@@ -1,0 +1,324 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS — LIGHT MODE (default)
+   ============================================================ */
+:root {
+  /* Surfaces */
+  --surface-0: #ffffff;
+  --surface-1: #f8f9fb;
+  --surface-2: #f1f3f7;
+  --surface-3: #e8ecf4;
+
+  /* Borders */
+  --border: #dde1ea;
+  --border-strong: #c4cad8;
+  --border-focus: #1a56db;
+
+  /* Text */
+  --text-primary: #0d1117;
+  --text-secondary: #5b6278;
+  --text-muted: #9299ab;
+
+  /* Accent */
+  --accent: #1a56db;
+  --accent-hover: #1649c4;
+  --accent-subtle: #eef2fd;
+  --accent-text: #1a56db;
+
+  /* Semantic */
+  --success: #0a7c47;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --warning: #b45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #c0392b;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(13, 17, 23, 0.06);
+  --shadow-md: 0 4px 16px rgba(13, 17, 23, 0.08), 0 1px 4px rgba(13, 17, 23, 0.04);
+  --shadow-lg: 0 12px 40px rgba(13, 17, 23, 0.12), 0 4px 12px rgba(13, 17, 23, 0.06);
+  --shadow-xl: 0 24px 64px rgba(13, 17, 23, 0.16), 0 8px 24px rgba(13, 17, 23, 0.08);
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Legacy compat */
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
+}
+
+/* ============================================================
+   DESIGN TOKENS — DARK MODE
+   ============================================================ */
+.dark {
+  --surface-0: #0f1117;
+  --surface-1: #181c27;
+  --surface-2: #1e2333;
+  --surface-3: #252a3a;
+
+  --border: #2c3249;
+  --border-strong: #3a4060;
+  --border-focus: #4d82f5;
+
+  --text-primary: #f0f2f7;
+  --text-secondary: #8892aa;
+  --text-muted: #525d76;
+
+  --accent: #4d82f5;
+  --accent-hover: #6394f7;
+  --accent-subtle: #1a2340;
+  --accent-text: #7aa9f8;
+
+  --success: #2dd98e;
+  --success-bg: #0a2d1e;
+  --success-border: #064e34;
+  --warning: #fbbf24;
+  --warning-bg: #2d1f0a;
+  --warning-border: #5c3d0e;
+  --danger: #f87171;
+  --danger-bg: #2d0f0f;
+  --danger-border: #5c1a1a;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.7), 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
+}
+
+/* ============================================================
+   TAILWIND THEME BRIDGE
+   ============================================================ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--duration-slow) var(--ease-in-out),
+              color var(--duration-slow) var(--ease-in-out);
+}
+
+/* Theme transition — smooth crossfade on all surfaces */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-in-out);
+}
+
+/* Override: elements that should NOT animate theme */
+button,
+a,
+input,
+textarea,
+select,
+[data-no-theme-transition] {
+  transition-property: background-color, border-color, color, fill, stroke,
+    box-shadow, opacity, transform;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-out);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection {
+  background-color: var(--accent);
+  color: #ffffff;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ============================================================
+   FOCUS
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.surface-0 { background-color: var(--surface-0); }
+.surface-1 { background-color: var(--surface-1); }
+.surface-2 { background-color: var(--surface-2); }
+.surface-3 { background-color: var(--surface-3); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--accent-text); }
+
+.border-default { border-color: var(--border); }
+.border-strong { border-color: var(--border-strong); }
+
+/* Card hover elevation */
+.card-interactive {
+  transition: box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .glass {
+  background: rgba(24, 28, 39, 0.8);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* AI Vibrant Brand Gradient */
+.ai-gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+.dark .ai-gradient-text {
+  background: linear-gradient(135deg, #60a5fa 0%, #818cf8 50%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Accessibility: Font Scaling */
+html.font-size-normal { font-size: 16px; }
+html.font-size-large  { font-size: 18px; }
+html.font-size-xlarge { font-size: 20px; }
+
+/* Accessibility: High Contrast */
+html.high-contrast {
+  --text-primary: #000000;
+  --text-secondary: #1e293b;
+  --text-muted: #334155;
+  --border: #000000;
+  --border-strong: #000000;
+}
+html.dark.high-contrast {
+  --surface-0: #000000;
+  --surface-1: #050505;
+  --surface-2: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: #f1f5f9;
+  --text-muted: #cbd5e1;
+  --border: #ffffff;
+  --border-strong: #ffffff;
+}
+
+/* Number counter animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse glow for accent — uses CSS var so it auto-adapts to dark mode */
+@keyframes accentPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+  50%       { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* Shimmer loading */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.5s linear infinite;
+}

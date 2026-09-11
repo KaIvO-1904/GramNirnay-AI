@@ -1,0 +1,19 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Rotating squares -->
+  <rect x="75" y="75" width="150" height="150" stroke="currentColor" stroke-width="1.5" opacity="0.12" transform="rotate(0 150 150)"/>
+  <rect x="75" y="75" width="150" height="150" stroke="currentColor" stroke-width="1" opacity="0.08" transform="rotate(22.5 150 150)"/>
+  <rect x="75" y="75" width="150" height="150" stroke="currentColor" stroke-width="0.75" opacity="0.06" transform="rotate(45 150 150)"/>
+  <!-- Inner diamond -->
+  <polygon points="150,80 220,150 150,220 80,150"
+    stroke="currentColor" stroke-width="1.5" opacity="0.15" fill="currentColor" fill-opacity="0.02"/>
+  <!-- Corner accents -->
+  <circle cx="75" cy="75" r="3" fill="currentColor" opacity="0.2"/>
+  <circle cx="225" cy="75" r="3" fill="currentColor" opacity="0.2"/>
+  <circle cx="225" cy="225" r="3" fill="currentColor" opacity="0.2"/>
+  <circle cx="75" cy="225" r="3" fill="currentColor" opacity="0.2"/>
+  <!-- Centre cross -->
+  <line x1="150" y1="100" x2="150" y2="200" stroke="currentColor" stroke-width="0.75" opacity="0.1"/>
+  <line x1="100" y1="150" x2="200" y2="150" stroke="currentColor" stroke-width="0.75" opacity="0.1"/>
+  <!-- Centre dot -->
+  <circle cx="150" cy="150" r="3" fill="currentColor" opacity="0.25"/>
+</svg>

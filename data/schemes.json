@@ -1,0 +1,70 @@
+[
+  {
+    "schemeId": "pmegp-001",
+    "name": "Prime Minister's Employment Generation Programme (PMEGP)",
+    "ministry": "Ministry of MSME",
+    "eligibility": {
+      "minCapital": 0,
+      "maxCapital": 5000000,
+      "categories": ["manufacturing", "service", "agri-allied"]
+    },
+    "benefit": {
+      "subsidyPercent": 15.0,
+      "loanAmount": 5000000,
+      "interestRate": 9.0
+    },
+    "sourceUrl": "https://www.kvib.gov.in/pmegp",
+    "lastVerified": "2026-01-01"
+  },
+  {
+    "schemeId": "mudra-shishu",
+    "name": "MUDRA Loan - Shishu",
+    "ministry": "Department of Financial Services",
+    "eligibility": {
+      "minCapital": 0,
+      "maxCapital": 50000,
+      "categories": ["micro-enterprise", "trading", "services"]
+    },
+    "benefit": {
+      "subsidyPercent": 0,
+      "loanAmount": 50000,
+      "interestRate": 11.0
+    },
+    "sourceUrl": "https://www.mudra.org.in",
+    "lastVerified": "2026-01-01"
+  },
+  {
+    "schemeId": "mudra-kishore",
+    "name": "MUDRA Loan - Kishore",
+    "ministry": "Department of Financial Services",
+    "eligibility": {
+      "minCapital": 50001,
+      "maxCapital": 500000,
+      "categories": ["micro-enterprise", "trading", "services"]
+    },
+    "benefit": {
+      "subsidyPercent": 0,
+      "loanAmount": 500000,
+      "interestRate": 11.0
+    },
+    "sourceUrl": "https://www.mudra.org.in",
+    "lastVerified": "2026-01-01"
+  },
+  {
+    "schemeId": "mudra-tarun",
+    "name": "MUDRA Loan - Tarun",
+    "ministry": "Department of Financial Services",
+    "eligibility": {
+      "minCapital": 500001,
+      "maxCapital": 1000000,
+      "categories": ["micro-enterprise", "trading", "services"]
+    },
+    "benefit": {
+      "subsidyPercent": 0,
+      "loanAmount": 1000000,
+      "interestRate": 11.0
+    },
+    "sourceUrl": "https://www.mudra.org.in",
+    "lastVerified": "2026-01-01"
+  }
+]

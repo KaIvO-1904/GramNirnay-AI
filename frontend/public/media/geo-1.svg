@@ -1,0 +1,24 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Outer ring -->
+  <circle cx="200" cy="200" r="180" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+  <!-- Mid ring -->
+  <circle cx="200" cy="200" r="120" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+  <!-- Inner ring -->
+  <circle cx="200" cy="200" r="60" stroke="currentColor" stroke-width="1.5" opacity="0.15"/>
+  <!-- Hexagonal geometric accent -->
+  <polygon points="200,60 320,130 320,270 200,340 80,270 80,130"
+    stroke="currentColor" stroke-width="1.5" opacity="0.1" fill="currentColor" fill-opacity="0.03"/>
+  <!-- Cross lines -->
+  <line x1="200" y1="20" x2="200" y2="380" stroke="currentColor" stroke-width="0.75" opacity="0.06"/>
+  <line x1="20" y1="200" x2="380" y2="200" stroke="currentColor" stroke-width="0.75" opacity="0.06"/>
+  <!-- Diagonal lines -->
+  <line x1="57" y1="57" x2="343" y2="343" stroke="currentColor" stroke-width="0.75" opacity="0.04"/>
+  <line x1="343" y1="57" x2="57" y2="343" stroke="currentColor" stroke-width="0.75" opacity="0.04"/>
+  <!-- Center dot -->
+  <circle cx="200" cy="200" r="4" fill="currentColor" opacity="0.2"/>
+  <!-- Accent dots on ring -->
+  <circle cx="200" cy="20" r="3" fill="currentColor" opacity="0.15"/>
+  <circle cx="380" cy="200" r="3" fill="currentColor" opacity="0.15"/>
+  <circle cx="200" cy="380" r="3" fill="currentColor" opacity="0.15"/>
+  <circle cx="20" cy="200" r="3" fill="currentColor" opacity="0.15"/>
+</svg>

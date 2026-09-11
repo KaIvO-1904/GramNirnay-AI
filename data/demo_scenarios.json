@@ -1,0 +1,41 @@
+{
+  "dairy_ramanagara": {
+    "profile": {
+      "location": {
+        "lat": 12.73,
+        "lng": 77.46,
+        "district": "Ramanagara",
+        "state": "Karnataka"
+      },
+      "businessIdea": "Small scale dairy farm with 15 cows",
+      "availableCapital": 200000,
+      "experience": 3,
+      "targetInvestment": 800000
+    },
+    "market_proxies": {
+      "demand": 85,
+      "competition": 60,
+      "accessibility": 80,
+      "seasonality": 50,
+      "source": "Local market survey proxy - Ramanagara Agri-cluster"
+    },
+    "financial_params": {
+      "setup_cost": 800000,
+      "monthly_revenue": 65000,
+      "monthly_expenses": 35000,
+      "interest_rate": 9.0,
+      "tenure_years": 5
+    },
+    "ai_insights": {
+      "risks": [
+        "Feed cost volatility",
+        "Seasonal milk demand variation",
+        "Disease risk in cattle"
+      ],
+      "modifications": [
+        "Start with 10-12 cows instead of 15 to reduce initial loan burden",
+        "Implement a direct-to-consumer model to increase margins"
+      ]
+    }
+  }
+}

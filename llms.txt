@@ -1,0 +1,18 @@
+# GramNirnay.ai
+
+GramNirnay.ai is a hyper-local business decision intelligence system designed for rural micro-entrepreneurs in India.
+
+## Purpose
+To empower rural entrepreneurs by transforming their business ideas, capital, and local context into actionable, deterministic financial plans and government scheme matches.
+
+## Key Capabilities
+- Conversational Onboarding: Guided data collection for business profiling.
+- Deterministic Financial Engine: Accurate calculations for ROI, Break-even, and EMI.
+- What-If Simulations: Real-time financial adjustments and projections.
+- Hybrid Scheme Matching: RAG-based matching of government schemes with verified citations.
+- Hyper-Local Context: Market proxies for demand, competition, and accessibility.
+
+## Public Pages
+- Landing Page: `/`
+- User Profiling: `/profile`
+- Analysis Report: `/report`
