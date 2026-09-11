@@ -46,6 +46,8 @@ class NormalizationService:
             district=region.get("district") if region else None
         )
 
+        i = 0
+        final_words = []
         while i < len(words):
             matched = False
             # Try windows of 3, then 2, then 1

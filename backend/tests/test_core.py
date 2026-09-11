@@ -36,7 +36,7 @@ def test_financial_service():
     metrics = service.execute(benchmarks)
     assert isinstance(metrics, FinancialMetrics)
     assert metrics.total_project_cost == 500000
-    assert metrics.monthly_profit > 0
+    assert metrics.monthly_net_profit > 0
 
 def test_validation_service():
     service = ValidationService()

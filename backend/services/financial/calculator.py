@@ -24,16 +24,17 @@ class FinancialService(BaseService[FinancialMetrics]):
             # Map legacy dict to new FinancialMetrics schema
             return FinancialMetrics(
                 total_project_cost=result_dict["total_project_cost"],
-                is_viable=result_dict["is_viable"],
-                roi_percent=result_dict["roi_percent"],
-                break_even_months=result_dict["break_even_months"],
-                monthly_profit=result_dict["monthly_net_profit"],
+                financing_required=result_dict["financing_required"],
+                min_viable_capital=params.min_viable_capital or (result_dict["total_project_cost"] * 0.6),
                 monthly_revenue=params.monthly_revenue,
                 monthly_expenses=params.monthly_expenses,
-                emi=result_dict["monthly_emi"],
-                loan_amount=result_dict["financing_required"],
+                monthly_emi=result_dict["monthly_emi"],
+                monthly_net_profit=result_dict["monthly_net_profit"],
+                annual_net_profit=result_dict["annual_net_profit"],
+                roi_percent=result_dict["roi_percent"],
+                break_even_months=result_dict["break_even_months"],
+                is_viable=result_dict["is_viable"],
                 user_capital=params.user_capital,
-                min_viable_capital=params.min_viable_capital or (result_dict["total_project_cost"] * 0.6),
                 capital_breakdown=params.capital_breakdown
             )
         except Exception as e:

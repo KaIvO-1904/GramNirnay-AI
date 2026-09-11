@@ -1,13 +1,15 @@
-import json
 from typing import List, Dict, Any
 from openai import OpenAI
 import os
+import json
 try:
     from .config import settings
     from .logger import logger
+    from .core.schemas.domain import Scheme
 except (ImportError, ValueError):
     from config import settings
     from logger import logger
+    from core.schemas.domain import Scheme
 
 class RAGEngine:
     """
@@ -111,7 +113,7 @@ class RAGEngine:
             logger.error(f"AI Ranking failed: {e}. Falling back to original order.")
             return eligible_schemes
 
-    def get_best_schemes(self, profile: Dict[str, Any], financial_params: Dict[str, Any]) -> List[Dict]:
+    def get_best_schemes(self, profile: Dict[str, Any], financial_params: Dict[str, Any]) -> List[Scheme]:
         """
         Main entry point for scheme matching.
         """
@@ -125,4 +127,4 @@ class RAGEngine:
         # 2. AI Ranking
         ranked = self.rank_schemes_with_ai(category, eligible)
 
-        return ranked
+        return [Scheme(**s) for s in ranked]

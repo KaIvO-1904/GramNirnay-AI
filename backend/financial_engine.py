@@ -82,5 +82,11 @@ class FinancialEngine:
             "annual_net_profit": round(annual_net_profit, 2),
             "roi_percent": roi,
             "break_even_months": break_even,
-            "is_viable": monthly_net_profit > 0 and break_even < 60 # Viable if profit > 0 and breaks even within 5 years
+            "is_viable": monthly_net_profit > 0 and break_even < 60, # Viable if profit > 0 and breaks even within 5 years
+            "user_capital": user_capital,
+            "min_viable_capital": setup_cost * 0.2, # Default 20% owner contribution
+            "capital_breakdown": {
+                "owner_contribution": user_capital,
+                "external_financing": financing_req
+            }
         }

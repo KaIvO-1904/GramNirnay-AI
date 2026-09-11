@@ -10,24 +10,14 @@ from .orchestration.manager import OrchestrationManager
 from .core.schemas.domain import VentureProfile, FinancialBenchmarks, LocationContext, MarketAnalysis
 from .core.schemas.base import GramNirnayError
 
-try:
-    from .config import settings
-    from .logger import setup_logging, logger
-    from .financial_engine import FinancialEngine
-    from .rag_engine import RAGEngine
-    from .interpreter import BusinessInterpreter
-    from .context_engine import ContextEngine
-    from .question_generator import QuestionGenerator
-    from .utils import normalize_state
-except (ImportError, ValueError):
-    from config import settings
-    from logger import setup_logging, logger
-    from financial_engine import FinancialEngine
-    from rag_engine import RAGEngine
-    from interpreter import BusinessInterpreter
-    from context_engine import ContextEngine
-    from question_generator import QuestionGenerator
-    from utils import normalize_state
+from .config import settings
+from .logger import setup_logging, logger
+from .financial_engine import FinancialEngine
+from .rag_engine import RAGEngine
+from .interpreter import BusinessInterpreter
+from .context_engine import ContextEngine
+from .question_generator import QuestionGenerator
+from .utils import normalize_state
 
 # Initialize Logging
 setup_logging()
@@ -40,7 +30,7 @@ app = FastAPI(
 # Enable CORS for the frontend to communicate with the backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with ["http://localhost:3000"]
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,7 +44,6 @@ from .voice.service import VoiceService
 workflow_manager = WorkflowManager()
 location_service = LocationService()
 voice_service = VoiceService()
-orchestrator = OrchestrationManager()
 fin_engine = FinancialEngine()
 rag_engine = RAGEngine()
 interpreter = BusinessInterpreter()
@@ -386,15 +375,7 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
             financial_params=None
         )
 
-        # Construct the response in the format the frontend expects
-        return {
-            "profile": state.profile.model_dump() if state.profile else {},
-            "financials": state.financial_result.model_dump() if state.financial_result else {},
-            "intelligence": state.intelligence_result.model_dump() if state.intelligence_result else {},
-            "viabilityReport": state.viability_report.model_dump() if hasattr(state, 'viability_report') else None,
-            "recommendation": state.final_explanation,
-            "viabilityScore": state.viability_score
-        }
+        return state.viability_report
 
     except Exception as e:
         logger.exception(f"Analysis failed for idea '{profile.businessIdea}': {e}")

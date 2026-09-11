@@ -28,26 +28,31 @@ class FinancialBenchmarks(BaseModel):
 class FinancialMetrics(BaseModel):
     """Deterministic output of the Financial Engine."""
     total_project_cost: float
-    is_viable: bool
+    financing_required: float
+    min_viable_capital: float
+    monthly_revenue: float
+    monthly_expenses: float
+    monthly_emi: float
+    monthly_net_profit: float
+    annual_net_profit: float
     roi_percent: float
     break_even_months: float
-    monthly_profit: float = Field(..., alias="monthly_net_profit")
-    monthly_revenue: float = Field(..., alias="monthly_revenue")
-    monthly_expenses: float = Field(..., alias="monthly_expenses")
-    emi: float
-    loan_amount: float
+    is_viable: bool
     user_capital: float
-    min_viable_capital: float
-    capital_breakdown: Dict[str, float]
+    capital_breakdown: Dict[str, float] = Field(default_factory=dict)
 
     class Config:
         populate_by_name = True
 
 class MarketAnalysis(BaseModel):
     """Deterministic local intelligence data."""
-    demand_score: float = Field(..., alias="demand", ge=0.0, le=100.0)
-    competition_level: Any = Field(..., alias="competition")
-    accessibility_score: float = Field(..., alias="accessibility", ge=0.0, le=100.0)
+    demand: float = Field(..., ge=0.0, le=100.0)
+    competition: float = Field(..., ge=0.0, le=100.0)
+    accessibility: float = Field(..., ge=0.0, le=100.0)
+    seasonality: float = Field(0.0, ge=0.0, le=100.0)
+    source: str = "Estimated"
+    confidence: str = "Medium"
+    reasoning: Optional[str] = None
     market_proxies: Dict[str, Any] = Field(default_factory=dict)
     regional_risks: List[str] = Field(default_factory=list)
 
@@ -56,12 +61,12 @@ class MarketAnalysis(BaseModel):
 
 class Scheme(BaseModel):
     """Government scheme data."""
-    id: str
+    schemeId: str
     name: str
-    description: str
-    benefit: str
-    eligibility: List[str]
-    link: str
+    ministry: str
+    benefit: Dict[str, Any] = Field(..., description="Object containing subsidyPercent and loanAmount")
+    sourceUrl: str
+    eligibility: Dict[str, Any] = Field(..., description="Object containing minCapital, maxCapital, and categories")
     match_score: float = 0.0
 
 class ViabilityReport(BaseModel):
