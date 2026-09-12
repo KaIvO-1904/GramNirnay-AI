@@ -3,7 +3,10 @@
     "profile": {
       "businessIdea": "Dairy Farming with Gir Cows",
       "availableCapital": 200000,
-      "location": "Ramanagara, Karnataka",
+      "location": {
+        "district": "Ramanagara",
+        "state": "Karnataka"
+      },
       "experience": 2,
       "targetAudience": "Local milk cooperatives and urban centers"
     },
@@ -37,7 +40,10 @@
     "profile": {
       "businessIdea": "Commercial Broiler Poultry Unit",
       "availableCapital": 300000,
-      "location": "Namakkal, Tamil Nadu",
+      "location": {
+        "district": "Namakkal",
+        "state": "Tamil Nadu"
+      },
       "experience": 5,
       "targetAudience": "Regional wholesale markets"
     },
@@ -71,7 +77,10 @@
     "profile": {
       "businessIdea": "Agro-Inputs & Bio-Fertilizer Store",
       "availableCapital": 100000,
-      "location": "Bareilly, Uttar Pradesh",
+      "location": {
+        "district": "Bareilly",
+        "state": "Uttar Pradesh"
+      },
       "experience": 1,
       "targetAudience": "Small-scale farmers in peri-urban areas"
     },

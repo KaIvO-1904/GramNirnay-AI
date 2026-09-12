@@ -60,10 +60,31 @@ class WorkflowManager:
             state.financial_result = FinancialResult(**fin_data)
             state.viability_score = self.scoring_engine.calculate_financial_viability(state.financial_result)
 
+            # Resolve location if it's a string (for Local Intelligence)
+            if hasattr(state.profile, "location") and isinstance(state.profile.location, str):
+                # We try to resolve the location string to a LocationIdentity
+                # Note: In a real app, we'd use the LocationService.search_place and pick the best.
+                # For now, we use a default resolution or the first search result.
+                try:
+                    candidates = self.knowledge_manager.location_service.search_place(state.profile.location)
+                    if candidates:
+                        state.location_identity = self.knowledge_manager.location_service.resolve_location(
+                            candidates[0].provider_id,
+                            # Need to import LocationSource
+                            __import__('backend.location.models', fromlist=['LocationSource']).LocationSource.MANUAL
+                        )
+                    else:
+                        state.location_identity = None
+                except Exception:
+                    state.location_identity = None
+            else:
+                state.location_identity = getattr(state.profile, "location", None)
+
             # 4. LOCAL INTELLIGENCE
             state.intelligence_result = self.knowledge_manager.get_intelligence(
                 state.profile,
-                state.financial_params
+                state.financial_params,
+                location_identity=state.location_identity
             )
 
             # 5. VIABILITY AGGREGATION

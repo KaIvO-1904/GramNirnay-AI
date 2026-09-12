@@ -51,6 +51,24 @@ class LocationService:
         identity.source = LocationSource.GPS
         return identity
 
+    def get_regional_constraints(self, location: str) -> List[str]:
+        """Returns constraints specific to the given location."""
+        constraints = {
+            "Maharashtra": ["Agricultural land ceiling applies", "Priority for women entrepreneurs in rural zones"],
+            "Uttar Pradesh": ["Specific subsidies for food processing units", "District-level industrial permits required"],
+            "Karnataka": ["Digital literacy requirement for some IT schemes", "Startup Karnataka incentives available"]
+        }
+
+        for state, rules in constraints.items():
+            if state.lower() in location.lower():
+                return rules
+
+        return ["Standard national guidelines apply"]
+
+    def get_local_tips(self, location: str, category: str) -> List[str]:
+        """Returns tailored tips for the region and business category."""
+        return [f"Check the local district collector's office in {location} for {category} subsidies."]
+
     def handle_manual_confirmation(self, candidate: LocationCandidate) -> LocationIdentity:
         """Converts a selected candidate into a final identity."""
         return self.resolve_location(candidate.provider_id, LocationSource.MANUAL)
