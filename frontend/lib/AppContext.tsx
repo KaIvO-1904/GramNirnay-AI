@@ -114,7 +114,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       // 1. Prompt Google Sign-In / Account Chooser
-      const googleUser = await promptGoogleSignIn();
+      const googleUser = await triggerGoogleSignIn();
 
       // 2. Transmit to backend FastAPI /api/auth/google
       const payload = {
@@ -122,12 +122,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         name: googleUser.name,
         email: googleUser.email,
         avatar: googleUser.avatar,
-        google_id: googleUser.id,
+        google_id: googleUser.uid,
       };
 
       const res = await authenticateWithGoogleBackend(payload);
       const authenticatedUser: UserAccount = res?.user || {
-        id: googleUser.id,
+        id: googleUser.uid,
         name: googleUser.name,
         email: googleUser.email,
         avatar: googleUser.avatar,
