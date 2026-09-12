@@ -19,6 +19,7 @@ from .models import (
 )
 from openai import OpenAI
 from ..config import settings
+from ..logger import logger
 import json
 
 class ILocalIntelligenceProvider(ABC):
@@ -74,7 +75,7 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
             )
             return json.loads(response.choices[0].message.content)
         except Exception as e:
-            print(f"AI Intelligence Error: {e}")
+            logger.error(f"AI Intelligence Error: {e}")
             return {}
 
     def get_competitor_data(self, location: LocationIdentity, business_type: str) -> List[Dict[str, Any]]:

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 import httpx
 from .models import LocationIdentity, LocationCandidate, LocationHierarchy
+from ..logger import logger
 
 class ILocationProvider(ABC):
     """Abstraction for the geolocation provider to allow easy replacement."""
@@ -55,7 +56,7 @@ class OSMLocationProvider(ILocationProvider):
                     ))
                 return results
         except Exception as e:
-            print(f"OSM Forward Geocode Error: {e}")
+            logger.error(f"OSM Forward Geocode Error: {e}")
             return []
 
     def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
@@ -67,12 +68,12 @@ class OSMLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 if resp.status_code != 200:
-                    print(f"OSM Reverse Geocode API Error {resp.status_code}: {resp.text}")
+                    logger.error(f"OSM Reverse Geocode API Error {resp.status_code}: {resp.text}")
                     return None
 
                 data = resp.json()
                 if "error" in data:
-                    print(f"OSM Reverse Geocode Error: {data['error']}")
+                    logger.error(f"OSM Reverse Geocode Error: {data['error']}")
                     return None
 
                 addr = data.get("address", {})
@@ -89,11 +90,39 @@ class OSMLocationProvider(ILocationProvider):
                     source="gps"
                 )
         except Exception as e:
-            print(f"OSM Reverse Geocode Exception: {e}")
+            logger.error(f"OSM Reverse Geocode Exception: {e}")
             return None
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
-        return None
+        try:
+            # Nominatim allows searching by osm_id
+            with httpx.Client(headers=self.headers) as client:
+                resp = client.get(
+                    f"{self.base_url}/search",
+                    params={"osm_id": provider_id, "format": "json", "addressdetails": 1},
+                    timeout=5.0
+                )
+                data = resp.json()
+                if not data:
+                    return None
+
+                item = data[0]
+                addr = item.get("address", {})
+                return LocationIdentity(
+                    lat=float(item.get("lat", 0)),
+                    lng=float(item.get("lon", 0)),
+                    hierarchy=LocationHierarchy(
+                        state=addr.get("state", "Unknown"),
+                        district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
+                        village=addr.get("village") or addr.get("suburb", "Unknown")
+                    ),
+                    provider_id=item.get("osm_id", "unknown"),
+                    confidence=1.0,
+                    source="manual"
+                )
+        except Exception as e:
+            logger.error(f"OSM Resolve Hierarchy Error: {e}")
+            return None
 
 class MockLocationProvider(ILocationProvider):
     """Mock implementation for testing and development."""

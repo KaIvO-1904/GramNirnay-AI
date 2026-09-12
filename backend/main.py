@@ -399,13 +399,32 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
         market_analysis = MarketAnalysis(**market_data)
 
         # Use the new WorkflowManager for the intelligence pipeline
-        state = workflow_manager.run_pipeline(
-            user_input=profile.businessIdea,
-            profile=None,
-            financial_params=None
+        # Pass the interpreted profile and financial params to skip re-interpretation
+        from .ontology.models import BusinessProfile, FinancialParams
+
+        biz_profile = BusinessProfile(
+            business_idea=profile.businessIdea,
+            category=params_dict.get("category", "other"),
+            available_capital=profile.availableCapital or 0.0,
+            location=f"{loc_data.get('district', 'Unknown')}, {loc_data.get('state', 'Unknown')}",
+            experience_years=profile.experience
         )
 
-        return state.viability_report
+        fin_params = FinancialParams(
+            setup_cost=params_dict.get("setup_cost", 0.0),
+            monthly_revenue=params_dict.get("monthly_revenue", 0.0),
+            monthly_expenses=params_dict.get("monthly_expenses", 0.0),
+            interest_rate=params_dict.get("interest_rate", 0.0),
+            tenure_years=params_dict.get("tenure_years", 5),
+            user_capital=profile.availableCapital or 0.0
+        )
+
+        state = workflow_manager.run_pipeline(
+            user_input=profile.businessIdea,
+            profile=biz_profile,
+            financial_params=fin_params
+        )
+        return workflow_manager.format_for_frontend(state)
 
     except Exception as e:
         logger.exception(f"Analysis failed for idea '{profile.businessIdea}': {e}")
