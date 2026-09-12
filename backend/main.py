@@ -30,9 +30,9 @@ from firebase_admin import credentials
 
 # Initialize Firebase Admin SDK
 try:
-    # In production, FIREBASE_SERVICE_ACCOUNT_JSON should be the path to the JSON file
+    # In production, firebase_service_account_path should be the path to the JSON file
     # or the JSON content itself.
-    cred = credentials.Certificate("firebase-service-account.json")
+    cred = credentials.Certificate(settings.firebase_service_account_path)
     firebase_admin.initialize_app(cred)
     logger.info("Firebase Admin SDK initialized successfully")
 except Exception as e:
