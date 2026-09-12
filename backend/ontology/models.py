@@ -5,6 +5,7 @@ from enum import Enum
 class BusinessCategory(str, Enum):
     AGRICULTURE = "agriculture"
     LIVESTOCK = "livestock"
+    POULTRY = "poultry"
     HANDICRAFTS = "handicrafts"
     SERVICES = "services"
     TRADING = "trading"
