@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
   // Primary Venture Info
   const [businessIdea, setBusinessIdea] = useState('');
-  const [location, setLocation] = useState<{ district: string; state: string } | null>(null);
+  const [location, setLocation] = useState<any>(null);
   const [experience, setExperience] = useState('2');
 
   // Journey State
@@ -80,13 +80,9 @@ export default function ProfilePage() {
 
   // ── 2. Location Resolution ──
   const handleLocationResolved = (loc: any) => {
+    setLocation(loc);
     const district = loc.hierarchy?.district || loc.district || 'Unknown';
     const state = loc.hierarchy?.state || loc.state || 'Unknown';
-
-    setLocation({
-      district: district,
-      state: state,
-    });
     setJourneyStep('questions');
     handleStartQuestionnaire(businessIdea, district, state);
   };
@@ -176,10 +172,10 @@ export default function ProfilePage() {
       const profilePayload: UserProfile = {
         businessIdea: businessIdea.trim(),
         location: {
-          district: location?.district || '',
-          state: location?.state || '',
-          lat: 0,
-          lng: 0,
+          district: location?.hierarchy?.district || location?.district || '',
+          state: location?.hierarchy?.state || location?.state || '',
+          lat: location?.lat || 0,
+          lng: location?.lng || 0,
         },
         experience: parseInt(experience, 10) || 0,
         availableCapital: 0,

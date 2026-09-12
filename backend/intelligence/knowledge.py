@@ -20,18 +20,7 @@ class KnowledgeManager:
             financial_params.model_dump()
         )
 
-        # 2. Convert raw schemes to SchemeMatch models
-        matched_schemes = []
-        for s in schemes:
-            matched_schemes.append(SchemeMatch(
-                scheme_id=s.schemeId,
-                name=s.name,
-                benefit=s.benefit,
-                eligibility_score=0.9, # Placeholder for ranking score
-                match_reason="Matches your business category and capital requirements."
-            ))
-
-        # 3. Get Local Intelligence (The new engine)
+        # 2. Local Intelligence (The new engine)
         # Use provided coordinates, otherwise fallback to default
         if location_identity:
             local_intel = self.local_intel_engine.analyze_location(
@@ -53,12 +42,12 @@ class KnowledgeManager:
                 profile.category.value
             )
 
-        # 4. Get regional intelligence from LocationService
+        # 3. Get regional intelligence from LocationService
         constraints = self.location_service.get_regional_constraints(profile.location)
         tips = self.location_service.get_local_tips(profile.location, profile.category.value)
 
         return IntelligenceResult(
-            matched_schemes=matched_schemes,
+            matched_schemes=schemes,
             regional_constraints=constraints,
             local_tips=tips,
             # We'd add local_intel to the IntelligenceResult model in a real scenario

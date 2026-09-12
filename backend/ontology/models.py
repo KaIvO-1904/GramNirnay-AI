@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from enum import Enum
+from ..core.schemas.domain import Scheme
 
 class BusinessCategory(str, Enum):
     AGRICULTURE = "agriculture"
@@ -56,7 +57,7 @@ class SchemeMatch(BaseModel):
 
 class IntelligenceResult(BaseModel):
     """Consolidated intelligence output."""
-    matched_schemes: List[SchemeMatch]
+    matched_schemes: List[Scheme]
     regional_constraints: List[str] = []
     local_tips: List[str] = []
 
