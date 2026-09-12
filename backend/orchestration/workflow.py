@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, Any
+from typing import Optional, Any, Dict
 from .state import PipelineState
 from ..ontology.models import InterpretationError, ValidationError, CalculationError
 from ..agents.interpretation import InterpretationAgent
