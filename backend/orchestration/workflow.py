@@ -121,35 +121,47 @@ class WorkflowManager:
 
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:
         """Converts PipelineState to the AnalysisResult structure expected by the frontend."""
+        # If there's a critical error in the explanation, it's likely the pipeline failed.
+        # We check if critical results are missing.
+        if not state.financial_result or not state.intelligence_result:
+            return {
+                "error": "ANALYSIS_FAILED",
+                "message": state.final_explanation or "An unexpected error occurred during analysis.",
+                "viabilityScore": 0,
+                "recommendation": "Error",
+                "marketAnalysis": {
+                    "demand": 0,
+                    "competition": 0,
+                    "accessibility": 0,
+                    "seasonality": 0,
+                    "source": "Unavailable",
+                    "confidence": "None",
+                    "reasoning": "Analysis failed to complete."
+                },
+                "financials": {},
+                "interpreter_reasoning": state.final_explanation,
+                "modifications": [],
+                "matchedSchemes": [],
+                "is_demo": state.metadata.get("is_demo", False)
+            }
+
         # Determine recommendation
-        score = state.viability_score
+        # Use aggregated viability score if available, otherwise fallback to financial score
+        raw_score = 0.0
+        if hasattr(state, 'viability_report') and state.viability_report:
+            raw_score = state.viability_report.overall_score
+        elif hasattr(state, 'viability_score'):
+            raw_score = state.viability_score
+
+        score = round(raw_score * 100, 0)
+
         recommendation = "Reconsider"
         if score >= 80: recommendation = "Proceed"
         elif score >= 50: recommendation = "Proceed with Modification"
 
+
         # Map Intelligence Result to MarketAnalysis
         intel = state.intelligence_result
-
-        # Safety checks for intelligence data to prevent NoneType errors
-        if not intel or not hasattr(intel, 'demand') or intel.demand is None:
-            return {
-                "viabilityScore": round(score, 0),
-                "recommendation": recommendation,
-                "marketAnalysis": {
-                    "demand": 50,
-                    "competition": 50,
-                    "accessibility": 50,
-                    "seasonality": 50,
-                    "source": "Default/Unknown",
-                    "confidence": "Low",
-                    "reasoning": "Market intelligence data unavailable."
-                },
-                "financials": state.financial_result.model_dump() if state.financial_result else {},
-                "interpreter_reasoning": state.final_explanation or "No reasoning available.",
-                "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
-                "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') else [],
-                "is_demo": state.metadata.get("is_demo", False)
-            }
 
         conf_val = intel.overall_confidence if hasattr(intel, 'overall_confidence') else 0.6
         conf_label = "Low"
@@ -157,14 +169,14 @@ class WorkflowManager:
         elif conf_val >= 0.7: conf_label = "Medium"
 
         return {
-            "viabilityScore": round(score, 0),
+            "viabilityScore": int(score),
             "recommendation": recommendation,
             "marketAnalysis": {
                 "demand": round(intel.demand.local_demand_score * 100),
                 "competition": round(intel.competition.competition_score * 100),
                 "accessibility": round(((intel.logistics.transport_score + intel.logistics.accessibility_score) / 2) * 100),
                 "seasonality": round(intel.demand.seasonality_index * 100),
-                "source": intel.demand.metadata.source,
+                "source": ", ".join(state.viability_report.data_sources) if hasattr(state, 'viability_report') and state.viability_report else intel.demand.metadata.source,
                 "confidence": conf_label,
                 "reasoning": state.final_explanation[:200] + "..." if state.final_explanation else ""
             },

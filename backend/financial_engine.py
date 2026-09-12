@@ -84,6 +84,8 @@ class FinancialEngine:
 
         return {
             "total_project_cost": setup_cost,
+            "monthly_revenue": monthly_revenue,
+            "monthly_expenses": monthly_expenses,
             "financing_required": financing_req,
             "monthly_emi": emi,
             "monthly_net_profit": round(monthly_net_profit, 2),
