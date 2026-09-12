@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from .models import LocationIdentity, LocationCandidate, LocationSource
 from .provider import ILocationProvider, MockLocationProvider, OSMLocationProvider
+from ..config import settings
 
 class LocationAmbiguityError(Exception):
     """Raised when multiple locations match a query."""
