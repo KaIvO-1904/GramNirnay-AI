@@ -30,10 +30,22 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
   const [selectedLocation, setSelectedLocation] = useState<LocationCandidate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     detectLocation();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.length >= 3) {
+        handleSearch(searchQuery);
+      } else {
+        setCandidates([]);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const detectLocation = async () => {
     setIsLoading(true);
@@ -43,7 +55,6 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
         throw new Error('Geolocation is not supported by your browser');
       }
 
-      // Use higher accuracy and a reasonable timeout to prevent "laggy" feeling
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
@@ -61,7 +72,6 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           }
         },
         (err) => {
-          // Distinguish between permission denied and timeout/other errors
           if (err.code === 1) {
             setError('Location access denied. Please enter your district manually.');
           } else if (err.code === 3) {
@@ -89,7 +99,6 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     if (!selectedLocation) return;
     setIsLoading(true);
     try {
-      // For detected location, source is 'gps'
       const finalLoc = await resolveLocation(selectedLocation.provider_id, 'gps');
       onResolved(finalLoc);
     } catch (e: any) {
@@ -103,13 +112,11 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     setSelectedLocation(candidate);
     setIsLoading(true);
     try {
-      // Try to resolve for canonical identity, but fall back to candidate data if it fails
       try {
         const finalLoc = await resolveLocation(candidate.provider_id, 'manual');
         onResolved(finalLoc);
       } catch (resolveErr) {
         console.warn('Canonical resolution failed, using candidate data as fallback:', resolveErr);
-        // Fallback: Convert candidate to identity manually
         onResolved({
           lat: candidate.lat,
           lng: candidate.lng,
@@ -125,19 +132,6 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
       setIsLoading(false);
     }
   };
-
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.length >= 3) {
-        handleSearch(searchQuery);
-      } else {
-        setCandidates([]);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
@@ -159,11 +153,11 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
         <div className="flex items-center justify-center gap-2 mb-2">
           <MapPin size={18} className="text-[var(--accent)]" />
           <h3 className="text-lg font-bold tracking-tight text-[var(--text-primary]">Where is your venture?</h3>
-        </div>
+        </div >
         <p className="text-sm text-[var(--text-secondary)]">
           We need your location to find the best subsidies and local market data.
         </p>
-      </div>
+      </div >
 
       <div className="flex flex-col items-center justify-center gap-4">
         <AnimatePresence mode="wait">
@@ -178,7 +172,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
               <div className="relative">
                 <div className="w-12 h-12 rounded-full border-4 border-t-[var(--accent)] animate-spin" />
                 <MapPin size={20} className="absolute inset-0 m-auto text-[var(--accent)]" />
-              </div>
+              </div >
               <span className="text-sm font-medium text-[var(--text-secondary)]">Detecting your location...</span>
               <Button
                 variant="ghost"
@@ -199,12 +193,12 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
               className="w-full space-y-6 text-center"
             >
               <div className="p-6 rounded-2xl bg-[var(--surface-1)] border border-[var(--border)]">
-                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">Detected Location</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">Detected Location</div >
                 <div className="text-2xl font-black text-[var(--text-primary)] mb-1">
                   {selectedLocation.hierarchy.district}, {selectedLocation.hierarchy.state}
-                </div>
+                </div >
                 <div className="text-sm text-[var(--text-secondary)]">Is this the correct area for your business?</div>
-              </div>
+              </div >
               <div className="flex gap-3">
                 <Button
                   variant="outline"
@@ -221,7 +215,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                   {isLoading ? 'Resolving...' : 'Yes, correct'}
                 </Button>
-              </div>
+              </div >
             </motion.div>
           )}
 
@@ -242,32 +236,43 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-              </div>
-
+              </div >
               {error && <p className="text-xs text-red-500 text-center font-medium">{error}</p>}
-
               <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
-                {candidates.map((c) => (
-                  <button
-                    key={c.provider_id}
-                    onClick={() => handleSelectCandidate(c)}
-                    className="flex items-center justify-between p-3 rounded-xl border bg-[var(--surface-0)] hover:border-[var(--accent)] transition-all text-left group"
-                    style={{ borderColor: 'var(--border)' }}
-                  >
-                    <div>
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{c.hierarchy.district}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{c.hierarchy.state}</div>
-                    </div>
-                    <div className="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[var(--accent)]">
-                      {Math.round(c.confidence * 100)}% Match
-                    </div>
-                  </button>
-                ))}
-              </div>
+                {isLoading && candidates.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-[var(--text-muted)]">
+                    <Loader2 size={24} className="animate-spin mb-2" />
+                    <span className="text-xs">Searching for locations...</span>
+                  </div >
+                ) : candidates.length > 0 ? (
+                  candidates.map((c) => (
+                    <button
+                      key={c.provider_id}
+                      onClick={() => handleSelectCandidate(c)}
+                      className="flex items-center justify-between p-3 rounded-xl border bg-[var(--surface-0)] hover:border-[var(--accent)] transition-all text-left group"
+                      style={{ borderColor: 'var(--border)' }}
+                    >
+                      <div className="flex-1">
+                        <div className="text-sm font-bold text-[var(--text-primary)]">{c.hierarchy.district}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{c.hierarchy.state}</div>
+                      </div >
+                      <div className="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[var(--accent)] ml-2">
+                        {Math.round(c.confidence * 100)}% Match
+                      </div >
+                    </button>
+                  ))
+                ) : (
+                  !isLoading && (
+                    <div className="text-center py-8 text-[var(--text-muted)]">
+                      <p className="text-xs">No locations found. Try a different district name.</p>
+                    </div >
+                  )
+                )}
+              </div >
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
