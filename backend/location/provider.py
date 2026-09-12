@@ -137,18 +137,23 @@ class OSMLocationProvider(ILocationProvider):
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
         try:
             with httpx.Client(headers=self.headers) as client:
-                # Append ", India" to query to prioritize Indian results in OSM
+                # Use a more generic search query to increase hit rate
+                # We search for the query as is, and optionally with ", India"
                 search_query = f"{query}, India" if "india" not in query.lower() else query
+
                 resp = client.get(
                     f"{self.base_url}/search",
-                    params={"q": search_query, "format": "json", "addressdetails": 1, "limit": 5},
+                    params={"q": search_query, "format": "json", "addressdetails": 1, "limit": 10},
                     timeout=5.0
                 )
+
                 if resp.status_code != 200:
                     logger.error(f"OSM Search API Error {resp.status_code}: {resp.text}")
                     return []
 
                 data = resp.json()
+                if not isinstance(data, list):
+                    return []
 
                 results = []
                 for item in data:
@@ -157,18 +162,43 @@ class OSMLocationProvider(ILocationProvider):
                     if not osm_id:
                         continue
 
-                    results.append(LocationCandidate(
-                        provider_id=osm_id,
-                        label=item.get("display_name", "Unknown Location"),
-                        hierarchy=LocationHierarchy(
-                            state=addr.get("state", "Unknown"),
-                            district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
-                            village=addr.get("village") or addr.get("suburb", "Unknown")
-                        ),
-                        lat=float(item.get("lat", 0)),
-                        lng=float(item.get("lon", 0)),
-                        confidence=0.8
-                    ))
+                    # Broaden the search for district/state/village to avoid "Unknown" blocks
+                    # OSM uses different keys depending on the region
+                    state = addr.get("state") or addr.get("province") or addr.get("region") or "Unknown"
+
+                    # District mapping: county -> city -> town -> village -> administrative_area_level_2
+                    district = (
+                        addr.get("county") or
+                        addr.get("city") or
+                        addr.get("town") or
+                        addr.get("village") or
+                        addr.get("administrative_area_level_2") or
+                        "Unknown"
+                    )
+
+                    village = (
+                        addr.get("village") or
+                        addr.get("suburb") or
+                        addr.get("hamlet") or
+                        addr.get("neighbourhood") or
+                        "Unknown"
+                    )
+
+                    try:
+                        results.append(LocationCandidate(
+                            provider_id=osm_id,
+                            label=item.get("display_name", "Unknown Location"),
+                            hierarchy=LocationHierarchy(
+                                state=str(state),
+                                district=str(district),
+                                village=str(village)
+                            ),
+                            lat=float(item.get("lat", 0)),
+                            lng=float(item.get("lon", 0)),
+                            confidence=0.8
+                        ))
+                    except Exception:
+                        continue
                 return results
         except Exception as e:
             logger.error(f"OSM Forward Geocode Exception: {e}")
