@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Any
 from ..ontology.models import BusinessProfile, FinancialParams, IntelligenceResult, SchemeMatch
 from ..location.service import LocationService
 from ..rag_engine import RAGEngine
