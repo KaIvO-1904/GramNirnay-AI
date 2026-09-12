@@ -15,7 +15,7 @@ from .context_engine import ContextEngine
 from .question_generator import QuestionGenerator
 from .utils import normalize_state
 from .core.schemas.context import LocationContext
-from .core.schemas.domain import VentureProfile, FinancialBenchmarks
+from .core.schemas.domain import VentureProfile, FinancialBenchmarks, MarketAnalysis
 
 # In-memory stores for demo purposes
 USERS_DB: Dict[str, Any] = {}
