@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     groq_api_key: Optional[str] = None # Added for free LLM/STT
     google_maps_api_key: Optional[str] = None # Added for production geolocation
     firebase_service_account_path: str = "firebase-service-account.json"
-    llm_model: str = "llama-3.3-70b-versatile" # Default to Groq Llama 3
+    llm_model: str = "llama-3.1-70b-versatile" # Updated to a valid Groq model
     stt_model: str = "whisper-large-v3" # Default to Groq Whisper
 
     # Backend Config
