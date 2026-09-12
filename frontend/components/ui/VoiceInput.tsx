@@ -76,6 +76,12 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
   }, [voicePreference]);
 
   const startRecording = async () => {
+    // Stop AI speaking immediately when user starts recording
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+
     try {
       setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

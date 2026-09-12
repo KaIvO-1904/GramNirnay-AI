@@ -113,11 +113,20 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.length >= 3) {
+        handleSearch(searchQuery);
+      } else {
+        setCandidates([]);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handleSearch = async (query: string) => {
-    if (query.length < 3) {
-      setCandidates([]);
-      return;
-    }
     setIsLoading(true);
     try {
       const results = await searchLocation(query);
@@ -158,6 +167,13 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                 <MapPin size={20} className="absolute inset-0 m-auto text-[var(--accent)]" />
               </div>
               <span className="text-sm font-medium text-[var(--text-secondary)]">Detecting your location...</span>
+              <Button
+                variant="ghost"
+                onClick={() => setStep('resolving')}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] underline underline-offset-4"
+              >
+                Search Manually
+              </Button>
             </motion.div>
           )}
 
@@ -210,7 +226,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                   type="text"
                   placeholder="Search for your district..."
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
 
