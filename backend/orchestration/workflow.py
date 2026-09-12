@@ -161,7 +161,30 @@ class WorkflowManager:
 
 
         # Map Intelligence Result to MarketAnalysis
-        intel = state.intelligence_result
+        intel_res = state.intelligence_result
+        intel = intel_res.local_intelligence if intel_res and intel_res.local_intelligence else None
+
+        if not intel:
+            return {
+                "error": "INTELLIGENCE_MISSING",
+                "message": "Market intelligence data was not generated.",
+                "viabilityScore": 0,
+                "recommendation": "Error",
+                "marketAnalysis": {
+                    "demand": 0,
+                    "competition": 0,
+                    "accessibility": 0,
+                    "seasonality": 0,
+                    "source": "Unavailable",
+                    "confidence": "None",
+                    "reasoning": "Intelligence result was empty."
+                },
+                "financials": state.financial_result.model_dump() if state.financial_result else {},
+                "interpreter_reasoning": state.final_explanation,
+                "modifications": [],
+                "matchedSchemes": [],
+                "is_demo": state.metadata.get("is_demo", False)
+            }
 
         conf_val = intel.overall_confidence if hasattr(intel, 'overall_confidence') else 0.6
         conf_label = "Low"

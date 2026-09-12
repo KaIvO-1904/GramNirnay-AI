@@ -47,8 +47,8 @@ class KnowledgeManager:
         tips = self.location_service.get_local_tips(profile.location, profile.category.value)
 
         return IntelligenceResult(
+            local_intelligence=local_intel,
             matched_schemes=schemes,
             regional_constraints=constraints,
             local_tips=tips,
-            # We'd add local_intel to the IntelligenceResult model in a real scenario
         )

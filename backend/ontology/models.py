@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from ..core.schemas.domain import Scheme
+from ..intelligence.models import LocalIntelligenceResult
 
 class BusinessCategory(str, Enum):
     AGRICULTURE = "agriculture"
@@ -55,8 +56,10 @@ class SchemeMatch(BaseModel):
     eligibility_score: float = Field(0.0, description="How well the user fits the scheme")
     match_reason: str = Field(..., description="Why this scheme was recommended")
 
+
 class IntelligenceResult(BaseModel):
     """Consolidated intelligence output."""
+    local_intelligence: Optional[LocalIntelligenceResult] = None
     matched_schemes: List[Scheme]
     regional_constraints: List[str] = []
     local_tips: List[str] = []
