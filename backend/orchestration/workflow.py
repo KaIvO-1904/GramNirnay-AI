@@ -56,7 +56,7 @@ class WorkflowManager:
 
             # 3. CALCULATION
             fin_data = self.financial_engine.compute_full_model(state.financial_params.model_dump())
-            from .ontology.models import FinancialResult
+            from ..ontology.models import FinancialResult
             state.financial_result = FinancialResult(**fin_data)
             state.viability_score = self.scoring_engine.calculate_financial_viability(state.financial_result)
 
