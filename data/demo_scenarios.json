@@ -1,40 +1,103 @@
 {
   "dairy_ramanagara": {
     "profile": {
-      "location": {
-        "lat": 12.73,
-        "lng": 77.46,
-        "district": "Ramanagara",
-        "state": "Karnataka"
-      },
-      "businessIdea": "Small scale dairy farm with 15 cows",
+      "businessIdea": "Dairy Farming with Gir Cows",
       "availableCapital": 200000,
-      "experience": 3,
-      "targetInvestment": 800000
-    },
-    "market_proxies": {
-      "demand": 85,
-      "competition": 60,
-      "accessibility": 80,
-      "seasonality": 50,
-      "source": "Local market survey proxy - Ramanagara Agri-cluster"
+      "location": "Ramanagara, Karnataka",
+      "experience": 2,
+      "targetAudience": "Local milk cooperatives and urban centers"
     },
     "financial_params": {
-      "setup_cost": 800000,
+      "setup_cost": 550000,
       "monthly_revenue": 65000,
       "monthly_expenses": 35000,
       "interest_rate": 9.0,
-      "tenure_years": 5
+      "tenure_years": 5,
+      "user_capital": 200000
+    },
+    "market_proxies": {
+      "demand": 85,
+      "competition": 40,
+      "accessibility": 70,
+      "seasonality": 20,
+      "source": "Regional Livestock Census 2024"
     },
     "ai_insights": {
       "risks": [
-        "Feed cost volatility",
-        "Seasonal milk demand variation",
-        "Disease risk in cattle"
+        "Fodder price volatility",
+        "Disease outbreak (FMD)"
       ],
       "modifications": [
-        "Start with 10-12 cows instead of 15 to reduce initial loan burden",
-        "Implement a direct-to-consumer model to increase margins"
+        "Invest in automated milking machines to reduce labor cost",
+        "Implement a direct-to-consumer subscription model for A2 milk"
+      ]
+    }
+  },
+  "poultry_namakkal": {
+    "profile": {
+      "businessIdea": "Commercial Broiler Poultry Unit",
+      "availableCapital": 300000,
+      "location": "Namakkal, Tamil Nadu",
+      "experience": 5,
+      "targetAudience": "Regional wholesale markets"
+    },
+    "financial_params": {
+      "setup_cost": 820000,
+      "monthly_revenue": 110000,
+      "monthly_expenses": 60000,
+      "interest_rate": 8.5,
+      "tenure_years": 5,
+      "user_capital": 300000
+    },
+    "market_proxies": {
+      "demand": 92,
+      "competition": 60,
+      "accessibility": 85,
+      "seasonality": 30,
+      "source": "Tamil Nadu Poultry Federation Report"
+    },
+    "ai_insights": {
+      "risks": [
+        "Bird flu risk",
+        "Feed cost fluctuations"
+      ],
+      "modifications": [
+        "Adopt climate-controlled housing for better growth rates",
+        "Diversify into organic poultry for higher margins"
+      ]
+    }
+  },
+  "retail_bareilly": {
+    "profile": {
+      "businessIdea": "Agro-Inputs & Bio-Fertilizer Store",
+      "availableCapital": 100000,
+      "location": "Bareilly, Uttar Pradesh",
+      "experience": 1,
+      "targetAudience": "Small-scale farmers in peri-urban areas"
+    },
+    "financial_params": {
+      "setup_cost": 300000,
+      "monthly_revenue": 45000,
+      "monthly_expenses": 25000,
+      "interest_rate": 10.0,
+      "tenure_years": 5,
+      "user_capital": 100000
+    },
+    "market_proxies": {
+      "demand": 75,
+      "competition": 55,
+      "accessibility": 60,
+      "seasonality": 40,
+      "source": "UP Agri-Marketing Board"
+    },
+    "ai_insights": {
+      "risks": [
+        "Seasonal demand drop",
+        "Inventory spoilage"
+      ],
+      "modifications": [
+        "Offer soil testing services to build customer trust",
+        "Partner with local FPOs for bulk distribution"
       ]
     }
   }

@@ -6,9 +6,15 @@ class BusinessCategory(str, Enum):
     AGRICULTURE = "agriculture"
     LIVESTOCK = "livestock"
     POULTRY = "poultry"
+    DAIRY = "dairy"
+    GOAT_FARMING = "goat_farming"
     HANDICRAFTS = "handicrafts"
     SERVICES = "services"
     TRADING = "trading"
+    RETAIL_CLOTH = "retail_cloth"
+    RETAIL_KIRANA = "retail_kirana"
+    AGRO_RETAIL = "agro_retail"
+    MICRO_ENTERPRISE = "micro_enterprise"
     OTHER = "other"
 
 class BusinessProfile(BaseModel):

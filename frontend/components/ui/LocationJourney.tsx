@@ -99,8 +99,20 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     if (!selectedLocation) return;
     setIsLoading(true);
     try {
-      const finalLoc = await resolveLocation(selectedLocation.provider_id, 'gps');
-      onResolved(finalLoc);
+      try {
+        const finalLoc = await resolveLocation(selectedLocation.provider_id, 'gps');
+        onResolved(finalLoc);
+      } catch (resolveErr) {
+        console.warn('Canonical resolution failed, using detected location as fallback:', resolveErr);
+        onResolved({
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
+          hierarchy: selectedLocation.hierarchy,
+          provider_id: selectedLocation.provider_id,
+          confidence: selectedLocation.confidence,
+          source: 'gps'
+        });
+      }
     } catch (e: any) {
       setError('Failed to confirm location. Please try again.');
     } finally {

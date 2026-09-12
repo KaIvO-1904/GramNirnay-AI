@@ -24,6 +24,10 @@ out/
 logs/
 *.log
 
+# Firebase
+firebase-service-account.json
+.firebase/
+
 # OS
 .DS_Store
 Thumbs.db
