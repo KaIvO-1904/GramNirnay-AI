@@ -28,8 +28,21 @@ class BaseAgent:
     """
     Base class for all agents. Ensures structured communication.
     """
-    def __init__(self, name: str):
+    def __init__(self, name: str, model_name: Optional[str] = None):
         self.name = name
+        self.model_name = model_name
+
+    def wrap_response(self, content: str, structured_data: Any = None, score: float = 0.0, reason: str = "", errors: List[str] = None) -> AgentResponse:
+        """Helper to wrap results into a standard AgentResponse."""
+        status = AgentStatus.SUCCESS if score > 0.3 else AgentStatus.FAILURE
+        return AgentResponse(
+            status=status,
+            confidence=score,
+            result=structured_data,
+            evidence=[content, reason],
+            errors=errors or [],
+            next_action=NextAction.PROCEED if status == AgentStatus.SUCCESS else NextAction.RETRY
+        )
 
     async def execute(self, input_data: Any) -> AgentResponse:
         raise NotImplementedError("Agents must implement the execute method.")

@@ -8,7 +8,7 @@ class InterpretationAgent(BaseAgent):
     """Agent that transforms natural language into structured business models."""
 
     def __init__(self):
-        super().__init__(model_name=settings.llm_model)
+        super().__init__(name="InterpretationAgent", model_name=settings.llm_model)
         self.client = OpenAI(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url

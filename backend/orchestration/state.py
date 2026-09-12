@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional, Any
-from .ontology.models import BusinessProfile, FinancialParams, FinancialResult, IntelligenceResult, ValidationResult
+from ..ontology.models import BusinessProfile, FinancialParams, FinancialResult, IntelligenceResult, ValidationResult
 
 @dataclass
 class PipelineState:

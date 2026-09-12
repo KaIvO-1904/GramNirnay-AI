@@ -6,10 +6,6 @@ from typing import List, Optional, Dict, Any
 import logging
 import json
 
-from .orchestration.manager import OrchestrationManager
-from .core.schemas.domain import VentureProfile, FinancialBenchmarks, LocationContext, MarketAnalysis
-from .core.schemas.base import GramNirnayError
-
 from .config import settings
 from .logger import setup_logging, logger
 from .financial_engine import FinancialEngine
@@ -18,6 +14,10 @@ from .interpreter import BusinessInterpreter
 from .context_engine import ContextEngine
 from .question_generator import QuestionGenerator
 from .utils import normalize_state
+
+# In-memory stores for demo purposes
+USERS_DB: Dict[str, Any] = {}
+USER_ANALYSES_DB: Dict[str, List[Any]] = {}
 
 # Initialize Logging
 setup_logging()
@@ -77,26 +77,27 @@ class SavedAnalysisRequest(BaseModel):
     projectCost: float
     data: Optional[Dict[str, Any]] = None
 
-    @app.post("/api/location/search")
-    async def search_location(query: str) -> List[LocationCandidate]:
-        """Search for a place name and return candidates."""
-        return location_service.search_place(query)
+@app.post("/api/location/search")
+async def search_location(query: str) -> List[LocationCandidate]:
+    """Search for a place name and return candidates."""
+    return location_service.search_place(query)
 
-    @app.post("/api/location/resolve")
-    async def resolve_location(provider_id: str, source: LocationSource) -> LocationIdentity:
-        """Confirm and resolve a location candidate to a canonical identity."""
-        try:
-            return location_service.resolve_location(provider_id, source)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+@app.post("/api/location/resolve")
+async def resolve_location(provider_id: str, source: LocationSource) -> LocationIdentity:
+    """Confirm and resolve a location candidate to a canonical identity."""
+    try:
+        return location_service.resolve_location(provider_id, source)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    @app.post("/api/location/gps")
-    async def resolve_gps(lat: float, lng: float) -> LocationIdentity:
-        """Convert GPS coordinates to a structured location identity."""
-        try:
-            return location_service.resolve_gps(lat, lng)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+@app.post("/api/location/gps")
+async def resolve_gps(lat: float, lng: float) -> LocationIdentity:
+    """Convert GPS coordinates to a structured location identity."""
+    try:
+        return location_service.resolve_gps(lat, lng)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.post("/api/voice/upload")
 async def upload_voice(request: Request) -> Dict[str, Any]:
@@ -185,9 +186,9 @@ async def promote_mapping(
     phrase: str,
     lang: str,
     state: str,
+    status: str, # "verified" or "rejected"
     district: Optional[str] = None,
     biz: str = "GENERAL",
-    status: str # "verified" or "rejected"
 ) -> Dict[str, Any]:
     """
     Admin endpoint to promote a mapping to Curated Knowledge or reject it.

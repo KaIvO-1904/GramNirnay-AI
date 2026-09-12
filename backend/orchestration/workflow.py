@@ -1,13 +1,13 @@
 import uuid
 from typing import Optional, Any
 from .state import PipelineState
-from .ontology.models import InterpretationError, ValidationError, CalculationError
-from .agents.interpretation import InterpretationAgent
-from .agents.explanation import ExplanationAgent
-from .validation.rules_engine import ValidationEngine
-from .scoring.viability import ScoringEngine
-from .scoring.viability_engine import ViabilityEngine
-from .intelligence.knowledge import KnowledgeManager
+from ..ontology.models import InterpretationError, ValidationError, CalculationError
+from ..agents.interpretation import InterpretationAgent
+from ..agents.explanation import ExplanationAgent
+from ..validation.rules_engine import ValidationEngine
+from ..scoring.viability import ScoringEngine
+from ..scoring.viability_engine import ViabilityEngine
+from ..intelligence.knowledge import KnowledgeManager
 from ..financial_engine import FinancialEngine
 
 class WorkflowManager:

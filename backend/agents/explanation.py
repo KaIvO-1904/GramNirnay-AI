@@ -8,7 +8,7 @@ class ExplanationAgent(BaseAgent):
     """Agent that transforms structured results into empathetic, personalized advice."""
 
     def __init__(self):
-        super().__init__(model_name=settings.llm_model)
+        super().__init__(name="ExplanationAgent", model_name=settings.llm_model)
         self.client = OpenAI(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url

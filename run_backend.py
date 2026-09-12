@@ -9,22 +9,27 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = BASE_DIR / "backend"
 
-sys.path.insert(0, str(BACKEND_DIR))
+# Ensure local root directory is in path
 sys.path.insert(0, str(BASE_DIR))
 
-import main
+import backend.main as main
 import uvicorn
 
 if __name__ == "__main__":
+    # Render provides the PORT environment variable; default to 8000 for local dev
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+
     print("==================================================")
-    print("   GramNirnay.ai Backend Starting on Port 8000    ")
+    print(f"   GramNirnay.ai Backend Starting on {host}:{port}   ")
     print(f"   Loaded App: {main.app.title}")
     print(f"   Routes: {[r.path for r in main.app.routes]}")
-    print("   API Docs available at: http://127.0.0.1:8000/docs")
+    print(f"   API Docs available at: http://{host}:{port}/docs")
     print("==================================================")
+
     uvicorn.run(
         main.app,
-        host="127.0.0.1",
-        port=8000,
+        host=host,
+        port=port,
         log_level="info",
     )

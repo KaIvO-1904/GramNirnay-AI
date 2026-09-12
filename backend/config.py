@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     demo_mode: bool = False
     app_port: int = 8000
     app_host: str = "0.0.0.0"
-    allowed_origins: List[str] = ["http://localhost:3000"]
+    allowed_origins: List[str] = ["http://localhost:3000", "https://gramnirnay.ai"]
 
     # Data paths - auto resolved to d:/Projects/SIH/data
     data_dir: str = DEFAULT_DATA_DIR
