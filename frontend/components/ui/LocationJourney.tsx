@@ -103,9 +103,22 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     setSelectedLocation(candidate);
     setIsLoading(true);
     try {
-      // For searched location, source is 'manual'
-      const finalLoc = await resolveLocation(candidate.provider_id, 'manual');
-      onResolved(finalLoc);
+      // Try to resolve for canonical identity, but fall back to candidate data if it fails
+      try {
+        const finalLoc = await resolveLocation(candidate.provider_id, 'manual');
+        onResolved(finalLoc);
+      } catch (resolveErr) {
+        console.warn('Canonical resolution failed, using candidate data as fallback:', resolveErr);
+        // Fallback: Convert candidate to identity manually
+        onResolved({
+          lat: candidate.lat,
+          lng: candidate.lng,
+          hierarchy: candidate.hierarchy,
+          provider_id: candidate.provider_id,
+          confidence: candidate.confidence,
+          source: 'manual'
+        });
+      }
     } catch (e: any) {
       setError('Failed to resolve selected location.');
     } finally {

@@ -105,11 +105,13 @@ class OSMLocationProvider(ILocationProvider):
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
         try:
-            # Nominatim allows searching by osm_id
+            # Nominatim /search can work with osm_id if we use the right syntax
+            # but /details is the correct way. Since we don't have osm_type,
+            # we attempt a general search for the ID.
             with httpx.Client(headers=self.headers) as client:
                 resp = client.get(
                     f"{self.base_url}/search",
-                    params={"osm_id": provider_id, "format": "json", "addressdetails": 1},
+                    params={"q": provider_id, "format": "json", "addressdetails": 1},
                     timeout=5.0
                 )
                 data = resp.json()
