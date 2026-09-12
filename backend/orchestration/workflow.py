@@ -108,6 +108,28 @@ class WorkflowManager:
 
         # Map Intelligence Result to MarketAnalysis
         intel = state.intelligence_result
+
+        # Safety checks for intelligence data to prevent NoneType errors
+        if not intel or not hasattr(intel, 'demand') or intel.demand is None:
+            return {
+                "viabilityScore": round(score, 0),
+                "recommendation": recommendation,
+                "marketAnalysis": {
+                    "demand": 50,
+                    "competition": 50,
+                    "accessibility": 50,
+                    "seasonality": 50,
+                    "source": "Default/Unknown",
+                    "confidence": "Low",
+                    "reasoning": "Market intelligence data unavailable."
+                },
+                "financials": state.financial_result.model_dump() if state.financial_result else {},
+                "interpreter_reasoning": state.final_explanation or "No reasoning available.",
+                "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
+                "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') else [],
+                "is_demo": state.metadata.get("is_demo", False)
+            }
+
         conf_val = intel.overall_confidence if hasattr(intel, 'overall_confidence') else 0.6
         conf_label = "Low"
         if conf_val >= 0.9: conf_label = "High"
@@ -125,7 +147,7 @@ class WorkflowManager:
                 "confidence": conf_label,
                 "reasoning": state.final_explanation[:200] + "..." if state.final_explanation else ""
             },
-            "financials": state.financial_result.model_dump(),
+            "financials": state.financial_result.model_dump() if state.financial_result else {},
             "interpreter_reasoning": state.final_explanation,
             "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') else [],
             "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') else [],

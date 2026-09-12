@@ -16,6 +16,7 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [voicePreference, setVoicePreference] = useState<'male' | 'female'>('female');
+  const [aiLanguage, setAiLanguage] = useState<'en-US' | 'hi-IN' | 'kn-IN'>('en-US');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const router = useRouter();
 
@@ -38,7 +39,15 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
 
     setIsSpeaking(true);
     const msg = new SpeechSynthesisUtterance();
-    msg.text = "Welcome to Gram Nirnay AI. Please describe your business idea in your native tongue. I am listening!";
+
+    const messages: Record<string, string> = {
+      'en-US': "Welcome to Gram Nirnay AI. Please describe your business idea in your native tongue. I am listening!",
+      'hi-IN': "ग्राम निर्णय एआई में आपका स्वागत है। कृपया अपने व्यावसायिक विचार को अपनी मातृभाषा में बताएं। मैं सुन रहा हूँ!",
+      'kn-IN': "ಗ್ರಾಮ್ ನಿರ್ಣಯ AI ಗೆ ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವ್ಯವಹಾರದ ಆಲೋಚನೆಯನ್ನು ನಿಮ್ಮ ಮಾತೃಭಾಷೆಯಲ್ಲಿ ವಿವರಿಸಿ. ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ!",
+    };
+
+    msg.text = messages[aiLanguage] || messages['en-US'];
+    msg.lang = aiLanguage;
 
     // Try to find a voice that matches the preference
     const voices = window.speechSynthesis.getVoices();
@@ -154,23 +163,39 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       </div>
 
       <div className="flex flex-col items-center justify-center gap-6">
-        <div className="flex gap-2 p-1 rounded-full bg-[var(--surface-1)] border border-[var(--border)] mb-2">
-          <button
-            onClick={() => setVoicePreference('female')}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-              voicePreference === 'female' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Female Voice
-          </button>
-          <button
-            onClick={() => setVoicePreference('male')}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-              voicePreference === 'male' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
-          >
-            Male Voice
-          </button>
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex gap-2 p-1 rounded-full bg-[var(--surface-1)] border border-[var(--border)] w-fit">
+            <button
+              onClick={() => setVoicePreference('female')}
+              className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                voicePreference === 'female' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Female Voice
+            </button>
+            <button
+              onClick={() => setVoicePreference('male')}
+              className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                voicePreference === 'male' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              Male Voice
+            </button>
+          </div>
+
+          <div className="flex gap-2 p-1 rounded-full bg-[var(--surface-1)] border border-[var(--border)] w-fit">
+            {(['en-US', 'hi-IN', 'kn-IN'] as const).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setAiLanguage(lang)}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                  aiLanguage === lang ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {lang === 'en-US' ? 'English' : lang === 'hi-IN' ? 'Hindi' : 'Kannada'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
