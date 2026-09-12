@@ -482,14 +482,29 @@ async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
         # Use RAG engine to find schemes for this scenario
         schemes = rag_engine.get_best_schemes(scenario["profile"], scenario["financial_params"])
 
+        # Construct a response that matches the analysis result format
+        # We simulate a viability score based on the financial result
+        viability_score = 85 if financials["is_viable"] else 45
+
         return {
-            "profile": scenario["profile"],
+            "viabilityScore": viability_score,
+            "recommendation": "Proceed" if viability_score >= 80 else "Proceed with Modification" if viability_score >= 50 else "Reconsider",
+            "category": scenario["profile"].get("category", "micro_enterprise"),
             "marketAnalysis": scenario["market_proxies"],
             "financials": financials,
-            "recommendation": "Proceed with Modification" if financials["is_viable"] else "Reconsider",
-            "risks": scenario["ai_insights"]["risks"],
+            "interpreter_reasoning": f"Demo analysis for {scenario['profile']['businessIdea']} in {scenario['profile']['location']['district']}.",
             "modifications": scenario["ai_insights"]["modifications"],
-            "matchedSchemes": schemes
+            "matchedSchemes": [
+                {
+                    "schemeId": s.schemeId,
+                    "name": s.name,
+                    "ministry": s.ministry,
+                    "benefit": s.benefit,
+                    "sourceUrl": s.sourceUrl,
+                    "eligibility": s.eligibility
+                } for s in schemes
+            ],
+            "is_demo": True
         }
     except FileNotFoundError:
         logger.error("demo_scenarios.json not found")

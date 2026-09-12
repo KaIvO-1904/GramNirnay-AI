@@ -705,17 +705,17 @@ export default function ReportPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <MetricTile
                     label="Recommended Setup Capital"
-                    value={`₹${data.financials.total_project_cost.toLocaleString()}`}
+                    value={`₹${(data.financials?.total_project_cost || 0).toLocaleString()}`}
                     accent
                   />
                   <MetricTile
                     label="Min. Viable Launch Capital"
-                    value={`₹${(data.financials.min_viable_capital || Math.round(data.financials.total_project_cost * 0.6)).toLocaleString()}`}
+                    value={`₹${(data.financials?.min_viable_capital || Math.round((data.financials?.total_project_cost || 0) * 0.6)).toLocaleString()}`}
                     accent={false}
                   />
                   <MetricTile
                     label="Projected Monthly Revenue"
-                    value={`₹${data.financials.monthly_revenue.toLocaleString()}`}
+                    value={`₹${(data.financials?.monthly_revenue || 0).toLocaleString()}`}
                     accent={false}
                   />
                 </div>
