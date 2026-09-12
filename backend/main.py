@@ -77,24 +77,35 @@ class SavedAnalysisRequest(BaseModel):
     projectCost: float
     data: Optional[Dict[str, Any]] = None
 
+class LocationSearchRequest(BaseModel):
+    query: str
+
 @app.post("/api/location/search")
-async def search_location(query: str) -> List[LocationCandidate]:
+async def search_location(request: LocationSearchRequest) -> List[LocationCandidate]:
     """Search for a place name and return candidates."""
-    return location_service.search_place(query)
+    return location_service.search_place(request.query)
+
+class LocationResolveRequest(BaseModel):
+    provider_id: str
+    source: LocationSource
 
 @app.post("/api/location/resolve")
-async def resolve_location(provider_id: str, source: LocationSource) -> LocationIdentity:
+async def resolve_location(request: LocationResolveRequest) -> LocationIdentity:
     """Confirm and resolve a location candidate to a canonical identity."""
     try:
-        return location_service.resolve_location(provider_id, source)
+        return location_service.resolve_location(request.provider_id, request.source)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class GpsLocationRequest(BaseModel):
+    lat: float
+    lng: float
+
 @app.post("/api/location/gps")
-async def resolve_gps(lat: float, lng: float) -> LocationIdentity:
+async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
     """Convert GPS coordinates to a structured location identity."""
     try:
-        return location_service.resolve_gps(lat, lng)
+        return location_service.resolve_gps(request.lat, request.lng)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
