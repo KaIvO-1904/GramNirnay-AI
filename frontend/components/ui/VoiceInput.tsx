@@ -37,12 +37,15 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       return;
     }
 
+    // Stop any current speech immediately
+    window.speechSynthesis.cancel();
+
     setIsSpeaking(true);
     const msg = new SpeechSynthesisUtterance();
 
     const messages: Record<string, string> = {
       'en-US': "Welcome to Gram Nirnay AI. Please describe your business idea in your native tongue. I am listening!",
-      'hi-IN': "ग्राम निर्णय एआई में आपका स्वागत है। कृपया अपने व्यावसायिक विचार को अपनी मातृभाषा में बताएं। मैं सुन रहा हूँ!",
+      'hi-IN': "ग्राम निर्णय ए बोर्ड एआई में आपका स्वागत है। कृपया अपने व्यावसायिक विचार को अपनी मातृभाषा में बताएं। मैं सुन रहा हूँ!",
       'kn-IN': "ಗ್ರಾಮ್ ನಿರ್ಣಯ AI ಗೆ ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವ್ಯವಹಾರದ ಆಲೋಚನೆಯನ್ನು ನಿಮ್ಮ ಮಾತೃಭಾಷೆಯಲ್ಲಿ ವಿವರಿಸಿ. ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ!",
     };
 

@@ -43,6 +43,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
         throw new Error('Geolocation is not supported by your browser');
       }
 
+      // Use higher accuracy and a reasonable timeout to prevent "laggy" feeling
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
@@ -60,9 +61,21 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           }
         },
         (err) => {
-          setError('Location access denied. Please enter your district manually.');
+          // Distinguish between permission denied and timeout/other errors
+          if (err.code === 1) {
+            setError('Location access denied. Please enter your district manually.');
+          } else if (err.code === 3) {
+            setError('Location request timed out. Please search manually.');
+          } else {
+            setError('Unable to retrieve location. Please search manually.');
+          }
           setStep('resolving');
           setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000,
         }
       );
     } catch (e: any) {
