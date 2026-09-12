@@ -1,7 +1,38 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 import { UserProfile, AnalysisResult, QuestionnaireResponse } from '@/types';
 
+export async function searchLocation(query: string): Promise<any[]> {
+  const response = await fetch(`${API_BASE_URL}/api/location/search?query=${encodeURIComponent(query)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  if (!response.ok) throw new Error(`Search failed: ${response.status}`);
+  return response.json();
+}
+
+export async function resolveLocation(providerId: string, source: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/location/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider_id: providerId, source: source }),
+  });
+  if (!response.ok) throw new Error(`Resolve failed: ${response.status}`);
+  return response.json();
+}
+
+export async function resolveGps(lat: number, lng: number): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/location/gps`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lat, lng }),
+  });
+  if (!response.ok) throw new Error(`GPS resolve failed: ${response.status}`);
+  return response.json();
+}
+
 export async function generateQuestions(businessIdea: string, location: { district: string; state: string }): Promise<QuestionnaireResponse> {
+
   const response = await fetch(`${API_BASE_URL}/api/generate-questions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

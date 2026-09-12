@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, CheckCircle2, Search, X } from 'lucide-react';
+import { MapPin, CheckCircle2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { searchLocation, resolveLocation, resolveGps } from '@/lib/api';
 
 interface LocationCandidate {
   provider_id: string;
@@ -42,25 +42,15 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            // In a real app, this would call the backend /api/location/gps
-            // For now, we simulate the flow for the demo
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
 
-            // Simulated backend response
-            const mockResolved = {
-              provider_id: 'mock_1',
-              source: 'GOOGLE',
-              name: 'Ramanagara',
-              district: 'Ramanagara',
-              state: 'Karnataka',
-              confidence: 0.95
-            };
-
-            setSelectedLocation(mockResolved);
+            const resolved = await resolveGps(lat, lng);
+            setSelectedLocation(resolved);
             setStep('confirming');
           } catch (e: any) {
-            setError('Failed to resolve coordinates.');
+            setError('Failed to resolve coordinates. Please search manually.');
+            setStep('resolving');
           } finally {
             setIsLoading(false);
           }
@@ -78,15 +68,46 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     }
   };
 
-  const handleConfirm = () => {
-    if (selectedLocation) {
-      onResolved(selectedLocation);
+  const handleConfirm = async () => {
+    if (!selectedLocation) return;
+    setIsLoading(true);
+    try {
+      const finalLoc = await resolveLocation(selectedLocation.provider_id, selectedLocation.source);
+      onResolved(finalLoc);
+    } catch (e: any) {
+      setError('Failed to confirm location. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSelectCandidate = (candidate: LocationCandidate) => {
+  const handleSelectCandidate = async (candidate: LocationCandidate) => {
     setSelectedLocation(candidate);
-    onResolved(candidate);
+    setIsLoading(true);
+    try {
+      const finalLoc = await resolveLocation(candidate.provider_id, candidate.source);
+      onResolved(finalLoc);
+    } catch (e: any) {
+      setError('Failed to resolve selected location.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    if (query.length < 3) {
+      setCandidates([]);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const results = await searchLocation(query);
+      setCandidates(results);
+    } catch (e: any) {
+      setError('Search failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,7 +117,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-2 mb-2">
           <MapPin size={18} className="text-[var(--accent)]" />
-          <h3 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">Where is your venture?</h3>
+          <h3 className="text-lg font-bold tracking-tight text-[var(--text-primary]">Where is your venture?</h3>
         </div>
         <p className="text-sm text-[var(--text-secondary)]">
           We need your location to find the best subsidies and local market data.
@@ -149,7 +170,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                   onClick={handleConfirm}
                   className="flex-1 rounded-xl h-11 bg-[var(--accent)] text-white font-bold gap-2"
                 >
-                  Yes, correct <CheckCircle2 size={16} />
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                  {isLoading ? 'Resolving...' : 'Yes, correct'}
                 </Button>
               </div>
             </motion.div>
@@ -169,17 +191,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                   type="text"
                   placeholder="Search for your district..."
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-                  onChange={(e) => {
-                    // Mock search results
-                    if (e.target.value.length > 2) {
-                      setCandidates([
-                        { provider_id: '1', source: 'GOOGLE', name: 'District A', district: 'District A', state: 'State X', confidence: 0.9 },
-                        { provider_id: '2', source: 'GOOGLE', name: 'District B', district: 'District B', state: 'State X', confidence: 0.7 },
-                      ]);
-                    } else {
-                      setCandidates([]);
-                    }
-                  }}
+                  onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
 
@@ -194,10 +206,10 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <div>
-                      <div className="text-sm font-bold text-[var(--text-primary)]">{c.district}</div>
-                      <div className="text-xs text-[var(--text-muted)]">{c.state}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary]">{c.district}</div>
+                      <div className="text-xs text-[var(--text-muted]">{c.state}</div>
                     </div>
-                    <div className="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[var(--accent)]">
+                    <div className="text-[10px] font-mono text-[var(--text-muted] group-hover:text-[var(--accent)]">
                       {Math.round(c.confidence * 100)}% Match
                     </div>
                   </button>

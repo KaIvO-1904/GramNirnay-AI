@@ -22,11 +22,7 @@ class Settings(BaseSettings):
     demo_mode: bool = False
     app_port: int = 8000
     app_host: str = "0.0.0.0"
-    allowed_origins: List[str] = [
-        "http://localhost:3000",
-        "https://gramnirnay.ai",
-        "https://gram-nirnay-qod01qclx-hexaclad.vercel.app"
-    ]
+    allowed_origins: List[str] = ["*"]
 
     # Data paths - auto resolved to d:/Projects/SIH/data
     data_dir: str = DEFAULT_DATA_DIR
