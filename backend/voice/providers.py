@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 from .models import TranscriptionResult, VoiceConfidence
+from openai import OpenAI
+from ..config import settings
 
 class IVoiceProvider(ABC):
     """Abstract base class for Speech-to-Text providers."""
@@ -15,36 +17,56 @@ class IVoiceProvider(ABC):
         """Identifies the spoken language/dialect."""
         pass
 
-class MockVoiceProvider(IVoiceProvider):
-    """Synthetic provider for testing and development."""
+class OpenAIVoiceProvider(IVoiceProvider):
+    """Production provider using OpenAI Whisper."""
+
+    def __init__(self):
+        self.client = OpenAI(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url
+        )
 
     async def transcribe(self, audio_data: bytes, language_hint: Optional[str] = None) -> TranscriptionResult:
         import uuid
+        import tempfile
+        import os
 
-        # Handle empty audio
         if not audio_data or len(audio_data) == 0:
             raise ValueError("Audio data is empty")
 
-        # Simulate different outcomes based on audio length for testing
-        # In a real mock, we might look at the bytes or a specific magic value
-        if len(audio_data) < 10:
-            raw_text = "I want to start a nati koli farm" # a known dialect term
-            conf = 0.9
-        elif len(audio_data) < 100:
-            raw_text = "I want to start a poultry business"
-            conf = 0.95
-        else:
-            raw_text = "something unclear and noisy"
-            conf = 0.4
+        # Whisper requires a file-like object or path. Write bytes to temp file.
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_data)
+            tmp_path = tmp.name
 
-        return TranscriptionResult(
-            request_id=str(uuid.uuid4()),
-            raw_text=raw_text,
-            normalized_text=raw_text, # To be filled by NormalizationService
-            detected_language="kn-IN" if "nati koli" in raw_text else "en-IN",
-            confidence=VoiceConfidence(score=conf, stage="stt", provider="MockVoiceProvider"),
-            metadata={"duration_sec": len(audio_data) / 1000}
-        )
+        try:
+            with open(tmp_path, "rb") as audio_file:
+                # Note: Whisper API doesn't provide per-word confidence in the same way
+                # as some other STT, but we can use the result.
+                response = self.client.audio.transcriptions.create(
+                    file=audio_file,
+                    model="whisper-1",
+                    language=language_hint
+                )
+                text = response.text
+
+            # Whisper is highly confident usually, we assign a default for this wrapper
+            return TranscriptionResult(
+                request_id=str(uuid.uuid4()),
+                raw_text=text,
+                normalized_text=text,
+                detected_language=language_hint or "auto",
+                confidence=VoiceConfidence(score=0.95, stage="stt", provider="OpenAI-Whisper"),
+                metadata={"provider": "openai"}
+            )
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
     async def detect_language(self, audio_data: bytes) -> str:
-        return "kn-IN" if len(audio_data) < 10 else "en-IN"
+        # Simplified: Use a small chunk to detect language or let transcribe handle it
+        return "auto"
+
+class MockVoiceProvider(IVoiceProvider):
+    """Synthetic provider for testing and development."""
+    # ... (existing MockVoiceProvider code) ...

@@ -1,7 +1,8 @@
 from typing import Optional, Dict, Any
 from .models import TranscriptionResult, VoiceRequest, NormalizedTranscript
-from .providers import IVoiceProvider, MockVoiceProvider
+from .providers import IVoiceProvider, OpenAIVoiceProvider
 from .normalization import NormalizationService
+from ..config import settings
 
 class VoiceService:
     """
@@ -10,7 +11,15 @@ class VoiceService:
     """
 
     def __init__(self, provider: Optional[IVoiceProvider] = None):
-        self.provider = provider or MockVoiceProvider()
+        # Use production provider if not in demo_mode, otherwise fallback to mock
+        if provider:
+            self.provider = provider
+        elif not settings.demo_mode:
+            self.provider = OpenAIVoiceProvider()
+        else:
+            from .providers import MockVoiceProvider
+            self.provider = MockVoiceProvider()
+
         self.normalizer = NormalizationService()
 
     async def process_audio(self, audio_data: bytes, language_hint: Optional[str] = None) -> TranscriptionResult:

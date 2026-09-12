@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Square, RotateCcw, CheckCircle2, Loader2, Edit3, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { uploadVoice, confirmVoice } from '@/lib/api';
+import { uploadVoice, confirmVoice, saveUserAnalysisBackend } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface VoiceInputProps {
@@ -81,8 +81,19 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       if (onComplete) {
         onComplete(result);
       } else {
-        // Default behavior: push to report page and store in local storage for demo
-        localStorage.setItem('analysis_result', JSON.stringify(result));
+        // Save analysis to backend before redirecting
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.id) {
+          await saveUserAnalysisBackend(user.id, {
+            businessIdea: transcript,
+            district: 'Unknown',
+            state: 'Unknown',
+            score: result.viabilityScore || 0,
+            recommendation: result.recommendation,
+            projectCost: result.financials?.total_project_cost || 0,
+            data: result
+          });
+        }
         router.push('/report');
       }
     } catch (err: any) {

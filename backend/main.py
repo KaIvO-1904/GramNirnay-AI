@@ -211,17 +211,19 @@ async def promote_mapping(
 @app.post("/api/auth/google")
 async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
     """
-    Authenticate user with Google credentials or backend Google token verification.
+    Authenticate user with Google credentials.
     """
     try:
         import uuid
         import time
 
-        # Extract or fallback to provided user identity
-        email = auth_req.email or "entrepreneur@gramnirnay.ai"
-        name = auth_req.name or "Rural Entrepreneur"
-        avatar = auth_req.avatar or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-        google_id = auth_req.google_id or str(uuid.uuid4())
+        email = auth_req.email
+        name = auth_req.name
+        avatar = auth_req.avatar
+        google_id = auth_req.google_id
+
+        if not all([email, name, google_id]):
+            raise HTTPException(status_code=400, detail="Missing required Google authentication fields.")
 
         user_id = f"usr_{google_id[:12]}"
         user_record = {
@@ -236,7 +238,6 @@ async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
         USERS_DB[user_id] = user_record
         token = f"gn_jwt_{user_id}_{int(time.time())}"
 
-        # Initialize history container if not existing
         if user_id not in USER_ANALYSES_DB:
             USER_ANALYSES_DB[user_id] = []
 
@@ -247,6 +248,7 @@ async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.exception(f"Google auth error: {e}")
+        if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
 @app.get("/api/user/analyses")

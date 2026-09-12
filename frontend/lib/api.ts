@@ -90,19 +90,8 @@ export async function authenticateWithGoogleBackend(authData: GoogleAuthPayload)
     }
     return await response.json();
   } catch (e: any) {
-    console.warn("Backend auth unavailable, using offline verified session fallback:", e.message);
-    // Fallback if backend is currently not booted up by user
-    return {
-      user: {
-        id: `usr_${Date.now()}`,
-        name: authData.name || 'Ramesh Patel',
-        email: authData.email || 'ramesh.patel@gmail.com',
-        avatar: authData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        provider: 'google',
-      },
-      token: `gn_jwt_${Date.now()}`,
-      message: 'Offline authentication initialized',
-    };
+    console.error("Authentication failed:", e.message);
+    throw e;
   }
 }
 
