@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+import httpx
 from .models import LocationIdentity, LocationCandidate, LocationHierarchy
 
 class ILocationProvider(ABC):
@@ -20,11 +21,76 @@ class ILocationProvider(ABC):
         """Get full hierarchy details for a specific provider ID."""
         pass
 
+class OSMLocationProvider(ILocationProvider):
+    """Free provider using OpenStreetMap Nominatim."""
+
+    def __init__(self):
+        self.base_url = "https://nominatim.openstreetmap.org"
+        self.headers = {"User-Agent": "GramNirnayAI/1.0 (contact: support@gramnirnay.ai)"}
+
+    def forward_geocode(self, query: str) -> List[LocationCandidate]:
+        try:
+            with httpx.Client(headers=self.headers) as client:
+                resp = client.get(
+                    f"{self.base_url}/search",
+                    params={"q": query, "format": "json", "addressdetails": 1, "limit": 5},
+                    timeout=5.0
+                )
+                data = resp.json()
+
+                results = []
+                for item in data:
+                    addr = item.get("address", {})
+                    results.append(LocationCandidate(
+                        provider_id=item.get("osm_id", "unknown"),
+                        label=item.get("display_name", "Unknown Location"),
+                        hierarchy=LocationHierarchy(
+                            state=addr.get("state", "Unknown"),
+                            district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
+                            village=addr.get("village") or addr.get("suburb", "Unknown")
+                        ),
+                        lat=float(item.get("lat", 0)),
+                        lng=float(item.get("lon", 0)),
+                        confidence=0.8
+                    ))
+                return results
+        except Exception as e:
+            print(f"OSM Forward Geocode Error: {e}")
+            return []
+
+    def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
+        try:
+            with httpx.Client(headers=self.headers) as client:
+                resp = client.get(
+                    f"{self.base_url}/reverse",
+                    params={"lat": lat, "lon": lng, "format": "json", "addressdetails": 1},
+                    timeout=5.0
+                )
+                data = resp.json()
+                addr = data.get("address", {})
+
+                return LocationIdentity(
+                    lat=lat, lng=lng,
+                    hierarchy=LocationHierarchy(
+                        state=addr.get("state", "Unknown"),
+                        district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
+                        village=addr.get("village") or addr.get("suburb", "Unknown")
+                    ),
+                    provider_id=data.get("osm_id", "unknown"),
+                    confidence=0.9,
+                    source="gps"
+                )
+        except Exception as e:
+            print(f"OSM Reverse Geocode Error: {e}")
+            return None
+
+    def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
+        return None
+
 class MockLocationProvider(ILocationProvider):
     """Mock implementation for testing and development."""
 
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
-        # Simulate ambiguity for "Anekal"
         if "anekal" in query.lower():
             return [
                 LocationCandidate(
@@ -40,8 +106,6 @@ class MockLocationProvider(ILocationProvider):
                     lat=10.21, lng=76.55, confidence=0.9
                 )
             ]
-
-        # Generic mock return
         return [
             LocationCandidate(
                 provider_id="gen_1",
@@ -52,7 +116,6 @@ class MockLocationProvider(ILocationProvider):
         ]
 
     def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
-        # Mock reverse geocoding
         return LocationIdentity(
             lat=lat, lng=lng,
             hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
@@ -62,7 +125,6 @@ class MockLocationProvider(ILocationProvider):
         )
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
-        # Mock resolution
         if provider_id == "non_existent":
             return None
         return LocationIdentity(

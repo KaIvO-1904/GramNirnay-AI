@@ -9,9 +9,14 @@ class ExplanationAgent(BaseAgent):
 
     def __init__(self):
         super().__init__(name="ExplanationAgent", model_name=settings.llm_model)
+
+        # Use Groq if available, otherwise OpenAI
+        api_key = settings.groq_api_key or settings.openai_api_key
+        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
+
         self.client = OpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url
+            api_key=api_key,
+            base_url=base_url
         )
 
     def execute(self, context: dict, **kwargs) -> AgentResponse:

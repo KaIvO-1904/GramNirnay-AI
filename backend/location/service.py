@@ -12,8 +12,8 @@ class LocationService:
     """High-level service for managing geolocation logic."""
 
     def __init__(self, provider: Optional[ILocationProvider] = None):
-        # In production, this would be injected via config
-        self.provider = provider or MockLocationProvider()
+        # Use OSM by default for free geolocation
+        self.provider = provider or OSMLocationProvider()
 
     def search_place(self, query: str) -> List[LocationCandidate]:
         """Search for a place and return candidates."""

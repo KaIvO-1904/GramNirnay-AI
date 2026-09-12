@@ -14,6 +14,9 @@ class VoiceService:
         # Use production provider if not in demo_mode, otherwise fallback to mock
         if provider:
             self.provider = provider
+        elif settings.groq_api_key:
+            from .providers import GroqVoiceProvider
+            self.provider = GroqVoiceProvider()
         elif not settings.demo_mode:
             self.provider = OpenAIVoiceProvider()
         else:

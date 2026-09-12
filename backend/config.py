@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     # API Keys and URLs
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
-    llm_model: str = "gpt-4o-mini"
+    groq_api_key: Optional[str] = None # Added for free LLM/STT
+    llm_model: str = "llama-3.3-70b-versatile" # Default to Groq Llama 3
+    stt_model: str = "whisper-large-v3" # Default to Groq Whisper
 
     # Backend Config
     app_title: str = "GramNirnay.ai Backend"

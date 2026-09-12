@@ -1,7 +1,12 @@
 import uuid
 from typing import Optional, Any, Dict
 from .state import PipelineState
-from ..ontology.models import InterpretationError, ValidationError, CalculationError
+from ..ontology.models import (
+    InterpretationError,
+    ValidationError,
+    CalculationError,
+    GramNirnayError
+)
 from ..agents.interpretation import InterpretationAgent
 from ..agents.explanation import ExplanationAgent
 from ..validation.rules_engine import ValidationEngine
