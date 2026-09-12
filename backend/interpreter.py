@@ -18,8 +18,9 @@ class BusinessInterpreter:
     """
 
     def __init__(self):
-        api_key = settings.openai_api_key
-        base_url = settings.openai_base_url
+        # Use Groq if available, otherwise OpenAI
+        api_key = settings.groq_api_key or settings.openai_api_key
+        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
         self.model = settings.llm_model
 
         if not api_key:

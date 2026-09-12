@@ -35,6 +35,29 @@ class GroqVoiceProvider(IVoiceProvider):
         if not audio_data or len(audio_data) == 0:
             raise ValueError("Audio data is empty")
 
+        # Map common hints to Groq's supported ISO codes
+        # Groq uses standard ISO 639-1 codes.
+        lang_map = {
+            "hindi": "hi",
+            "english": "en",
+            "kannada": "kn",
+            "tamil": "ta",
+            "telugu": "te",
+            "marathi": "mr",
+            "malayalam": "ml",
+            "bengali": "bn",
+            "gujarati": "gu",
+            "punjabi": "pa"
+        }
+
+        final_lang = None
+        if language_hint:
+            hint_lower = language_hint.lower()
+            final_lang = lang_map.get(hint_lower, language_hint)
+            # Fallback if the hint is still not a valid 2-letter code (simplified check)
+            if final_lang and len(final_lang) != 2:
+                final_lang = None
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_data)
             tmp_path = tmp.name
@@ -42,11 +65,10 @@ class GroqVoiceProvider(IVoiceProvider):
         try:
             with open(tmp_path, "rb") as audio_file:
                 files = {"file": ("audio.wav", audio_file, "audio/wav")}
-                data = {"model": "whisper-large-v3", "language": language_hint}
+                data = {"model": "whisper-large-v3"}
+                if final_lang:
+                    data["language"] = final_lang
 
-                # Groq uses synchronous httpx client here for simplicity, but async is better
-                # For consistency with IVoiceProvider (async), we should use httpx.AsyncClient
-                # But let's use the synchronous one for now or update the client to AsyncClient.
                 response = self.client.post("/audio/transcriptions", files=files, data=data)
 
                 if response.status_code != 200:
@@ -59,7 +81,7 @@ class GroqVoiceProvider(IVoiceProvider):
                 request_id=str(uuid.uuid4()),
                 raw_text=text,
                 normalized_text=text,
-                detected_language=language_hint or "auto",
+                detected_language=final_lang or "auto",
                 confidence=VoiceConfidence(score=0.95, stage="stt", provider="Groq-Whisper"),
                 metadata={"provider": "groq"}
             )
