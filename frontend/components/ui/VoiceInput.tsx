@@ -81,13 +81,16 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       if (onComplete) {
         onComplete(result);
       } else {
-        // Save analysis to backend before redirecting
+        // Save analysis to localStorage for the report page
+        localStorage.setItem('analysis_result', JSON.stringify(result));
+
+        // Also save to backend
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (user.id) {
           await saveUserAnalysisBackend(user.id, {
             businessIdea: transcript,
-            district: 'Unknown',
-            state: 'Unknown',
+            district: result.marketAnalysis?.district || 'Unknown',
+            state: result.marketAnalysis?.state || 'Unknown',
             score: result.viabilityScore || 0,
             recommendation: result.recommendation,
             projectCost: result.financials?.total_project_cost || 0,

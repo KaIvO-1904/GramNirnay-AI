@@ -139,15 +139,9 @@ async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
         confirmed_text = payload.get("confirmed_text")
         if not confirmed_text or not confirmed_text.strip():
             raise HTTPException(status_code=400, detail="Confirmed text cannot be empty.")
+
         state = workflow_manager.run_pipeline(user_input=confirmed_text)
-        return {
-            "profile": state.profile.model_dump() if state.profile else {},
-            "financials": state.financial_result.model_dump() if state.financial_result else {},
-            "intelligence": state.intelligence_result.model_dump() if state.intelligence_result else {},
-            "viabilityReport": state.viability_report.model_dump() if hasattr(state, 'viability_report') else None,
-            "recommendation": state.final_explanation,
-            "viabilityScore": state.viability_score
-        }
+        return workflow_manager.format_for_frontend(state)
     except Exception as e:
         logger.exception(f"Voice confirmation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")

@@ -8,10 +8,14 @@ import { searchLocation, resolveLocation, resolveGps } from '@/lib/api';
 
 interface LocationCandidate {
   provider_id: string;
-  source: string;
-  name: string;
-  district: string;
-  state: string;
+  label: string;
+  hierarchy: {
+    state: string;
+    district: string;
+    village: string;
+  };
+  lat: number;
+  lng: number;
   confidence: number;
 }
 
@@ -72,7 +76,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     if (!selectedLocation) return;
     setIsLoading(true);
     try {
-      const finalLoc = await resolveLocation(selectedLocation.provider_id, selectedLocation.source);
+      // For detected location, source is 'gps'
+      const finalLoc = await resolveLocation(selectedLocation.provider_id, 'gps');
       onResolved(finalLoc);
     } catch (e: any) {
       setError('Failed to confirm location. Please try again.');
@@ -85,7 +90,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
     setSelectedLocation(candidate);
     setIsLoading(true);
     try {
-      const finalLoc = await resolveLocation(candidate.provider_id, candidate.source);
+      // For searched location, source is 'manual'
+      const finalLoc = await resolveLocation(candidate.provider_id, 'manual');
       onResolved(finalLoc);
     } catch (e: any) {
       setError('Failed to resolve selected location.');
@@ -153,7 +159,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
               <div className="p-6 rounded-2xl bg-[var(--surface-1)] border border-[var(--border)]">
                 <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">Detected Location</div>
                 <div className="text-2xl font-black text-[var(--text-primary)] mb-1">
-                  {selectedLocation.district}, {selectedLocation.state}
+                  {selectedLocation.hierarchy.district}, {selectedLocation.hierarchy.state}
                 </div>
                 <div className="text-sm text-[var(--text-secondary)]">Is this the correct area for your business?</div>
               </div>
@@ -206,10 +212,10 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <div>
-                      <div className="text-sm font-bold text-[var(--text-primary]">{c.district}</div>
-                      <div className="text-xs text-[var(--text-muted]">{c.state}</div>
+                      <div className="text-sm font-bold text-[var(--text-primary)]">{c.hierarchy.district}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{c.hierarchy.state}</div>
                     </div>
-                    <div className="text-[10px] font-mono text-[var(--text-muted] group-hover:text-[var(--accent)]">
+                    <div className="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[var(--accent)]">
                       {Math.round(c.confidence * 100)}% Match
                     </div>
                   </button>
