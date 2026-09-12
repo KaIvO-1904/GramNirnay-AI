@@ -24,6 +24,21 @@ USERS_DB: Dict[str, Any] = {}
 USER_ANALYSES_DB: Dict[str, List[Any]] = {}
 RATE_LIMIT_STORE: Dict[str, List[float]] = defaultdict(list)
 
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+from firebase_admin import credentials
+
+# Initialize Firebase Admin SDK
+try:
+    # In production, FIREBASE_SERVICE_ACCOUNT_JSON should be the path to the JSON file
+    # or the JSON content itself.
+    cred = credentials.Certificate("firebase-service-account.json")
+    firebase_admin.initialize_app(cred)
+    logger.info("Firebase Admin SDK initialized successfully")
+except Exception as e:
+    logger.warning(f"Firebase Admin SDK failed to initialize: {e}. Auth verification will be disabled.")
+
+
 # Initialize Logging
 setup_logging()
 
@@ -238,20 +253,31 @@ async def promote_mapping(
 @app.post("/api/auth/google")
 async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
     """
-    Authenticate user with Google credentials.
+    Authenticate user with Google credentials using Firebase ID Token verification.
     """
     try:
-        import uuid
         import time
 
-        email = auth_req.email
-        name = auth_req.name
-        avatar = auth_req.avatar
-        google_id = auth_req.google_id
+        # 1. Extract and verify the Firebase ID Token
+        token = auth_req.credential
+        if not token:
+            raise HTTPException(status_code=400, detail="Missing Firebase ID Token.")
 
-        if not all([email, name, google_id]):
-            raise HTTPException(status_code=400, detail="Missing required Google authentication fields.")
+        try:
+            # Verify the token with Firebase Admin SDK
+            decoded_token = firebase_auth.verify_id_token(token)
+            google_id = decoded_token['uid']
+            email = decoded_token.get('email')
+            name = decoded_token.get('name', 'Rural Entrepreneur')
+            avatar = decoded_token.get('picture', '')
+        except Exception as e:
+            logger.error(f"Firebase token verification failed: {e}")
+            raise HTTPException(status_code=401, detail="Invalid or expired Firebase token.")
 
+        if not email:
+            raise HTTPException(status_code=400, detail="User email not found in token.")
+
+        # 2. Create or retrieve the user record
         user_id = f"usr_{google_id[:12]}"
         user_record = {
             "id": user_id,
@@ -263,19 +289,21 @@ async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
         }
 
         USERS_DB[user_id] = user_record
-        token = f"gn_jwt_{user_id}_{int(time.time())}"
+        # Use the actual Firebase UID as the session token for this demo
+        session_token = f"gn_jwt_{user_id}_{int(time.time())}"
 
         if user_id not in USER_ANALYSES_DB:
             USER_ANALYSES_DB[user_id] = []
 
         return {
             "user": user_record,
-            "token": token,
+            "token": session_token,
             "message": "Authentication successful"
         }
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.exception(f"Google auth error: {e}")
-        if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
 @app.get("/api/user/analyses")

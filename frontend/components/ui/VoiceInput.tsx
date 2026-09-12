@@ -28,6 +28,10 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
       }
+      // Stop AI speech immediately on component unmount/route change
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 

@@ -1,7 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authenticateWithGoogleBackend, fetchUserAnalysesBackend, saveUserAnalysisBackend } from '@/lib/api';
-import { promptGoogleSignIn } from '@/lib/googleAuth';
+import { triggerGoogleSignIn } from '@/lib/firebase';
 
 export type FontSize = 'normal' | 'large' | 'xlarge';
 
