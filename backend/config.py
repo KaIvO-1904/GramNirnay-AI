@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     demo_mode: bool = False
     app_port: int = 8000
     app_host: str = "0.0.0.0"
-    allowed_origins: List[str] = ["*"]
+    allowed_origins: str = "*"
 
     # Data paths - auto resolved to d:/Projects/SIH/data
     data_dir: str = DEFAULT_DATA_DIR
