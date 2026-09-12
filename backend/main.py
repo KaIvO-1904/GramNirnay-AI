@@ -14,6 +14,8 @@ from .interpreter import BusinessInterpreter
 from .context_engine import ContextEngine
 from .question_generator import QuestionGenerator
 from .utils import normalize_state
+from .core.schemas.context import LocationContext
+from .core.schemas.domain import VentureProfile, FinancialBenchmarks
 
 # In-memory stores for demo purposes
 USERS_DB: Dict[str, Any] = {}

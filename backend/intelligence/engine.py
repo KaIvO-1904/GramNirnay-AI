@@ -8,7 +8,7 @@ from .models import (
     DataPointMetadata,
     DataSourceType
 )
-from .providers import ILocalIntelligenceProvider, MockLocalIntelligenceProvider
+from .providers import ILocalIntelligenceProvider, AIIntelligenceProvider, MockLocalIntelligenceProvider
 from .services.competition_service import CompetitionService
 from .services.supply_chain_service import SupplyChainService
 from .services.logistics_service import LogisticsService
@@ -20,8 +20,8 @@ class LocalIntelligenceEngine:
     """
 
     def __init__(self, provider: Optional[ILocalIntelligenceProvider] = None):
-        # Inject provider (Mock by default)
-        self.provider = provider or MockLocalIntelligenceProvider()
+        # Inject provider (AI by default)
+        self.provider = provider or AIIntelligenceProvider()
 
         # Initialize sub-services
         self.competition_service = CompetitionService(self.provider)
