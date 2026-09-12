@@ -40,7 +40,7 @@ class NormalizationService:
         normalized_text = " ".join(filtered_words)
 
         # Setup region context for memory resolution
-        from .models import RegionalContext # avoid circular import
+        from ..memory.models import RegionalContext # avoid circular import
         region_ctx = RegionalContext(
             state=region.get("state", "Unknown") if region else "Unknown",
             district=region.get("district") if region else None

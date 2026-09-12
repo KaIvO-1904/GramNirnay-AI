@@ -66,7 +66,15 @@ class OSMLocationProvider(ILocationProvider):
                     params={"lat": lat, "lon": lng, "format": "json", "addressdetails": 1},
                     timeout=5.0
                 )
+                if resp.status_code != 200:
+                    print(f"OSM Reverse Geocode API Error {resp.status_code}: {resp.text}")
+                    return None
+
                 data = resp.json()
+                if "error" in data:
+                    print(f"OSM Reverse Geocode Error: {data['error']}")
+                    return None
+
                 addr = data.get("address", {})
 
                 return LocationIdentity(
@@ -81,7 +89,7 @@ class OSMLocationProvider(ILocationProvider):
                     source="gps"
                 )
         except Exception as e:
-            print(f"OSM Reverse Geocode Error: {e}")
+            print(f"OSM Reverse Geocode Exception: {e}")
             return None
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:

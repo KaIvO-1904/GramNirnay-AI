@@ -105,20 +105,8 @@ export async function promptGoogleSignIn(): Promise<GoogleUserProfile> {
       }
     }
 
-    // Interactive prompt modal fallback if third-party cookies or client ID are not configured
-    const userEmail = window.prompt("Sign in with Google\nEnter your Google Email address:", "");
-    if (!userEmail) {
-      reject(new Error("Sign in cancelled"));
-      return;
-    }
-
-    const userName = userEmail.split('@')[0].replace(/[\._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    resolve({
-      id: `usr_g_${Date.now()}`,
-      name: userName || 'Google User',
-      email: userEmail,
-      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userName)}`,
-      provider: 'google',
-    });
+    // Interactive prompt modal fallback - REMOVED for security.
+    // Authentication must be performed via real Google OAuth to prevent impersonation.
+    reject(new Error("Google Sign-In failed. Please ensure you are using a supported browser and that third-party cookies are enabled."));
   });
 }

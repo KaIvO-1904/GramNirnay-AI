@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Square, RotateCcw, CheckCircle2, Loader2, Edit3, Volume2 } from 'lucide-react';
+import { Mic, Square, RotateCcw, CheckCircle2, Loader2, Edit3, Volume2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { uploadVoice, confirmVoice, saveUserAnalysisBackend } from '@/lib/api';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,8 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
   const [status, setStatus] = useState<'idle' | 'recording' | 'processing' | 'review'>('idle');
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [voicePreference, setVoicePreference] = useState<'male' | 'female'>('female');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const router = useRouter();
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -27,6 +29,39 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       }
     };
   }, []);
+
+  const speakWelcome = () => {
+    if (!window.speechSynthesis) {
+      console.warn("Speech synthesis not supported");
+      return;
+    }
+
+    setIsSpeaking(true);
+    const msg = new SpeechSynthesisUtterance();
+    msg.text = "Welcome to Gram Nirnay AI. Please describe your business idea in your native tongue. I am listening!";
+
+    // Try to find a voice that matches the preference
+    const voices = window.speechSynthesis.getVoices();
+    const selectedVoice = voices.find(v =>
+      (voicePreference === 'female' ? (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google uk english female')) :
+       (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('google uk english male')))
+    ) || voices[0];
+
+    if (selectedVoice) msg.voice = selectedVoice;
+    msg.rate = 0.9;
+    msg.pitch = voicePreference === 'female' ? 1.2 : 0.8;
+
+    msg.onend = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(msg);
+  };
+
+  useEffect(() => {
+    // Trigger welcome message on mount (after a short delay for browser compatibility)
+    const timer = setTimeout(() => {
+      speakWelcome();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [voicePreference]);
 
   const startRecording = async () => {
     try {
@@ -119,6 +154,25 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       </div>
 
       <div className="flex flex-col items-center justify-center gap-6">
+        <div className="flex gap-2 p-1 rounded-full bg-[var(--surface-1)] border border-[var(--border)] mb-2">
+          <button
+            onClick={() => setVoicePreference('female')}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+              voicePreference === 'female' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Female Voice
+          </button>
+          <button
+            onClick={() => setVoicePreference('male')}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+              voicePreference === 'male' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            Male Voice
+          </button>
+        </div>
+
         <AnimatePresence mode="wait">
           {status === 'idle' && (
             <motion.div

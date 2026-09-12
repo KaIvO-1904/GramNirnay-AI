@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import logging
 import json
+import time
+from collections import defaultdict
 
 from .config import settings
 from .logger import setup_logging, logger
@@ -20,9 +22,27 @@ from .core.schemas.domain import VentureProfile, FinancialBenchmarks, MarketAnal
 # In-memory stores for demo purposes
 USERS_DB: Dict[str, Any] = {}
 USER_ANALYSES_DB: Dict[str, List[Any]] = {}
+RATE_LIMIT_STORE: Dict[str, List[float]] = defaultdict(list)
 
 # Initialize Logging
 setup_logging()
+
+def rate_limit(request: Request):
+    """Simple in-memory rate limiter to prevent API abuse."""
+    client_ip = request.client.host
+    now = time.time()
+
+    # Window: 1 minute, Limit: 60 requests
+    window = 60
+    limit = 60
+
+    # Clean old timestamps
+    RATE_LIMIT_STORE[client_ip] = [t for t in RATE_LIMIT_STORE[client_ip] if now - t < window]
+
+    if len(RATE_LIMIT_STORE[client_ip]) >= limit:
+        raise HTTPException(status_code=429, detail="Too many requests. Please slow down.")
+
+    RATE_LIMIT_STORE[client_ip].append(now)
 
 app = FastAPI(
     title=settings.app_title,
@@ -33,7 +53,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -82,7 +102,7 @@ class SavedAnalysisRequest(BaseModel):
 class LocationSearchRequest(BaseModel):
     query: str
 
-@app.post("/api/location/search")
+@app.post("/api/location/search", dependencies=[Depends(rate_limit)])
 async def search_location(request: LocationSearchRequest) -> List[LocationCandidate]:
     """Search for a place name and return candidates."""
     return location_service.search_place(request.query)
@@ -91,7 +111,7 @@ class LocationResolveRequest(BaseModel):
     provider_id: str
     source: LocationSource
 
-@app.post("/api/location/resolve")
+@app.post("/api/location/resolve", dependencies=[Depends(rate_limit)])
 async def resolve_location(request: LocationResolveRequest) -> LocationIdentity:
     """Confirm and resolve a location candidate to a canonical identity."""
     try:
@@ -103,7 +123,7 @@ class GpsLocationRequest(BaseModel):
     lat: float
     lng: float
 
-@app.post("/api/location/gps")
+@app.post("/api/location/gps", dependencies=[Depends(rate_limit)])
 async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
     """Convert GPS coordinates to a structured location identity."""
     try:
@@ -112,7 +132,7 @@ async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/api/voice/upload")
+@app.post("/api/voice/upload", dependencies=[Depends(rate_limit)])
 async def upload_voice(request: Request) -> Dict[str, Any]:
     """
     Uploads audio and returns the initial transcription and normalization.
@@ -130,7 +150,7 @@ async def upload_voice(request: Request) -> Dict[str, Any]:
         logger.exception(f"Voice upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"Voice processing failed: {str(e)}")
 
-@app.post("/api/voice/confirm")
+@app.post("/api/voice/confirm", dependencies=[Depends(rate_limit)])
 async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Confirms the transcript and triggers the viability pipeline.
@@ -313,7 +333,7 @@ async def root() -> Dict[str, str]:
     """
     return {"message": "Welcome to Gram-AI API", "status": "online"}
 
-@app.post("/api/generate-questions")
+@app.post("/api/generate-questions", dependencies=[Depends(rate_limit)])
 async def generate_questions(payload: GenerateQuestionsRequest) -> Dict[str, Any]:
     """
     Generates domain-tailored MCQ questions for the user's specific business idea and location.
@@ -325,7 +345,7 @@ async def generate_questions(payload: GenerateQuestionsRequest) -> Dict[str, Any
         logger.exception(f"Question generation failed for '{payload.businessIdea}': {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
 
-@app.post("/api/analyze-viability")
+@app.post("/api/analyze-viability", dependencies=[Depends(rate_limit)])
 async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
     """
     Main endpoint for analyzing the viability of a business idea without requiring the user to estimate capital.
