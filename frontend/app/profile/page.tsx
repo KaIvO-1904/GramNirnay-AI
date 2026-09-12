@@ -80,12 +80,15 @@ export default function ProfilePage() {
 
   // ── 2. Location Resolution ──
   const handleLocationResolved = (loc: any) => {
+    const district = loc.hierarchy?.district || loc.district || 'Unknown';
+    const state = loc.hierarchy?.state || loc.state || 'Unknown';
+
     setLocation({
-      district: loc.district,
-      state: loc.state,
+      district: district,
+      state: state,
     });
     setJourneyStep('questions');
-    handleStartQuestionnaire(businessIdea, loc.district, loc.state);
+    handleStartQuestionnaire(businessIdea, district, state);
   };
 
   // ── 3. Fetch Dynamic Questions ──

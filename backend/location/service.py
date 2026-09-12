@@ -12,8 +12,16 @@ class LocationService:
     """High-level service for managing geolocation logic."""
 
     def __init__(self, provider: Optional[ILocationProvider] = None):
-        # Use OSM by default for free geolocation
-        self.provider = provider or OSMLocationProvider()
+        # 1. If a provider is explicitly passed, use it
+        if provider:
+            self.provider = provider
+        # 2. Use Google Maps if API key is provided (Production Choice)
+        elif settings.google_maps_api_key:
+            from .provider import GoogleLocationProvider
+            self.provider = GoogleLocationProvider(settings.google_maps_api_key)
+        # 3. Fallback to OSM (Free Choice)
+        else:
+            self.provider = OSMLocationProvider()
 
     def search_place(self, query: str) -> List[LocationCandidate]:
         """Search for a place and return candidates."""

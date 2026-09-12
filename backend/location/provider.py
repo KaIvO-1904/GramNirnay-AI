@@ -22,8 +22,113 @@ class ILocationProvider(ABC):
         """Get full hierarchy details for a specific provider ID."""
         pass
 
+class GoogleLocationProvider(ILocationProvider):
+    """Production provider using Google Maps Geocoding API."""
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://maps.googleapis.com/maps/api/geocode"
+
+    def forward_geocode(self, query: str) -> List[LocationCandidate]:
+        try:
+            with httpx.Client() as client:
+                resp = client.get(
+                    f"{self.base_url}/json",
+                    params={"address": query, "key": self.api_key},
+                    timeout=5.0
+                )
+                data = resp.json()
+                if data.get("status") != "OK":
+                    logger.error(f"Google Forward Geocode Error: {data.get('status')}")
+                    return []
+
+                results = []
+                for item in data.get("results", []):
+                    # Parse address components
+                    addr_map = {comp["types"][0]: comp["long_name"] for comp in item.get("address_components", [])}
+
+                    # Map Google types to our hierarchy
+                    state = addr_map.get("administrative_area_level_1", "Unknown")
+                    district = addr_map.get("administrative_area_level_2") or addr_map.get("locality", "Unknown")
+                    village = addr_map.get("sublocality_level_1") or addr_map.get("neighborhood", "Unknown")
+
+                    results.append(LocationCandidate(
+                        provider_id=item.get("place_id", "unknown"),
+                        label=item.get("formatted_address", "Unknown Location"),
+                        hierarchy=LocationHierarchy(
+                            state=state,
+                            district=district,
+                            village=village
+                        ),
+                        lat=item["geometry"]["location"]["lat"],
+                        lng=item["geometry"]["location"]["lng"],
+                        confidence=0.9
+                    ))
+                return results
+        except Exception as e:
+            logger.error(f"Google Forward Geocode Exception: {e}")
+            return []
+
+    def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
+        try:
+            with httpx.Client() as client:
+                resp = client.get(
+                    f"{self.base_url}/json",
+                    params={"latlng": f"{lat},{lng}", "key": self.api_key},
+                    timeout=5.0
+                )
+                data = resp.json()
+                if data.get("status") != "OK":
+                    logger.error(f"Google Reverse Geocode Error: {data.get('status')}")
+                    return None
+
+                result = data.get("results", [{}])[0]
+                addr_map = {comp["types"][0]: comp["long_name"] for comp in result.get("address_components", [])}
+
+                state = addr_map.get("administrative_area_level_1", "Unknown")
+                district = addr_map.get("administrative_area_level_2") or addr_map.get("locality", "Unknown")
+                village = addr_map.get("sublocality_level_1") or addr_map.get("neighborhood", "Unknown")
+
+                return LocationIdentity(
+                    lat=lat, lng=lng,
+                    hierarchy=LocationHierarchy(
+                        state=state,
+                        district=district,
+                        village=village
+                    ),
+                    provider_id=result.get("place_id", "unknown"),
+                    confidence=1.0,
+                    source="gps"
+                )
+        except Exception as e:
+            logger.error(f"Google Reverse Geocode Exception: {e}")
+            return None
+
+    def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
+        # Google Maps doesn't have a direct "resolve by place_id" that returns the same structure as reverse_geocode
+        # without the place_id endpoint, but for a simple a manual resolve, we can use the place_id to get details.
+        try:
+            with httpx.Client() as client:
+                resp = client.get(
+                    f"https://maps.googleapis.com/maps/api/place/details/json",
+                    params={"place_id": provider_id, "key": self.api_key},
+                    timeout=5.0
+                )
+                data = resp.json()
+                if data.get("status") != "OK":
+                    return None
+
+                result = data.get("result", {})
+                formatted_address = result.get("formatted_address", "")
+                # For simplicity, we'll treat this as a manual search query to get the structured hierarchy
+                # in a real production app, we'd parse the address components from the place details.
+                return self.forward_geocode(formatted_address)[0] if self.forward_geocode(formatted_address) else None
+        except Exception as e:
+            logger.error(f"Google Resolve Hierarchy Error: {e}")
+            return None
+
 class OSMLocationProvider(ILocationProvider):
-    """Free provider using OpenStreetMap Nominatim."""
+
 
     def __init__(self):
         self.base_url = "https://nominatim.openstreetmap.org"

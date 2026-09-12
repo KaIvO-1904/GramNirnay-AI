@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
     groq_api_key: Optional[str] = None # Added for free LLM/STT
+    google_maps_api_key: Optional[str] = None # Added for production geolocation
     llm_model: str = "llama-3.3-70b-versatile" # Default to Groq Llama 3
     stt_model: str = "whisper-large-v3" # Default to Groq Whisper
 
