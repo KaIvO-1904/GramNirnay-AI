@@ -29,7 +29,7 @@ class KnowledgeManager:
             )
         else:
             # Default fallback coordinates
-            from .models import LocationIdentity, LocationHierarchy
+            from ..location.models import LocationIdentity, LocationHierarchy
             mock_coords = LocationIdentity(
                 lat=12.97, lng=77.59,
                 hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
