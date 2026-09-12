@@ -32,3 +32,7 @@ export const calculateCapitalEfficiency = (totalCost: number, minViable: number)
   if (totalCost <= 0) return 1;
   return minViable / totalCost;
 };
+
+export const calculateSurvivalThreshold = (monthlyExpenses: number, emi: number) => {
+  return monthlyExpenses + emi;
+};

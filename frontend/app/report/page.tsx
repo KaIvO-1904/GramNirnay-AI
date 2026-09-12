@@ -14,7 +14,8 @@ import {
   calculateBreakEven,
   calculateROI,
   calculateSubsidyBenefit,
-  calculateCapitalEfficiency
+  calculateCapitalEfficiency,
+  calculateSurvivalThreshold
 } from '@/lib/financials';
 import { useLanguage } from '@/lib/LanguageContext';
 import { t } from '@/lib/i18n';
@@ -121,6 +122,46 @@ function LiveGauge({ label, value, unit = '', threshold = 0, inverse = false }: 
   );
 }
 
+function SurvivalPanel({ revenue, expenses, emi }: { revenue: number, expenses: number, emi: number }) {
+  const threshold = calculateSurvivalThreshold(expenses, emi);
+  const survivalGap = revenue - threshold;
+  const survivalPct = Math.min(100, Math.max(0, (revenue / threshold) * 100));
+  const isSurviving = survivalGap >= 0;
+
+  return (
+    <div className="p-6 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Activity size={16} style={{ color: 'var(--accent)' }} />
+        <h3 className="text-sm font-bold uppercase tracking-wider">Survival Threshold</h3>
+      </div>
+      <div className="space-y-4">
+        <div className="flex justify-between items-end">
+          <div>
+            <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Min. Monthly Revenue to Survive</div>
+            <div className="text-2xl font-black font-mono" style={{ color: 'var(--text-primary)' }}>
+              ₹{Math.round(threshold).toLocaleString()}
+            </div>
+          </div>
+          <Badge variant={isSurviving ? 'success' : 'danger'} className="text-[10px] px-2 py-0.5">
+            {isSurviving ? 'SURVIVING' : 'AT RISK'}
+          </Badge>
+        </div>
+        <div className="h-2 w-full rounded-full overflow-hidden bg-var(--surface-2)">
+          <motion.div
+            className="h-full transition-all duration-500"
+            style={{ width: `${survivalPct}%`, backgroundColor: isSurviving ? 'var(--success)' : 'var(--danger)' }}
+          />
+        </div>
+        <p className="text-[11px] leading-relaxed opacity-70">
+          {isSurviving
+            ? `Your current revenue exceeds the survival threshold by ₹${Math.round(survivalGap).toLocaleString()}.`
+            : `You are ₹${Math.round(Math.abs(survivalGap)).toLocaleString()} short of covering your basic monthly costs.`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function FundingBridge({ totalCost, userCapital, schemes }: { totalCost: number, userCapital: number, schemes: Scheme[] }) {
   const bestScheme = schemes[0] || { benefit: { subsidyPercent: 0 } };
   const subsidyAmount = calculateSubsidyBenefit(totalCost, bestScheme.benefit.subsidyPercent);
@@ -155,6 +196,42 @@ function FundingBridge({ totalCost, userCapital, schemes }: { totalCost: number,
           <span className="font-bold">Total Loan Needed</span>
           <span className="font-mono font-black text-amber-500">₹{loanRequired.toLocaleString()}</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SchemeAnalysisBox({ schemes }: { schemes: Scheme[] }) {
+  if (!schemes || schemes.length === 0) return null;
+
+  return (
+    <div className="p-6 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <ShieldCheck size={16} style={{ color: 'var(--accent)' }} />
+        <h3 className="text-sm font-bold uppercase tracking-wider">Scheme Analysis</h3>
+      </div>
+      <div className="space-y-4">
+        {schemes.map((scheme, i) => (
+          <div key={i} className="p-4 rounded-2xl border transition-all hover:shadow-sm bg-var(--surface-1)" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex justify-between items-start mb-2">
+              <h4 className="text-xs font-bold">{scheme.name}</h4>
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 font-bold">{scheme.ministry}</Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="p-2 rounded-xl bg-var(--surface-0) border text-center">
+                <div className="text-[9px] opacity-50 uppercase">Subsidy</div>
+                <div className="text-xs font-black text-emerald-500">{scheme.benefit.subsidyPercent}%</div>
+              </div>
+              <div className="p-2 rounded-xl bg-var(--surface-0) border text-center">
+                <div className="text-[9px] opacity-50 uppercase">Max Loan</div>
+                <div className="text-xs font-black">₹{scheme.benefit.loanAmount.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="text-[10px] leading-relaxed opacity-70 italic">
+              Strategic Impact: This scheme can reduce your initial capital burden and lower the break-even period.
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -210,7 +287,6 @@ export default function ReportPage() {
     if (activePreset === 'conservative') { revMult = 0.85; expMult = 1.1; }
     if (activePreset === 'optimistic') { revMult = 1.15; expMult = 0.9; }
 
-    // Strategic Levers
     if (levers.leanMode) costMult = 0.85;
     if (levers.growthMode) revMult *= 1.2;
 
@@ -259,7 +335,6 @@ export default function ReportPage() {
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10 pt-24 pb-20">
 
-        {/* ── TOP NAVIGATION ── */}
         <div className="flex justify-between items-center mb-10">
           <div className="flex items-center gap-3">
             <ThreeDIcon name="chart" size="sm" variant="blue" />
@@ -271,12 +346,10 @@ export default function ReportPage() {
           </Button>
         </div>
 
-        {/* ── VENTURE HEALTH PULSE ── */}
         <Reveal>
           <HealthPulse score={data.viabilityScore} recommendation={data.recommendation} />
         </Reveal>
 
-        {/* ── MAIN DASHBOARD GRID ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">
 
           {/* COLUMN 1: The Command Center */}
@@ -291,6 +364,7 @@ export default function ReportPage() {
               <LiveGauge label="Monthly Net" value={monthlyNet} unit="₹" threshold={5000} />
               <LiveGauge label="Debt Burden" value={(emi / effectiveSandbox.monthlyRevenue) * 100 || 0} unit="%" threshold={40} inverse />
             </Stagger>
+            <SurvivalPanel revenue={effectiveSandbox.monthlyRevenue} expenses={effectiveSandbox.monthlyExpenses} emi={emi} />
             <FundingBridge totalCost={effectiveSandbox.setupCost} userCapital={sandbox.loanAmount} schemes={data.matchedSchemes} />
           </div>
 
@@ -324,7 +398,6 @@ export default function ReportPage() {
                     </div>
                   </div>
 
-                  {/* Strategic Levers */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
                     <LeverToggle
                       label="Govt Subsidy"
@@ -388,7 +461,6 @@ export default function ReportPage() {
               </Card3DTilt>
             </Reveal>
 
-            {/* Execution Roadmap */}
             <Reveal delay={0.1}>
               <div className="p-8 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-2 mb-6">
@@ -426,6 +498,9 @@ export default function ReportPage() {
                 <IntelSection title="Accessibility" value={data.marketAnalysis.accessibility} variant="blue" icon={<Rocket size={14} />} evidence={data.marketAnalysis.source} />
                 <IntelSection title="Seasonality" value={data.marketAnalysis.seasonality} variant="amber" icon={<Activity size={14} />} evidence={data.marketAnalysis.source} />
               </div>
+            </Reveal>
+            <Reveal>
+              <SchemeAnalysisBox schemes={data.matchedSchemes} />
             </Reveal>
             <div className="p-6 rounded-3xl border shadow-sm backdrop-blur-md" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
               <div className="text-xs font-bold uppercase mb-3 opacity-60">Analyst's Perspective</div>
