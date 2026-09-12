@@ -43,12 +43,18 @@ class LocalIntelligenceEngine:
 
         # 4. Handle Demand (Directly from provider as it's usually an estimation/proxy)
         demand_data = self.provider.get_demand_data(location_id, business_type)
+
+        # Build a descriptive source based on the location
+        district_name = "Unknown District"
+        if hasattr(location_id, 'hierarchy') and location_id.hierarchy:
+            district_name = location_id.hierarchy.district
+
         demand_analysis = LocalDemandAnalysis(
             local_demand_score=round(demand_data.get("estimated_demand_score", 0.5), 2),
             seasonality_index=round(demand_data.get("seasonality_index", 0.5), 2),
             operational_risks=demand_data.get("risks", []),
             metadata=DataPointMetadata(
-                source="IntelligenceProvider",
+                source=f"Regional Market Intelligence - {district_name}",
                 geographic_scope="District",
                 confidence=0.8,
                 data_type=DataSourceType.ESTIMATED

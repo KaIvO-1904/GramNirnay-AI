@@ -422,10 +422,6 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
 
         benchmarks = FinancialBenchmarks(**params_dict)
 
-        # 3. Local Context: Get market proxies for the location and business idea
-        market_data = ctx_engine.get_market_proxies(profile.model_dump(), profile.businessIdea)
-        market_analysis = MarketAnalysis(**market_data)
-
         # Use the new WorkflowManager for the intelligence pipeline
         # Pass the interpreted profile and financial params to skip re-interpretation
         from .ontology.models import BusinessProfile, FinancialParams

@@ -74,6 +74,14 @@ class FinancialEngine:
         roi = self.calculate_roi(annual_net_profit, setup_cost)
         break_even = self.calculate_break_even(setup_cost, monthly_revenue, monthly_expenses + emi)
 
+        # Preserve existing detailed breakdown if provided, otherwise use default
+        capital_breakdown = params.get('capital_breakdown')
+        if not capital_breakdown:
+            capital_breakdown = {
+                "Owner Contribution": user_capital,
+                "External Financing": financing_req
+            }
+
         return {
             "total_project_cost": setup_cost,
             "financing_required": financing_req,
@@ -85,8 +93,5 @@ class FinancialEngine:
             "is_viable": monthly_net_profit > 0 and break_even < 60, # Viable if profit > 0 and breaks even within 5 years
             "user_capital": user_capital,
             "min_viable_capital": setup_cost * 0.2, # Default 20% owner contribution
-            "capital_breakdown": {
-                "owner_contribution": user_capital,
-                "external_financing": financing_req
-            }
+            "capital_breakdown": capital_breakdown
         }
