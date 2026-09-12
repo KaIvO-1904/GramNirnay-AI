@@ -32,18 +32,28 @@ class OSMLocationProvider(ILocationProvider):
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
         try:
             with httpx.Client(headers=self.headers) as client:
+                # Append ", India" to query to prioritize Indian results in OSM
+                search_query = f"{query}, India" if "india" not in query.lower() else query
                 resp = client.get(
                     f"{self.base_url}/search",
-                    params={"q": query, "format": "json", "addressdetails": 1, "limit": 5},
+                    params={"q": search_query, "format": "json", "addressdetails": 1, "limit": 5},
                     timeout=5.0
                 )
+                if resp.status_code != 200:
+                    logger.error(f"OSM Search API Error {resp.status_code}: {resp.text}")
+                    return []
+
                 data = resp.json()
 
                 results = []
                 for item in data:
                     addr = item.get("address", {})
+                    osm_id = item.get("osm_id")
+                    if not osm_id:
+                        continue
+
                     results.append(LocationCandidate(
-                        provider_id=item.get("osm_id", "unknown"),
+                        provider_id=osm_id,
                         label=item.get("display_name", "Unknown Location"),
                         hierarchy=LocationHierarchy(
                             state=addr.get("state", "Unknown"),
@@ -56,7 +66,7 @@ class OSMLocationProvider(ILocationProvider):
                     ))
                 return results
         except Exception as e:
-            logger.error(f"OSM Forward Geocode Error: {e}")
+            logger.error(f"OSM Forward Geocode Exception: {e}")
             return []
 
     def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
