@@ -15,3 +15,20 @@ export const calculateROI = (annualNetProfit: number, totalInvestment: number) =
   if (totalInvestment <= 0) return 0;
   return (annualNetProfit / totalInvestment) * 100;
 };
+
+export const calculateSubsidyBenefit = (cost: number, subsidyPercent: number) => {
+  return cost * (subsidyPercent / 100);
+};
+
+export const simulateVolatility = (value: number, percentage: number) => {
+  const range = value * (percentage / 100);
+  return {
+    min: value - range,
+    max: value + range,
+  };
+};
+
+export const calculateCapitalEfficiency = (totalCost: number, minViable: number) => {
+  if (totalCost <= 0) return 1;
+  return minViable / totalCost;
+};
