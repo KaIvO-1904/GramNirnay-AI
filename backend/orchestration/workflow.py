@@ -170,7 +170,7 @@ class WorkflowManager:
         if conf_val >= 0.9: conf_label = "High"
         elif conf_val >= 0.7: conf_label = "Medium"
 
-        params = state.financial_params if state.financial_params else {}
+        params = state.financial_params.model_dump() if hasattr(state.financial_params, 'model_dump') else (state.financial_params if isinstance(state.financial_params, dict) else {})
 
         return {
             "viabilityScore": int(score),
