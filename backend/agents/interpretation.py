@@ -1,8 +1,9 @@
 import json
 from openai import OpenAI
 from .base import BaseAgent
-from ..ontology.models import AgentResponse, BusinessProfile, FinancialParams, BusinessCategory
+from ..ontology.models import AgentResponse, BusinessProfile, FinancialParams
 from ..config import settings
+from ..interpreter import BusinessInterpreter
 
 class InterpretationAgent(BaseAgent):
     """Agent that transforms natural language into structured business models."""
@@ -18,8 +19,10 @@ class InterpretationAgent(BaseAgent):
             api_key=api_key,
             base_url=base_url
         )
+        self.interpreter = BusinessInterpreter()
 
     def execute(self, user_input: str, **kwargs) -> AgentResponse:
+        # 1. First, use the LLM to extract the profile and basic intents
         prompt = (
             "You are a Professional Business Analyst. Your task is to transform natural language "
             "descriptions of business ideas into a structured business model.\n\n"
@@ -46,15 +49,33 @@ class InterpretationAgent(BaseAgent):
             )
             data = json.loads(response.choices[0].message.content)
 
-            # Convert to Pydantic models for validation
-            profile = BusinessProfile(**data.get("profile", {}))
-            financials = FinancialParams(**data.get("financials", {}))
+            # 2. Use the domain-specific BusinessInterpreter to enrich the result with deterministic calculations
+            profile_data = data.get("profile", {})
+            # Extract location as a dict for the interpreter
+            location = {
+                "district": profile_data.get("location", "Rural District"),
+                "state": "India"
+            }
+
+            # Enrich with deterministic calculations (Poultry, Dairy, etc.)
+            enriched_data = self.interpreter.interpret_from_answers(
+                idea=profile_data.get("business_idea", ""),
+                location=location,
+                experience_years=profile_data.get("experience_years", 0),
+                answers={} # In a full flow, these would come from the questionnaire
+            )
+
+            # Merge the profile and the enriched financials/blueprints
+            final_structured_data = {
+                "profile": BusinessProfile(**profile_data),
+                "financials": enriched_data # The interpreter returns the full dictionary including blueprint, etc.
+            }
 
             return self.wrap_response(
-                content="Successfully interpreted the business requirements.",
-                structured_data={"profile": profile, "financials": financials},
+                content="Successfully interpreted and enriched the business requirements.",
+                structured_data=final_structured_data,
                 score=0.9,
-                reason="LLM successfully extracted all required fields."
+                reason="LLM extracted profile and domain-engine enriched the financial model."
             )
         except Exception as e:
             return self.wrap_response(

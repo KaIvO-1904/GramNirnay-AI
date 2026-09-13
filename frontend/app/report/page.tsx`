@@ -251,18 +251,6 @@ export default function ReportPage() {
     cash: Math.round(monthlyNet * (i + 1)),
   }));
 
-  const fundingMix = useMemo(() => {
-    const total = data?.financials.total_project_cost || 1;
-    const user = data?.financials.user_capital || 0;
-    const subsidy = calculateSubsidyBenefit(data?.financials.total_project_cost || 0, data?.matchedSchemes[0]?.benefit.subsidyPercent || 0);
-    const loan = data?.financials.financing_required || 0;
-    return {
-      userPct: (user / total) * 100,
-      subsidyPct: (subsidy / total) * 100,
-      loanPct: (loan / total) * 100,
-    };
-  }, [data]);
-
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-primary)' }}>
       <div className="flex flex-col items-center gap-4">
@@ -482,9 +470,9 @@ export default function ReportPage() {
                   <div className="p-6 rounded-3xl border bg-var(--surface-1) shadow-sm">
                     <div className="text-xs font-black uppercase opacity-50 mb-4">Funding Mix</div>
                     <div className="h-6 w-full rounded-full overflow-hidden flex mb-6 bg-var(--surface-2)">
-                      <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${fundingMix.userPct}%` }} title="Own Capital" />
-                      <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${fundingMix.subsidyPct}%` }} title="Govt Subsidy" />
-                      <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${fundingMix.loanPct}%` }} title="External Loan" />
+                      <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${((data.financials.user_capital || 0) / (data.financials.total_project_cost || 1)) * 100}%` }} title="Own Capital" />
+                      <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${((calculateSubsidyBenefit(data.financials.total_project_cost, data.matchedSchemes[0]?.benefit.subsidyPercent || 0) / (data.financials.total_project_cost || 1)) * 100}%` }} title="Govt Subsidy" />
+                      <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${((data.financials.financing_required / (data.financials.total_project_cost || 1)) * 100)}%` }} title="External Loan" />
                     </div>
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">₹{data.financials.user_capital?.toLocaleString()}</span></div>
