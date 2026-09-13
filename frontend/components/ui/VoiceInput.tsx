@@ -7,16 +7,17 @@ import { Button } from '@/components/ui/button';
 import { uploadVoice, confirmVoice, saveUserAnalysisBackend } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
+import { useLanguage } from '@/lib/LanguageContext';
+
 interface VoiceInputProps {
   onComplete?: (data: any) => void;
 }
 
 export default function VoiceInput({ onComplete }: VoiceInputProps) {
+  const { lang, voicePreference, setVoicePreference, setLang } = useLanguage();
   const [status, setStatus] = useState<'idle' | 'recording' | 'processing' | 'review'>('idle');
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [voicePreference, setVoicePreference] = useState<'male' | 'female'>('female');
-  const [aiLanguage, setAiLanguage] = useState<'en-US' | 'hi-IN' | 'kn-IN'>('en-US');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const router = useRouter();
 

@@ -1,5 +1,5 @@
 export const translations = {
-  en: {
+  'en-US': {
     onboarding: {
       title: "GramNirnay.ai",
       subtitle: "Conversational Onboarding",
@@ -31,7 +31,7 @@ export const translations = {
       roadmap_title: "Financing Roadmap"
     }
   },
-  hi: {
+  'hi-IN': {
     onboarding: {
       title: "ग्रामनिर्णय AI",
       subtitle: "संवादात्मक ऑनबोर्डिंग",
@@ -62,10 +62,42 @@ export const translations = {
       context_reasoning: "संदर्भ तर्क",
       roadmap_title: "वित्तपोषण रोडमैप"
     }
+  },
+  'kn-IN': {
+    onboarding: {
+      title: "ಗ್ರಾಮ್ ನಿರ್ಣಯ AI",
+      subtitle: "ಸಂಭಾಷಣಾ ಆನ್ಬೋರ್ಡಿಂಗ್",
+      send: "ಕಳುಹಿಸಿ",
+      analyzing: "ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ಅನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
+      voice_input: "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಬಳಸಿ",
+      step1_title: "ಕಲ್ಪನೆ",
+      step1_desc: "ನೀವು ಏನನ್ನು ನಿರ್ಮಿಸಲು ಯೋಜಿಸುತ್ತಿದ್ದೀರಿ ಎಂದು ನಮಗೆ ತಿಳಿಸಿ.",
+      step2_title: "ಲಭ್ಯವಿರುವ ಬಂಡವಾಳ",
+      step2_desc: "ನಿಮ್ಮ ಬಳಿ ಎಷ್ಟು ಬೀಜ ಹಣವಿದೆ?",
+      step3_title: "ಗುರಿ ಹೂಡಿಕೆ",
+      step3_desc: "ಯೋಜನೆಯ ಒಟ್ಟು ವೆಚ್ಚ ಎಷ್ಟು?",
+      step4_title: "ಅನುಭವ",
+      step4_desc: "ಈ ಉದ್ಯಮದಲ್ಲಿ ನಿಮ್ಮ ಹಿನ್ನೆಲೆ.",
+      step5_title: "ಜಿಲ್ಲೆ",
+      step5_desc: "ನಿಮ್ಮ ವ್ಯವಹಾರ ಎಲ್ಲಿದೆ?",
+      step6_title: "ರಾಜ್ಯ",
+      step6_desc: "ನೀವು ಯಾವ ರಾಜ್ಯದಲ್ಲಿದ್ದೀರಿ?"
+    },
+    report: {
+      title: "ವಿಶ್ಲೇಷಣಾ ವರದಿ",
+      subtitle: "ಹೈಪರ್-ಲೋಕಲ್ ಬಿಸಿನೆಸ್ ಇಂಟೆಲಿಜೆನ್ಸ್",
+      new_analysis: "ಹೊಸ ವಿಶ್ಲೇಷಣೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ",
+      sandbox_title: "ಹಣಕಾಸು ಸ್ಯಾಂಡ್‌ಬಾಕ್ಸ್",
+      sandbox_subtitle: "वास्तविक समय में व्यवहार्यता देखने के लिए मापदंडों को बदलें",
+      viability_score: "व्यवहार्यता स्कोर",
+      ai_insights: "AI अंतर्दृष्टि",
+      context_reasoning: "संदर्भ तर्क",
+      roadmap_title: "वित्तपोषण रोडमैप"
+    }
   }
 };
 
-export type Language = 'en' | 'hi';
+export type Language = 'en-US' | 'hi-IN' | 'kn-IN';
 
 export function t(lang: Language, path: string): string {
   const keys = path.split('.');

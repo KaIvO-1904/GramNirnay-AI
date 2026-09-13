@@ -58,7 +58,7 @@ export default function ProfilePage() {
   const [stage, setStage] = useState<'loading_questions' | 'answering_questions' | 'analyzing'>('loading_questions');
   const [questionnaireData, setQuestionnaireData] = useState<QuestionnaireResponse | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const [isCustomActive, setIsCustomActive] = useState<Record<string, boolean>>({});
   const [errorMsg, setErrorMsg] = useState('');
@@ -104,10 +104,14 @@ export default function ProfilePage() {
       });
       setQuestionnaireData(qRes);
 
-      const initialAnswers: Record<string, string> = {};
+      const initialAnswers: Record<string, string | string[]> = {};
       qRes.questions.forEach((q) => {
         if (q.options && q.options.length > 0) {
-          initialAnswers[q.id] = q.options[0].value;
+          if (q.type === 'multi_select') {
+            initialAnswers[q.id] = [];
+          } else {
+            initialAnswers[q.id] = q.options[0].value;
+          }
         }
       });
       setAnswers(initialAnswers);
@@ -121,8 +125,21 @@ export default function ProfilePage() {
 
   // ── 4. Handle Option Selection ──
   const handleSelectOption = (questionId: string, value: string) => {
+    const question = questionnaireData?.questions.find(q => q.id === questionId);
+    const isMulti = question?.type === 'multi_select';
+
     setIsCustomActive((prev) => ({ ...prev, [questionId]: false }));
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+
+    setAnswers((prev) => {
+      if (isMulti) {
+        const current = (prev[questionId] as string[]) || [];
+        const next = current.includes(value)
+          ? current.filter(v => v !== value)
+          : [...current, value];
+        return { ...prev, [questionId]: next };
+      }
+      return { ...prev, [questionId]: value };
+    });
   };
 
   const handleSelectCustom = (questionId: string) => {
@@ -166,7 +183,7 @@ export default function ProfilePage() {
   };
 
   // ── 5. Final Viability Submission ──
-  const submitDirectAnalysis = async (collectedAnswers: Record<string, string>) => {
+  const submitDirectAnalysis = async (collectedAnswers: Record<string, string | string[]>) => {
     setStage('analyzing');
     try {
       const profilePayload: UserProfile = {
@@ -179,7 +196,8 @@ export default function ProfilePage() {
         },
         experience: parseInt(experience, 10) || 0,
         availableCapital: 0,
-        answers: collectedAnswers,
+        answers: collectedAnswers as any,
+      };
       };
 
       const result = await analyzeViability(profilePayload);
@@ -459,7 +477,12 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {currentQ.options?.map((option, idx) => {
-                    const isSelected = !isCustomActive[currentQ.id] && answers[currentQ.id] === option.value;
+                    const currentAnswer = answers[currentQ.id];
+                    const isSelected = !isCustomActive[currentQ.id] && (
+                      Array.isArray(currentAnswer)
+                        ? currentAnswer.includes(option.value)
+                        : currentAnswer === option.value
+                    );
                     const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
                     const letter = letters[idx % letters.length];
 

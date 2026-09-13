@@ -19,7 +19,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "poultry_type",
                 "question": "What type of poultry unit are you planning?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Broiler (Fast 45-day Meat Cycle)", "value": "broiler", "desc": "High turnover, steady mandi & retail chicken demand"},
@@ -31,7 +31,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "flock_size",
                 "question": "What is your target flock capacity per batch?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "1,000 Birds (Starter Commercial)", "value": "1000", "desc": "Manageable initial capital, family labor friendly"},
@@ -42,7 +42,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "shed_status",
                 "question": "What is the status of your shed & civil infrastructure?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Own land, need new shed construction", "value": "need_shed", "desc": "Requires civil investment in truss, floor & wire mesh"},
@@ -53,7 +53,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "contract_farming",
                 "question": "Will you operate independently or via contract integration?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Independent Farming (Higher Profit, Market Risk)", "value": "independent", "desc": "Purchase feed & DOC directly, capture full open mandi profits"},
@@ -63,7 +63,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "feed_strategy",
                 "question": "How will you manage feed and water infrastructure?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Commercial Branded Pelleted Feed", "value": "commercial_feed", "desc": "Optimal FCR (1.55-1.65), predictable weight gain"},
@@ -82,7 +82,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "apparel_category",
                 "question": "What primary clothing lines will you stock?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Sarees, Lehengas & Ethnic Festive Wear", "value": "ethnic", "desc": "High gross profit margins (30-45%), wedding peak demand"},
@@ -94,7 +94,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "shop_location",
                 "question": "Where will your retail store be located?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Main Taluka Bazaar / High Footfall Market", "value": "main_market", "desc": "Highest daily walk-in traffic, higher rental advance"},
@@ -105,7 +105,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "shop_size",
                 "question": "What estimated retail floor area are you planning?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "150 - 250 sq.ft (Compact Boutique)", "value": "small", "desc": "Optimal for single entrepreneur with curated stock"},
@@ -116,7 +116,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "sourcing_channel",
                 "question": "Where will you source your wholesale inventory?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Direct from manufacturing clusters (Surat / Delhi / Tirupur)", "value": "direct_hubs", "desc": "Lowest cost price, extra 8-14% profit margin"},
@@ -127,7 +127,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "fitout_level",
                 "question": "What level of interior furnishing & lighting do you plan?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Modern LED Lighting, Acrylic Racks & Glass Display", "value": "premium_fitout", "desc": "Boosts perceived garment value and premium pricing"},
@@ -146,7 +146,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "cattle_count",
                 "question": "How many milch animals are you starting with?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "4 - 5 Animals (Starter Unit)", "value": "4", "desc": "Family-run, low risk, 45-60 liters/day output"},
@@ -157,7 +157,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "breed_preference",
                 "question": "Which cattle breed do you plan to acquire?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Crossbred High-Yield Cows (HF / Jersey)", "value": "crossbred", "desc": "High volume (16-24 L/day per cow), fast cashflow"},
@@ -168,7 +168,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "fodder_availability",
                 "question": "What is your green fodder cultivation setup?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Own agricultural land with borewell/canal irrigation", "value": "own_fodder", "desc": "Cuts daily feeding cost by 38%, maximizes net profit"},
@@ -179,7 +179,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "sales_channel",
                 "question": "How will you market the produced milk?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Dairy Cooperative Union (Amul / KMF / Mother Dairy)", "value": "cooperative", "desc": "Guaranteed daily off-take with 10-day direct bank payout"},
@@ -190,7 +190,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "mechanization",
                 "question": "What farm machinery will you incorporate?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Automatic Bucket Milking Machine & Chaff Cutter", "value": "milking_machine", "desc": "Reduces labor time from 3 hours to 35 minutes"},
@@ -209,7 +209,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "store_format",
                 "question": "What format of grocery store are you setting up?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "General Provisions & Daily FMCG Store", "value": "general_store", "desc": "Standard counter format with pulses, spices, soaps & staples"},
@@ -220,7 +220,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "refrigeration",
                 "question": "Will you install commercial refrigeration & cooling units?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Yes, Commercial Deep Freezers & Beverage Coolers", "value": "with_refrigeration", "desc": "Capture lucrative dairy, ice-cream, cold beverage & frozen margins"},
@@ -230,7 +230,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "inventory_sourcing",
                 "question": "How will you source your daily FMCG inventory?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Direct FMCG Company Distributors on Weekly Credit", "value": "fmcg_distributors", "desc": "Best dealer discounts & promotional schemes"},
@@ -241,7 +241,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "digital_payments",
                 "question": "What payment & delivery services will you offer?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "UPI QR Soundbox + Free Home Delivery within 3km", "value": "digital_delivery", "desc": "Attracts 30% higher sales volume from nearby households"},
@@ -259,7 +259,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "input_mix",
                 "question": "What agricultural inputs will you distribute?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Certified Hybrid Seeds, Fertilizers & Crop Protection", "value": "standard_inputs", "desc": "High seasonal turnover (Urea, DAP, NPK, Hybrid Paddy/Cotton)"},
@@ -270,7 +270,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "storage_facility",
                 "question": "What is your warehouse / godown storage capacity?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Licensed Dry Godown (500+ Bag Capacity)", "value": "godown_ready", "desc": "Essential for bulk seasonal fertilizer storage"},
@@ -281,7 +281,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "credit_cycle",
                 "question": "How will you manage farmer seasonal credit cycles?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Strict Cash & 15-day Credit against Mandi slips", "value": "low_credit", "desc": "Protects cash flow, eliminates bad debts"},
@@ -299,7 +299,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "herd_size",
                 "question": "What breeding herd size are you starting with?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "10 Does + 1 Buck (Starter Family Unit)", "value": "10_1", "desc": "Low initial risk, manageable in backyard setup"},
@@ -310,7 +310,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "housing_type",
                 "question": "What rearing & housing method will you adopt?",
-                "type": "select",
+                "type": "single_select",
                 "allow_custom": False,
                 "options": [
                     {"label": "Elevated Wooden Slatted Floor (Stall-Fed Zero Grazing)", "value": "stall_fed", "desc": "Clean hygiene, cuts disease by 70%, rapid weight gain to 30kg"},
@@ -321,7 +321,7 @@ CURATED_QUESTION_BANKS = {
             {
                 "id": "breed_choice",
                 "question": "Which goat breed will you raise?",
-                "type": "select",
+                "type": "multi_select",
                 "allow_custom": True,
                 "options": [
                     {"label": "Sirohi / Barbari / Jamnapari (Fast Weight Gain)", "value": "meat_breeds", "desc": "Reaches 25-30kg in 7 months, top festival price"},
@@ -386,7 +386,7 @@ class QuestionGenerator:
                 {
                     "id": "operational_scale",
                     "question": f"What scale are you planning for this {business_idea}?",
-                    "type": "select",
+                    "type": "single_select",
                     "allow_custom": True,
                     "options": [
                         {"label": "Micro / Starter Scale (Low Risk)", "value": "micro", "desc": "Operated directly by 1-2 people, minimal capital risk"},
@@ -397,7 +397,7 @@ class QuestionGenerator:
                 {
                     "id": "premises_setup",
                     "question": "What is your workspace or premises requirement?",
-                    "type": "select",
+                    "type": "single_select",
                     "allow_custom": True,
                     "options": [
                         {"label": "Already have owned premises / land", "value": "owned", "desc": "Zero lease burden, fast operational setup"},
@@ -408,7 +408,7 @@ class QuestionGenerator:
                 {
                     "id": "machinery_equipment",
                     "question": "What machinery or equipment will you require?",
-                    "type": "select",
+                    "type": "single_select",
                     "allow_custom": True,
                     "options": [
                         {"label": "Semi-Automatic Processing Machinery", "value": "semi_auto", "desc": "Balances throughput with manageable electricity & capital"},
@@ -419,7 +419,7 @@ class QuestionGenerator:
                 {
                     "id": "target_customer",
                     "question": "Who will be your primary buyers or clients?",
-                    "type": "select",
+                    "type": "single_select",
                     "allow_custom": True,
                     "options": [
                         {"label": "Direct Village & Local Town Retail Consumers", "value": "retail_b2c", "desc": "Immediate cash & digital payments"},
@@ -430,7 +430,7 @@ class QuestionGenerator:
                 {
                     "id": "sourcing_inputs",
                     "question": "Where will you source your raw materials & supplies?",
-                    "type": "select",
+                    "type": "single_select",
                     "allow_custom": True,
                     "options": [
                         {"label": "Local District Farmers & Mandi", "value": "local_mandi", "desc": "Low transportation cost, immediate availability"},

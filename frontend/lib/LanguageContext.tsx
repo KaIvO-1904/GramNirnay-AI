@@ -5,18 +5,25 @@ import { Language } from '@/lib/i18n';
 interface LanguageContextType {
   lang: Language;
   setLang: (lang: Language) => void;
+  voicePreference: 'male' | 'female';
+  setVoicePreference: (pref: 'male' | 'female') => void;
 }
 
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Language>('en');
+  const [lang, setLangState] = useState<Language>('en-US');
+  const [voicePreference, setVoicePreferenceState] = useState<'male' | 'female'>('female');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('app_lang') as Language;
-    if (savedLang && (savedLang === 'en' || savedLang === 'hi')) {
+    if (savedLang && (savedLang === 'en-US' || savedLang === 'hi-IN' || savedLang === 'kn-IN')) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLangState(savedLang);
+    }
+    const savedVoice = localStorage.getItem('app_voice_pref') as 'male' | 'female';
+    if (savedVoice === 'male' || savedVoice === 'female') {
+      setVoicePreferenceState(savedVoice);
     }
   }, []);
 
@@ -25,8 +32,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('app_lang', newLang);
   };
 
+  const setVoicePreference = (pref: 'male' | 'female') => {
+    setVoicePreferenceState(pref);
+    localStorage.setItem('app_voice_pref', pref);
+  };
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang }}>
+    <LanguageContext.Provider value={{ lang, setLang, voicePreference, setVoicePreference }}>
       {children}
     </LanguageContext.Provider>
   );
