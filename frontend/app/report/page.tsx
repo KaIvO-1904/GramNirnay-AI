@@ -57,8 +57,10 @@ function useAnimatedNumber(target: number, duration = 900) {
    UI Components
 ───────────────────────────────────────── */
 
-function HealthPulse({ score, recommendation }: { score: number; recommendation: string }) {
+function HealthPulse({ score, recommendation, headline, data }: { score: number; recommendation: string; headline?: string; data: AnalysisResult | null }) {
+  if (!data) return null;
   const { value, ref } = useAnimatedNumber(score, 1200);
+
 
   const status = {
     'Proceed': { color: 'var(--success)', label: 'Ready for Launch', icon: <CheckCircle size={18} /> },
@@ -95,14 +97,26 @@ function HealthPulse({ score, recommendation }: { score: number; recommendation:
           Business Viability Analysis
         </h2>
         <p className="text-sm opacity-70 max-w-md">
-          {data.headline || 'Based on regional benchmarks and projected market demand.'}
+          {headline || 'Based on regional benchmarks and projected market demand.'}
         </p>
       </div>
     </div>
   );
 }
 
-function LiveGauge({ label, value, unit = '', threshold = 0, inverse = false }: { label: string; value: number; unit?: string; threshold?: number; inverse?: boolean }) {
+function LiveGauge({ label, value, unit = '', threshold = 0, inverse = false }: { label: string; value: number | null, unit?: string; threshold?: number; inverse?: boolean }) {
+  if (value === null) {
+    return (
+      <div className="p-4 rounded-2xl border transition-all hover:shadow-sm"
+           style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
+        <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{label}</div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-2xl font-black font-mono opacity-50">N/A</span>
+          <span className="text-xs font-bold opacity-50">{unit}</span>
+        </div>
+      </div>
+    );
+  }
   const isCritical = inverse ? value > threshold : value < threshold;
   const color = isCritical ? 'var(--danger)' : 'var(--success)';
 
@@ -343,7 +357,7 @@ export default function ReportPage() {
         </div>
 
         <Reveal>
-          <HealthPulse score={data.viabilityScore} recommendation={data.recommendation} />
+          <HealthPulse score={data.viabilityScore} recommendation={data.recommendation} headline={data.headline} data={data} />
         </Reveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">

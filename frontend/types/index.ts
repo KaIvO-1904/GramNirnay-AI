@@ -86,6 +86,7 @@ export interface AnalysisResult {
   is_demo?: boolean;
   viabilityScore: number;
   recommendation: string;
+  headline?: string;
   category?: string;
   marketAnalysis: MarketAnalysis;
   financials: Financials;
