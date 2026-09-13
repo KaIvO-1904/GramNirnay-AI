@@ -27,7 +27,7 @@ import {
   ArrowLeft, TrendingUp, AlertTriangle, ShieldCheck,
   CheckCircle, ExternalLink, Zap, Target, Rocket,
   DollarSign, Activity, LayoutDashboard, MapPin,
-  ClipboardList, FileText, Warning, Lightbulb, ChevronRight
+  ClipboardList, FileText, AlertCircle, Lightbulb, ChevronRight
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
@@ -331,7 +331,7 @@ export default function ReportPage() {
             <Reveal delay={0.4}>
               <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-2 mb-6">
-                  <Warning size={20} style={{ color: 'var(--danger)' }} />
+                  <AlertCircle size={20} style={{ color: 'var(--danger)' }} />
                   <h3 className="text-lg font-black uppercase">Risk Assessment</h3>
                 </div>
                 <RiskMatrix risks={data.risk_matrix} />
