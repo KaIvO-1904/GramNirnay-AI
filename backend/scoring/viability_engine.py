@@ -32,8 +32,19 @@ class ViabilityEngine:
     def calculate_viability(
         self,
         financials: FinancialResult,
-        intel: LocalIntelligenceResult
+        intel: Optional[LocalIntelligenceResult]
     ) -> ViabilityReport:
+        if not intel:
+            # Return a report with zeroed scores if intelligence is missing
+            return ViabilityReport(
+                overall_score=0.0,
+                component_scores={},
+                positive_factors=[],
+                negative_factors=["Market intelligence data unavailable"],
+                risk_flags=["MISSING_INTELLIGENCE"],
+                overall_confidence=0.0,
+                data_sources=[]
+            )
         # 1. Component Score Mapping
         components = {}
 
@@ -50,9 +61,10 @@ class ViabilityEngine:
         )
 
         # Competition
-        comp_score = intel.competition.competition_score
+        # Higher competition score means MORE competition, which is NEGATIVE for viability.
+        comp_score = 1.0 - intel.competition.competition_score
         components["competition"] = self._create_component(
-            "Competition", comp_score, f"Competition level: {comp_score}."
+            "Competition", comp_score, f"Competition level: {intel.competition.competition_score}."
         )
 
         # Supply Chain (Averaging Supplier Access and Raw Material Access)
@@ -90,7 +102,19 @@ class ViabilityEngine:
         if total_weight > 0 and total_weight != 1.0:
             overall_score /= total_weight
 
-        # 3. Extract Positive/Negative Factors and Risk Flags
+        # 3. Determine Recommendation and Headline
+        score_pct = round(overall_score * 100, 0)
+        if score_pct >= 80:
+            recommendation = "Proceed"
+            headline = "Strong market indicators and financial health. Ideal for immediate implementation."
+        elif score_pct >= 50:
+            recommendation = "Proceed with Modification"
+            headline = "Viable potential, but requires strategic adjustments to reduce risk."
+        else:
+            recommendation = "Reconsider"
+            headline = "Significant risks detected. We recommend pivoting the model before investing capital."
+
+        # 4. Extract Positive/Negative Factors and Risk Flags
         positives = []
         negatives = []
         risk_flags = []
@@ -121,6 +145,8 @@ class ViabilityEngine:
 
         return ViabilityReport(
             overall_score=round(overall_score, 2),
+            recommendation=recommendation,
+            headline=headline,
             component_scores=components,
             positive_factors=positives,
             negative_factors=negatives,

@@ -45,7 +45,7 @@ class FinancialResult(BaseModel):
     monthly_net_profit: float
     annual_net_profit: float
     roi_percent: float
-    break_even_months: float
+    break_even_months: Optional[float]
     is_viable: bool
 
 class SchemeMatch(BaseModel):

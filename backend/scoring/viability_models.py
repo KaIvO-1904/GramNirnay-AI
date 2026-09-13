@@ -34,6 +34,8 @@ class ViabilityConfig(BaseModel):
 class ViabilityReport(BaseModel):
     """The final, deterministic viability report."""
     overall_score: float
+    recommendation: str
+    headline: str
     component_scores: Dict[str, ComponentScore]
     positive_factors: List[str]
     negative_factors: List[str]

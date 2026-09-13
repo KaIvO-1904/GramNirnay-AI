@@ -95,11 +95,7 @@ function HealthPulse({ score, recommendation }: { score: number; recommendation:
           Business Viability Analysis
         </h2>
         <p className="text-sm opacity-70 max-w-md">
-          {recommendation === 'Proceed'
-            ? 'Strong market indicators and financial health. Ideal for immediate implementation.'
-            : recommendation === 'Proceed with Modification'
-            ? 'Viable potential, but requires strategic adjustments to reduce risk.'
-            : 'Significant risks detected. We recommend pivoting the model before investing capital.'}
+          {data.headline || 'Based on regional benchmarks and projected market demand.'}
         </p>
       </div>
     </div>
@@ -362,10 +358,10 @@ export default function ReportPage() {
               <LiveGauge label="Annual ROI" value={roi} unit="%" threshold={15} />
               <LiveGauge label="Break-even" value={breakEven} unit="Mo" threshold={36} inverse />
               <LiveGauge label="Monthly Net" value={monthlyNet} unit="₹" threshold={5000} />
-              <LiveGauge label="Debt Burden" value={(emi / effectiveSandbox.monthlyRevenue) * 100 || 0} unit="%" threshold={40} inverse />
+              <LiveGauge label="Debt Burden" value={effectiveSandbox.monthlyRevenue > 0 ? (emi / effectiveSandbox.monthlyRevenue) * 100 : 0} unit="%" threshold={40} inverse />
             </Stagger>
             <SurvivalPanel revenue={effectiveSandbox.monthlyRevenue} expenses={effectiveSandbox.monthlyExpenses} emi={emi} />
-            <FundingBridge totalCost={effectiveSandbox.setupCost} userCapital={sandbox.loanAmount} schemes={data.matchedSchemes} />
+            <FundingBridge totalCost={effectiveSandbox.setupCost} userCapital={data.financials.user_capital || 0} schemes={data.matchedSchemes} />
           </div>
 
           {/* COLUMN 2: The Strategy Simulator */}
@@ -452,7 +448,7 @@ export default function ReportPage() {
                       <div className="p-4 rounded-2xl border bg-var(--surface-1) text-center">
                         <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Projected Break-even</div>
                         <div className="text-3xl font-black font-mono" style={{ color: 'var(--accent)' }}>
-                          {breakEven === 999 ? 'Never' : `${Math.round(breakEven)} Mo`}
+                          {breakEven === null ? 'Never' : `${Math.round(breakEven)} Mo`}
                         </div>
                       </div>
                     </div>

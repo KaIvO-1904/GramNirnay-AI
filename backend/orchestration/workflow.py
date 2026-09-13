@@ -90,7 +90,7 @@ class WorkflowManager:
             # 5. VIABILITY AGGREGATION
             state.viability_report = self.viability_engine.calculate_viability(
                 state.financial_result,
-                state.intelligence_result
+                state.intelligence_result.local_intelligence if state.intelligence_result else None
             )
 
             # 6. SCHEMES MATCHING (RAG)
@@ -148,16 +148,19 @@ class WorkflowManager:
         # Determine recommendation
         # Use aggregated viability score if available, otherwise fallback to financial score
         raw_score = 0.0
+        recommendation = "Reconsider"
         if hasattr(state, 'viability_report') and state.viability_report:
             raw_score = state.viability_report.overall_score
+            recommendation = state.viability_report.recommendation
         elif hasattr(state, 'viability_score'):
             raw_score = state.viability_score
+            # Fallback recommendation based on score
+            score_pct = round(raw_score * 100, 0)
+            if score_pct >= 80: recommendation = "Proceed"
+            elif score_pct >= 50: recommendation = "Proceed with Modification"
 
         score = round(raw_score * 100, 0)
 
-        recommendation = "Reconsider"
-        if score >= 80: recommendation = "Proceed"
-        elif score >= 50: recommendation = "Proceed with Modification"
 
 
         # Map Intelligence Result to MarketAnalysis
@@ -194,6 +197,7 @@ class WorkflowManager:
         return {
             "viabilityScore": int(score),
             "recommendation": recommendation,
+            "headline": state.viability_report.headline if hasattr(state, 'viability_report') and state.viability_report else "Evaluating venture viability...",
             "marketAnalysis": {
                 "demand": round(intel.demand.local_demand_score * 100),
                 "competition": round(intel.competition.competition_score * 100),

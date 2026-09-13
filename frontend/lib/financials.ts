@@ -7,7 +7,7 @@ export const calculateEMI = (principal: number, annualRate: number, tenureYears:
 
 export const calculateBreakEven = (setupCost: number, monthlyRevenue: number, monthlyExpenses: number) => {
   const contribution = monthlyRevenue - monthlyExpenses;
-  if (contribution <= 0) return 999;
+  if (contribution <= 0) return null;
   return setupCost / contribution;
 };
 

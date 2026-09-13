@@ -27,13 +27,13 @@ class FinancialEngine:
             return 0.0
 
     @staticmethod
-    def calculate_break_even(setup_cost: float, monthly_revenue: float, monthly_fixed_cost: float) -> float:
+    def calculate_break_even(setup_cost: float, monthly_revenue: float, monthly_fixed_cost: float) -> Optional[float]:
         """
         Calculates break-even period in months.
         """
         contribution_margin = monthly_revenue - monthly_fixed_cost
         if contribution_margin <= 0:
-            return 999.0 # Use a large number instead of float('inf') for JSON compliance
+            return None # Use None instead of 999.0 for JSON compliance and clarity
         return round(setup_cost / contribution_margin, 2)
 
     @staticmethod
