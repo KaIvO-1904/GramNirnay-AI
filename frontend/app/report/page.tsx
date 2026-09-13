@@ -30,6 +30,27 @@ import {
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────
+   Utilities
+───────────────────────────────────────── */
+
+function formatValue(val: number | string | null): string {
+  if (val === null || val === undefined) return 'N/A';
+  if (typeof val === 'string') return val;
+
+  if (val === 0) return '0';
+
+  const absVal = Math.abs(val);
+  if (absVal >= 10000000) {
+    return (val / 10000000).toFixed(2) + ' Cr';
+  } else if (absVal >= 100000) {
+    return (val / 100000).toFixed(2) + ' L';
+  } else if (absVal >= 1000) {
+    return (val / 1000).toFixed(1) + ' K';
+  }
+  return val.toLocaleString();
+}
+
+/* ─────────────────────────────────────────
    Configuration
 ───────────────────────────────────────── */
 
@@ -51,17 +72,19 @@ function KpiWidget({ label, value, unit = '', trend, variant = 'default', icon: 
     danger: 'var(--danger)',
   };
   return (
-    <div className="p-5 rounded-3xl border bg-var(--surface-0) transition-all hover:shadow-md group" style={{ borderColor: 'var(--border)' }}>
+    <div className="p-5 rounded-3xl border bg-var(--surface-0) transition-all hover:shadow-md group min-w-0" style={{ borderColor: 'var(--border)' }}>
       <div className="flex items-center justify-between mb-3">
         <div className="p-2 rounded-xl bg-var(--surface-1) group-hover:bg-var(--accent)/10 transition-colors">
           <Icon size={16} style={{ color: 'var(--accent)' }} />
         </div>
-        {trend && <div className="text-[10px] font-bold flex items-center gap-1 text-var(--success)"><TrendingUp size={10} /> {trend}</div>}
+        {trend && <div className="text-[10px] font-bold flex items-center gap-1 text-var(--success) truncate"><TrendingUp size={10} /> {trend}</div>}
       </div>
-      <div className="text-xs font-bold uppercase tracking-widest mb-1 opacity-50">{label}</div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-black font-mono" style={{ color: colors[variant] }}>{typeof value === 'number' ? value.toLocaleString() : (value ?? 'N/A')}</span>
-        <span className="text-sm font-bold opacity-50">{unit}</span>
+      <div className="text-xs font-bold uppercase tracking-widest mb-1 opacity-50 truncate">{label}</div>
+      <div className="flex items-baseline gap-1 overflow-hidden">
+        <span className="text-2xl md:text-3xl font-black font-mono truncate" style={{ color: colors[variant] }}>
+          {typeof value === 'number' ? formatValue(value) : (value ?? 'N/A')}
+        </span>
+        <span className="text-sm font-bold opacity-50 shrink-0">{unit}</span>
       </div>
     </div>
   );
@@ -563,13 +586,13 @@ function IntelWidget({ title, value, variant, icon: Icon, evidence }: { title: s
     default: 'var(--accent)',
   };
   return (
-    <div className="p-5 rounded-3xl border transition-all hover:shadow-md" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-50">
-          <Icon size={14} className="text-var(--accent)" />
-          {title}
+    <div className="p-5 rounded-3xl border transition-all hover:shadow-md min-w-0" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-50 truncate">
+          <Icon size={14} className="text-var(--accent) shrink-0" />
+          <span className="truncate">{title}</span>
         </div>
-        <span className="text-2xl font-black font-mono" style={{ color: colors[variant as keyof typeof colors] || colors.default }}>
+        <span className="text-xl md:text-2xl font-black font-mono shrink-0" style={{ color: colors[variant as keyof typeof colors] || colors.default }}>
           {value}%
         </span>
       </div>
