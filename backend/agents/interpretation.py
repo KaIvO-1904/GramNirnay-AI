@@ -21,12 +21,21 @@ class InterpretationAgent(BaseAgent):
 
     def execute(self, user_input: str, **kwargs) -> AgentResponse:
         prompt = (
-            f"Extract business details from the following input: '{user_input}'. "
-            "Return ONLY a JSON object with two keys: 'profile' and 'financials'. "
-            "Profile should have: business_idea, category (one of: agriculture, livestock, handicrafts, services, trading, other), "
-            "available_capital, location, experience_years, target_audience. "
-            "Financials should have: setup_cost, monthly_revenue, monthly_expenses, interest_rate, tenure_years, user_capital. "
-            "Use 0.0 for unknown numerical values."
+            "You are a Professional Business Analyst. Your task is to transform natural language "
+            "descriptions of business ideas into a structured business model.\n\n"
+            f"USER INPUT: '{user_input}'\n\n"
+            "CRITICAL GUIDELINES:\n"
+            "1. ZERO FABRICATION: Use 0.0 for unknown numerical values. Do NOT guess or estimate capital/revenue "
+            "unless the user explicitly provides them. If a field is missing, set it to null or 0.0.\n"
+            "2. CATEGORIZATION: Map the business to the most appropriate category (agriculture, livestock, "
+            "handicrafts, services, trading, other).\n"
+            "3. OUTPUT FORMAT: Return ONLY a JSON object with two keys: 'profile' and 'financials'.\n\n"
+            "STRUCTURE:\n"
+            "- profile: { business_idea, category, available_capital, location, experience_years, target_audience }\n"
+            "- financials: { setup_cost, monthly_revenue, monthly_expenses, interest_rate, tenure_years, user_capital }\n\n"
+            "EXAMPLE:\n"
+            "Input: 'I want to start a small organic poultry farm in Mysore with 2 lakhs.'\n"
+            "Output: {\"profile\": {\"business_idea\": \"organic poultry farm\", \"category\": \"poultry\", \"available_capital\": 200000, \"location\": \"Mysore\", \"experience_years\": 0, \"target_audience\": \"local markets\"}, \"financials\": {\"setup_cost\": 0.0, \"monthly_revenue\": 0.0, \"monthly_expenses\": 0.0, \"interest_rate\": 0.0, \"tenure_years\": 0, \"user_capital\": 200000}}"
         )
 
         try:

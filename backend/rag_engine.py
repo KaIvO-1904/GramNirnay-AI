@@ -113,9 +113,42 @@ class RAGEngine:
             logger.error(f"AI Ranking failed: {e}. Falling back to original order.")
             return eligible_schemes
 
+    def enrich_scheme_details(self, scheme: Dict, business_description: str) -> Dict:
+        """
+        Uses LLM to turn scheme metadata into a customized application guide.
+        Adheres to Zero Fabrication: only interprets provided data.
+        """
+        if not self.client:
+            return scheme
+
+        prompt = (
+            f"You are a Govt Scheme Advisor. Based on this scheme metadata: {json.dumps(scheme)} "
+            f"and the user's business: '{business_description}', "
+            f"create a professional, step-by-step application guide. "
+            f"Do NOT fabricate external links or deadlines. If info is missing, state 'Refer to official portal'. "
+            f"Return ONLY a JSON object with keys 'application_steps' (list of strings) and 'detailed_eligibility' (string)."
+        )
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            enrichment = json.loads(response.choices[0].message.content)
+
+            return {
+                **scheme,
+                "application_steps": enrichment.get("application_steps", scheme.get("application_steps", [])),
+                "detailed_eligibility": enrichment.get("detailed_eligibility", scheme.get("detailed_eligibility", "Refer to official portal."))
+            }
+        except Exception as e:
+            logger.error(f"Enrichment failed for {scheme.get('schemeId')}: {e}")
+            return scheme
+
     def get_best_schemes(self, profile: Dict[str, Any], financial_params: Dict[str, Any]) -> List[Scheme]:
         """
-        Main entry point for scheme matching.
+        Main entry point for scheme matching with enrichment.
         """
         # Calculate gap
         gap = financial_params.get("setup_cost", 0) - profile.get("availableCapital", 0)
@@ -127,4 +160,14 @@ class RAGEngine:
         # 2. AI Ranking
         ranked = self.rank_schemes_with_ai(category, eligible)
 
-        return [Scheme(**s) for s in ranked]
+        # 3. Enrichment (only for top 3 to save latency/tokens)
+        top_schemes = ranked[:3]
+        enriched_schemes = []
+        for s in top_schemes:
+            enriched_schemes.append(self.enrich_scheme_details(s, category))
+
+        # Append remaining schemes without enrichment
+        final_list = enriched_schemes + ranked[3:]
+
+        return [Scheme(**s) for s in final_list]
+

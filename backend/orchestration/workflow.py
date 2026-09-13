@@ -62,15 +62,11 @@ class WorkflowManager:
 
             # Resolve location if it's a string (for Local Intelligence)
             if hasattr(state.profile, "location") and isinstance(state.profile.location, str):
-                # We try to resolve the location string to a LocationIdentity
-                # Note: In a real app, we'd use the LocationService.search_place and pick the best.
-                # For now, we use a default resolution or the first search result.
                 try:
                     candidates = self.knowledge_manager.location_service.search_place(state.profile.location)
                     if candidates:
                         state.location_identity = self.knowledge_manager.location_service.resolve_location(
                             candidates[0].provider_id,
-                            # Need to import LocationSource
                             __import__('backend.location.models', fromlist=['LocationSource']).LocationSource.MANUAL
                         )
                     else:
@@ -121,8 +117,6 @@ class WorkflowManager:
 
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:
         """Converts PipelineState to the AnalysisResult structure expected by the frontend."""
-        # If there's a critical error in the explanation, it's likely the pipeline failed.
-        # We check if critical results are missing.
         if not state.financial_result or not state.intelligence_result:
             return {
                 "error": "ANALYSIS_FAILED",
@@ -130,13 +124,8 @@ class WorkflowManager:
                 "viabilityScore": 0,
                 "recommendation": "Error",
                 "marketAnalysis": {
-                    "demand": 0,
-                    "competition": 0,
-                    "accessibility": 0,
-                    "seasonality": 0,
-                    "source": "Unavailable",
-                    "confidence": "None",
-                    "reasoning": "Analysis failed to complete."
+                    "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
+                    "source": "Unavailable", "confidence": "None", "reasoning": "Analysis failed to complete."
                 },
                 "financials": {},
                 "interpreter_reasoning": state.final_explanation,
@@ -145,8 +134,6 @@ class WorkflowManager:
                 "is_demo": state.metadata.get("is_demo", False)
             }
 
-        # Determine recommendation
-        # Use aggregated viability score if available, otherwise fallback to financial score
         raw_score = 0.0
         recommendation = "Reconsider"
         if hasattr(state, 'viability_report') and state.viability_report:
@@ -154,18 +141,12 @@ class WorkflowManager:
             recommendation = state.viability_report.recommendation
         elif hasattr(state, 'viability_score'):
             raw_score = state.viability_score
-            # Fallback recommendation based on score
             score_pct = round(raw_score * 100, 0)
             if score_pct >= 80: recommendation = "Proceed"
             elif score_pct >= 50: recommendation = "Proceed with Modification"
 
         score = round(raw_score * 100, 0)
-
-
-
-        # Map Intelligence Result to MarketAnalysis
-        intel_res = state.intelligence_result
-        intel = intel_res.local_intelligence if intel_res and intel_res.local_intelligence else None
+        intel = state.intelligence_result.local_intelligence if state.intelligence_result else None
 
         if not intel:
             return {
@@ -174,13 +155,8 @@ class WorkflowManager:
                 "viabilityScore": 0,
                 "recommendation": "Error",
                 "marketAnalysis": {
-                    "demand": 0,
-                    "competition": 0,
-                    "accessibility": 0,
-                    "seasonality": 0,
-                    "source": "Unavailable",
-                    "confidence": "None",
-                    "reasoning": "Intelligence result was empty."
+                    "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
+                    "source": "Unavailable", "confidence": "None", "reasoning": "Intelligence result was empty."
                 },
                 "financials": state.financial_result.model_dump() if state.financial_result else {},
                 "interpreter_reasoning": state.final_explanation,
@@ -193,6 +169,8 @@ class WorkflowManager:
         conf_label = "Low"
         if conf_val >= 0.9: conf_label = "High"
         elif conf_val >= 0.7: conf_label = "Medium"
+
+        params = state.financial_params if state.financial_params else {}
 
         return {
             "viabilityScore": int(score),
@@ -209,7 +187,11 @@ class WorkflowManager:
             },
             "financials": state.financial_result.model_dump() if state.financial_result else {},
             "interpreter_reasoning": state.final_explanation,
-            "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') else [],
-            "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') else [],
-            "is_demo": state.metadata.get("is_demo", False)
+            "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
+            "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') and state.matched_schemes else [],
+            "is_demo": state.metadata.get("is_demo", False),
+            "business_blueprint": params.get("business_blueprint") or {"flow": [], "inputs": [], "outputs": []},
+            "startup_roadmap": params.get("startup_roadmap") or [],
+            "regulatory_requirements": params.get("regulatory_requirements") or [],
+            "risk_matrix": params.get("risk_matrix") or []
         }

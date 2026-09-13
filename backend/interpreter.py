@@ -64,51 +64,56 @@ class BusinessInterpreter:
                 return demo_financials
         # --------------------------
 
+        result = None
         # 1. Poultry Venture Analysis
         if any(w in idea_lower for w in ["poultry", "chicken", "broiler", "layer", "hen", "egg", "kadaknath"]):
             result = self._calculate_poultry_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 2. Apparel & Cloth Store Analysis
-        if any(w in idea_lower for w in ["cloth", "garment", "apparel", "saree", "textile", "tailor", "dress", "boutique"]):
+        elif any(w in idea_lower for w in ["cloth", "garment", "apparel", "saree", "textile", "tailor", "dress", "boutique"]):
             result = self._calculate_cloth_store_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 3. Dairy Farm Analysis
-        if any(w in idea_lower for w in ["dairy", "cow", "buffalo", "milk", "cattle", "ghee", "paneer"]):
+        elif any(w in idea_lower for w in ["dairy", "cow", "buffalo", "milk", "cattle", "ghee", "paneer"]):
             result = self._calculate_dairy_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 4. Grocery & Kirana Analysis
-        if any(w in idea_lower for w in ["kirana", "grocery", "provision", "supermarket", "fmcg"]):
+        elif any(w in idea_lower for w in ["kirana", "grocery", "provision", "supermarket", "fmcg"]):
             result = self._calculate_kirana_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 5. Agro-Inputs & Fertilizer Analysis
-        if any(w in idea_lower for w in ["fertilizer", "seed", "pesticide", "agro", "input"]):
+        elif any(w in idea_lower for w in ["fertilizer", "seed", "pesticide", "agro", "input"]):
             result = self._calculate_agro_inputs_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 6. Goat & Livestock Husbandry
-        if any(w in idea_lower for w in ["goat", "sheep", "bakri", "mutton"]):
+        elif any(w in idea_lower for w in ["goat", "sheep", "bakri", "mutton"]):
             result = self._calculate_goat_financials(answers, district, state)
-            result["is_demo"] = False
-            return result
-
         # 7. AI LLM Dynamic Interpretation for unique ventures
-        if self.client:
+        elif self.client:
             result = self._interpret_with_llm(idea, location, experience_years, answers)
-            result["is_demo"] = False
-            return result
-
         # Fallback generic rural enterprise model
-        result = self._calculate_generic_financials(idea, answers, district, state)
-        result["is_demo"] = False
+        else:
+            result = self._calculate_generic_financials(idea, answers, district, state)
+
+        if result:
+            result["is_demo"] = False
+
+        # --- ENRICHMENT PASS ---
+        # If the result was generated deterministically, it might miss blueprint, roadmap, etc.
+        # We use the LLM to fill these gaps based on the deterministic numbers.
+        if self.client and not result.get("business_blueprint"):
+            try:
+                enrichment_prompt = (
+                    f"Based on these financial parameters: {json.dumps(result)}, "
+                    f"for a business idea: '{idea}' in {district}, {state}, "
+                    f"generate a professional business_blueprint, startup_roadmap, regulatory_requirements, and risk_matrix. "
+                    f"Return ONLY a JSON object with these four keys. ZERO FABRICATION."
+                )
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": enrichment_prompt}],
+                    response_format={"type": "json_object"}
+                )
+                enrichment_data = json.loads(resp.choices[0].message.content)
+                result.update(enrichment_data)
+            except Exception as e:
+                logger.error(f"Blueprint enrichment failed: {e}")
+
         return result
 
     def _get_category_key(self, idea_lower: str) -> str:
@@ -166,6 +171,35 @@ class BusinessInterpreter:
                 "Feeders, Drinkers & Heating Equipment": equipment_cost,
                 "First Batch Livestock & Feed Working Capital": working_capital
             },
+            "business_blueprint": {
+                "flow": [
+                    {"step": "Procurement", "desc": "Purchase high-quality DOCs (Day-Old Chicks) from certified hatcheries."},
+                    {"step": "Housing", "desc": "Prepare ventilated sheds with appropriate litter and temperature control."},
+                    {"step": "Feeding", "desc": "Administer phase-wise feed (Starter, Grower, Finisher)."},
+                    {"step": "Health", "desc": "Implement strict vaccination schedule and bio-security measures."},
+                    {"step": "Growth", "desc": "Monitor weight gain and FCR (Feed Conversion Ratio)."},
+                    {"step": "Harvest", "desc": "Market birds at 40-45 days (Broilers) or collect eggs (Layers)."},
+                    {"step": "Sales", "desc": "Sell to local wholesalers or integrated company hubs."}
+                ],
+                "inputs": ["DOCs", "Poultry Feed", "Vaccines", "Electricity", "Water"],
+                "outputs": ["Meat (Broilers)", "Eggs (Layers)", "Manure (Organic fertilizer)"]
+            },
+            "startup_roadmap": [
+                {"week": 1, "tasks": ["Land identification", "Local demand verification", "Budget finalization"]},
+                {"week": 2, "tasks": ["Shed construction/repair", "Equipment procurement", "Utility connections"]},
+                {"week": 3, "tasks": ["Staff hiring/training", "Vaccination plan setup", "Supplier tie-ups"]},
+                {"week": 4, "tasks": ["First batch procurement", " brooding setup", "Launch operations"]}
+            ],
+            "regulatory_requirements": [
+                {"doc": "Trade License", "status": "Required", "source": "Local Panchayat"},
+                {"doc": "Pollution Board NOC", "status": "Potentially Required", "source": "State PCB"},
+                {"doc": "Animal Husbandry Registration", "status": "Required", "source": "District Vet Office"}
+            ],
+            "risk_matrix": [
+                {"risk": "Avian Influenza / Disease", "severity": "High", "probability": "Medium", "mitigation": "Strict bio-security and mandatory vaccination."},
+                {"risk": "Feed Price Volatility", "severity": "Medium", "probability": "High", "mitigation": "Bulk procurement or contract farming tie-ups."},
+                {"risk": "Market Price Crash", "severity": "High", "probability": "Low", "mitigation": "Diversify sales channels (Retail + Wholesale)."}
+            ],
             "reasoning": f"Based on {flock_size} bird {poultry_type} unit in {district}, {state}. High regional protein consumption supports steady 45-day cycle cashflow.",
             "modifications": [
                 "Install automated nipple drinking systems to reduce mortality below 3.5%.",
@@ -368,15 +402,19 @@ class BusinessInterpreter:
             f"Experience: {experience} years. Operational survey answers: {answers_str}.\n\n"
             f"Calculate benchmarked, realistic, profitable financial requirements for this business. DO NOT assume they already have capital.\n"
             f"Provide the exact capital needed to achieve healthy profitability, expected monthly sales, and operating expenses.\n\n"
-            f"Return ONLY a JSON object with:\n"
-            f"- setup_cost: (Total recommended investment in INR to build and equip the venture)\n"
+            f"Return ONLY a JSON object with the following structure:\n"
+            f"- setup_cost: (Total recommended investment in INR)\n"
             f"- min_viable_capital: (Minimum bare-bones capital to launch)\n"
             f"- monthly_revenue: (Realistic projected monthly sales in INR)\n"
-            f"- monthly_expenses: (All recurring monthly costs: raw material, labor, electricity, rent in INR)\n"
+            f"- monthly_expenses: (All recurring monthly costs in INR)\n"
             f"- interest_rate: (Typical rural loan interest, e.g. 9.0 to 11.5)\n"
             f"- tenure_years: (Standard loan tenure, usually 5)\n"
             f"- category: (Business classification string)\n"
             f"- capital_breakdown: (Object with 3-4 major asset items and their INR cost)\n"
+            f"- business_blueprint: {{ 'flow': [{{'step': str, 'desc': str}}], 'inputs': [str], 'outputs': [str] }}\n"
+            f"- startup_roadmap: [{{'week': int, 'tasks': [str]}}]\n"
+            f"- regulatory_requirements: [{{'doc': str, 'status': str, 'source': str}}]\n"
+            f"- risk_matrix: [{{'risk': str, 'severity': str, 'probability': str, 'mitigation': str}}]\n"
             f"- reasoning: (Clear explanation of the revenue and capital benchmark in that district)\n"
             f"- modifications: (Array of 3 concrete strategic recommendations to increase profit margin)"
         )

@@ -42,7 +42,6 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       return;
     }
 
-    // Stop any current speech immediately
     window.speechSynthesis.cancel();
 
     setIsSpeaking(true);
@@ -57,12 +56,25 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
     msg.text = messages[lang] || messages['en-US'];
     msg.lang = lang;
 
-    // Try to find a voice that matches the preference
     const voices = window.speechSynthesis.getVoices();
-    const selectedVoice = voices.find(v =>
-      (voicePreference === 'female' ? (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google uk english female')) :
-       (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('google uk english male')))
-    ) || voices[0];
+
+    // 1. Try to find a voice that matches BOTH language and preference
+    let selectedVoice = voices.find(v =>
+      v.lang.startsWith(lang.split('-')[0]) &&
+      (voicePreference === 'female'
+        ? (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google') && v.name.toLowerCase().includes('female'))
+        : (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('google') && v.name.toLowerCase().includes('male')))
+    );
+
+    // 2. Fallback: match language only
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+    }
+
+    // 3. Final fallback: any voice
+    if (!selectedVoice && voices.length > 0) {
+      selectedVoice = voices[0];
+    }
 
     if (selectedVoice) msg.voice = selectedVoice;
     msg.rate = 0.9;
@@ -73,11 +85,24 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
   };
 
   useEffect(() => {
-    // Trigger welcome message on mount (after a short delay for browser compatibility)
+    // Handle async loading of voices in some browsers
+    const handleVoicesChanged = () => {
+      speakWelcome();
+    };
+
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+    }
+
     const timer = setTimeout(() => {
       speakWelcome();
     }, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
   }, [voicePreference]);
 
   const startRecording = async () => {

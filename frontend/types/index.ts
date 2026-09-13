@@ -93,5 +93,13 @@ export interface AnalysisResult {
   interpreter_reasoning?: string;
   modifications: string[];
   matchedSchemes: Scheme[];
+  business_blueprint?: {
+    flow: Array<{step: string, desc: string}>;
+    inputs: string[];
+    outputs: string[];
+  };
+  startup_roadmap?: Array<{week: number, tasks: string[]}>;
+  regulatory_requirements?: Array<{doc: string, status: string, source: string}>;
+  risk_matrix?: Array<{risk: string, severity: string, probability: string, mitigation: string}>;
 }
 

@@ -26,219 +26,62 @@ import ThreeDIcon from '@/components/3d/ThreeDIcons';
 import {
   ArrowLeft, TrendingUp, AlertTriangle, ShieldCheck,
   CheckCircle, ExternalLink, Zap, Target, Rocket,
-  DollarSign, Activity, LayoutDashboard
+  DollarSign, Activity, LayoutDashboard, MapPin,
+  ClipboardList, FileText, Warning, Lightbulb, ChevronRight
 } from 'lucide-react';
-
-/* ─────────────────────────────────────────
-   Animated counter hook
-───────────────────────────────────────── */
-function useAnimatedNumber(target: number, duration = 900) {
-  const [value, setValue] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!isInView) return;
-    let start: number | null = null;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [target, duration, isInView]);
-
-  return { value, ref };
-}
 
 /* ─────────────────────────────────────────
    UI Components
 ───────────────────────────────────────── */
 
-function HealthPulse({ score, recommendation, headline, data }: { score: number; recommendation: string; headline?: string; data: AnalysisResult | null }) {
-  if (!data) return null;
-  const { value, ref } = useAnimatedNumber(score, 1200);
-
-
-  const status = {
-    'Proceed': { color: 'var(--success)', label: 'Ready for Launch', icon: <CheckCircle size={18} /> },
-    'Proceed with Modification': { color: 'var(--warning)', label: 'Strategic Pivot Needed', icon: <AlertTriangle size={18} /> },
-    'Reconsider': { color: 'var(--danger)', label: 'High Risk', icon: <ShieldCheck size={18} /> },
-  }[recommendation] || { color: 'var(--border)', label: 'Evaluating', icon: <Activity size={18} /> };
-
+function MetricCard({ label, value, unit = '', trend, variant = 'default' }: { label: string, value: number | string, unit?: string, trend?: string, variant?: 'default' | 'success' | 'danger' }) {
+  const colors = {
+    default: 'var(--text-primary)',
+    success: 'var(--success)',
+    danger: 'var(--danger)',
+  };
   return (
-    <div className="flex flex-col md:flex-row items-center gap-8 p-6 rounded-3xl border shadow-sm backdrop-blur-md"
-         style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }} ref={ref}>
-      <div className="relative w-32 h-32 flex items-center justify-center">
-        <svg width="120" height="120" className="rotate-[-90deg]">
-          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-3)" strokeWidth="12" />
-          <motion.circle
-            cx="60" cy="60" r="50" fill="none" stroke={status.color} strokeWidth="12" strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 50}
-            initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-            animate={{ strokeDashoffset: (2 * Math.PI * 50) * (1 - value / 100) }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-black font-mono">{value}</span>
-          <span className="text-[10px] font-bold uppercase opacity-50">Score</span>
-        </div>
-      </div>
-      <div className="flex flex-col items-center md:items-start gap-2">
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-             style={{ backgroundColor: `${status.color}20`, color: status.color }}>
-          {status.icon}
-          {status.label}
-        </div>
-        <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          Business Viability Analysis
-        </h2>
-        <p className="text-sm opacity-70 max-w-md">
-          {headline || 'Based on regional benchmarks and projected market demand.'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function LiveGauge({ label, value, unit = '', threshold = 0, inverse = false }: { label: string; value: number | null, unit?: string; threshold?: number; inverse?: boolean }) {
-  if (value === null) {
-    return (
-      <div className="p-4 rounded-2xl border transition-all hover:shadow-sm"
-           style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-        <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{label}</div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-black font-mono opacity-50">N/A</span>
-          <span className="text-xs font-bold opacity-50">{unit}</span>
-        </div>
-      </div>
-    );
-  }
-  const isCritical = inverse ? value > threshold : value < threshold;
-  const color = isCritical ? 'var(--danger)' : 'var(--success)';
-
-  return (
-    <div className="p-4 rounded-2xl border transition-all hover:shadow-sm"
-         style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
+    <div className="p-4 rounded-2xl border bg-var(--surface-0) transition-all hover:shadow-sm" style={{ borderColor: 'var(--border)' }}>
       <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{label}</div>
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-black font-mono" style={{ color }}>{value.toLocaleString()}</span>
+        <span className="text-2xl font-black font-mono" style={{ color: colors[variant] }}>{typeof value === 'number' ? value.toLocaleString() : value}</span>
         <span className="text-xs font-bold opacity-50">{unit}</span>
       </div>
+      {trend && <div className="text-[10px] mt-1 flex items-center gap-1 opacity-70"><TrendingUp size={10} /> {trend}</div>}
     </div>
   );
 }
 
-function SurvivalPanel({ revenue, expenses, emi }: { revenue: number, expenses: number, emi: number }) {
-  const threshold = calculateSurvivalThreshold(expenses, emi);
-  const survivalGap = revenue - threshold;
-  const survivalPct = Math.min(100, Math.max(0, (revenue / threshold) * 100));
-  const isSurviving = survivalGap >= 0;
-
+function BusinessBlueprint({ blueprint }: { blueprint: AnalysisResult['business_blueprint'] }) {
+  if (!blueprint) return null;
   return (
-    <div className="p-6 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-      <div className="flex items-center gap-2 mb-4">
-        <Activity size={16} style={{ color: 'var(--accent)' }} />
-        <h3 className="text-sm font-bold uppercase tracking-wider">Survival Threshold</h3>
-      </div>
-      <div className="space-y-4">
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Min. Monthly Revenue to Survive</div>
-            <div className="text-2xl font-black font-mono" style={{ color: 'var(--text-primary)' }}>
-              ₹{Math.round(threshold).toLocaleString()}
-            </div>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 rounded-2xl border bg-var(--surface-1) border-dashed">
+          <div className="text-xs font-bold uppercase mb-2 opacity-50 flex items-center gap-2"><Zap size={12}/> Inputs</div>
+          <div className="flex flex-wrap gap-2">
+            {blueprint.inputs.map(i => <Badge key={i} variant="secondary" className="text-[10px]">{i}</Badge>)}
           </div>
-          <Badge variant={isSurviving ? 'success' : 'danger'} className="text-[10px] px-2 py-0.5">
-            {isSurviving ? 'SURVIVING' : 'AT RISK'}
-          </Badge>
         </div>
-        <div className="h-2 w-full rounded-full overflow-hidden bg-var(--surface-2)">
-          <motion.div
-            className="h-full transition-all duration-500"
-            style={{ width: `${survivalPct}%`, backgroundColor: isSurviving ? 'var(--success)' : 'var(--danger)' }}
-          />
+        <div className="p-4 rounded-2xl border bg-var(--surface-1) border-dashed">
+          <div className="text-xs font-bold uppercase mb-2 opacity-50 flex items-center gap-2"><Activity size={12}/> Operations</div>
+          <div className="text-xs opacity-80">Deterministic workflow based on {blueprint.flow.length} key steps.</div>
         </div>
-        <p className="text-[11px] leading-relaxed opacity-70">
-          {isSurviving
-            ? `Your current revenue exceeds the survival threshold by ₹${Math.round(survivalGap).toLocaleString()}.`
-            : `You are ₹${Math.round(Math.abs(survivalGap)).toLocaleString()} short of covering your basic monthly costs.`}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function FundingBridge({ totalCost, userCapital, schemes }: { totalCost: number, userCapital: number, schemes: Scheme[] }) {
-  const bestScheme = schemes[0] || { benefit: { subsidyPercent: 0 } };
-  const subsidyAmount = calculateSubsidyBenefit(totalCost, bestScheme.benefit.subsidyPercent);
-  const loanRequired = Math.max(0, totalCost - userCapital - subsidyAmount);
-
-  const total = totalCost || 1;
-  const userPct = (userCapital / total) * 100;
-  const subsidyPct = (subsidyAmount / total) * 100;
-  const loanPct = (loanRequired / total) * 100;
-
-  return (
-    <div className="p-6 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-      <div className="flex items-center gap-2 mb-4">
-        <DollarSign size={16} style={{ color: 'var(--accent)' }} />
-        <h3 className="text-sm font-bold uppercase tracking-wider">Funding Bridge</h3>
-      </div>
-      <div className="h-4 w-full rounded-full overflow-hidden flex mb-6" style={{ backgroundColor: 'var(--surface-2)' }}>
-        <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${userPct}%` }} title="User Capital" />
-        <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${subsidyPct}%` }} title="Subsidy" />
-        <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${loanPct}%` }} title="Loan" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs">
-          <span className="opacity-60">User Capital</span>
-          <span className="font-mono font-bold">₹{userCapital.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className="opacity-60">Best Subsidy ({bestScheme.benefit.subsidyPercent}%)</span>
-          <span className="font-mono font-bold text-emerald-500">₹{subsidyAmount.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between text-xs border-t pt-2 mt-2">
-          <span className="font-bold">Total Loan Needed</span>
-          <span className="font-mono font-black text-amber-500">₹{loanRequired.toLocaleString()}</span>
+        <div className="p-4 rounded-2xl border bg-var(--surface-1) border-dashed">
+          <div className="text-xs font-bold uppercase mb-2 opacity-50 flex items-center gap-2"><Rocket size={12}/> Outputs</div>
+          <div className="flex flex-wrap gap-2">
+            {blueprint.outputs.map(o => <Badge key={o} variant="secondary" className="text-[10px]">{o}</Badge>)}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function SchemeAnalysisBox({ schemes }: { schemes: Scheme[] }) {
-  if (!schemes || schemes.length === 0) return null;
-
-  return (
-    <div className="p-6 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-      <div className="flex items-center gap-2 mb-4">
-        <ShieldCheck size={16} style={{ color: 'var(--accent)' }} />
-        <h3 className="text-sm font-bold uppercase tracking-wider">Scheme Analysis</h3>
-      </div>
-      <div className="space-y-4">
-        {schemes.map((scheme, i) => (
-          <div key={i} className="p-4 rounded-2xl border transition-all hover:shadow-sm bg-var(--surface-1)" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="text-xs font-bold">{scheme.name}</h4>
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 font-bold">{scheme.ministry}</Badge>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <div className="p-2 rounded-xl bg-var(--surface-0) border text-center">
-                <div className="text-[9px] opacity-50 uppercase">Subsidy</div>
-                <div className="text-xs font-black text-emerald-500">{scheme.benefit.subsidyPercent}%</div>
-              </div>
-              <div className="p-2 rounded-xl bg-var(--surface-0) border text-center">
-                <div className="text-[9px] opacity-50 uppercase">Max Loan</div>
-                <div className="text-xs font-black">₹{scheme.benefit.loanAmount.toLocaleString()}</div>
-              </div>
-            </div>
-            <div className="text-[10px] leading-relaxed opacity-70 italic">
-              Strategic Impact: This scheme can reduce your initial capital burden and lower the break-even period.
+      <div className="relative pl-8 space-y-4">
+        <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-var(--border)" />
+        {blueprint.flow.map((step, i) => (
+          <div key={i} className="relative">
+            <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-var(--accent) border-4 border-var(--surface-0)" />
+            <div className="p-3 rounded-xl border bg-var(--surface-0) hover:shadow-sm transition-all">
+              <div className="text-xs font-bold text-var(--accent) uppercase mb-1">{step.step}</div>
+              <div className="text-sm opacity-80">{step.desc}</div>
             </div>
           </div>
         ))}
@@ -247,16 +90,64 @@ function SchemeAnalysisBox({ schemes }: { schemes: Scheme[] }) {
   );
 }
 
-/* ─────────────────────────────────────────
-   Main Report Page
-───────────────────────────────────────── */
-type ScenarioPreset = 'conservative' | 'base' | 'optimistic';
+function ActionPlan({ roadmap }: { roadmap: AnalysisResult['startup_roadmap'] }) {
+  if (!roadmap) return null;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {roadmap.map((week, i) => (
+        <div key={i} className="p-4 rounded-2xl border bg-var(--surface-0)">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-black uppercase tracking-tighter p-1 px-2 rounded bg-var(--accent) text-white">Week {week.week}</div>
+          </div>
+          <ul className="space-y-2">
+            {week.tasks.map((task, j) => (
+              <li key={j} className="text-xs flex items-start gap-2 opacity-80">
+                <ChevronRight size={12} className="mt-0.5 shrink-0 text-var(--accent)" />
+                {task}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RiskMatrix({ risks }: { risks: AnalysisResult['risk_matrix'] }) {
+  if (!risks) return null;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-xs">
+        <thead>
+          <tr className="text-[10px] font-bold uppercase opacity-50 border-b border-var(--border)">
+            <th className="pb-2">Risk</th>
+            <th className="pb-2">Severity</th>
+            <th className="pb-2">Prob.</th>
+            <th className="pb-2">Mitigation</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-var(--border)">
+          {risks.map((r, i) => (
+            <tr key={i} className="group hover:bg-var(--surface-1)">
+              <td className="py-3 font-bold">{r.risk}</td>
+              <td className="py-3">
+                <Badge variant={r.severity === 'High' ? 'danger' : r.severity === 'Medium' ? 'warning' : 'secondary'} className="text-[9px]">{r.severity}</Badge>
+              </td>
+              <td className="py-3 opacity-70">{r.probability}</td>
+              <td className="py-3 opacity-80 italic">{r.mitigation}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function ReportPage() {
   const { lang } = useLanguage();
   const router = useRouter();
   const [data, setData] = useState<AnalysisResult | null>(null);
-  const [activePreset, setActivePreset] = useState<ScenarioPreset>('base');
+  const [activePreset, setActivePreset] = useState<'conservative' | 'base' | 'optimistic'>('base');
   const [levers, setLevers] = useState({
     leanMode: false,
     growthMode: false,
@@ -296,14 +187,11 @@ export default function ReportPage() {
     let revMult = 1, expMult = 1, costMult = 1;
     if (activePreset === 'conservative') { revMult = 0.85; expMult = 1.1; }
     if (activePreset === 'optimistic') { revMult = 1.15; expMult = 0.9; }
-
     if (levers.leanMode) costMult = 0.85;
     if (levers.growthMode) revMult *= 1.2;
-
     const bestScheme = data?.matchedSchemes?.[0];
     const subsidyPercent = bestScheme?.benefit.subsidyPercent || 0;
     const subsidyAmount = levers.appliedSubsidy ? calculateSubsidyBenefit(sandbox.setupCost, subsidyPercent) : 0;
-
     return {
       ...sandbox,
       setupCost: (sandbox.setupCost * costMult) - subsidyAmount,
@@ -318,11 +206,6 @@ export default function ReportPage() {
   const annualProfit = monthlyNet * 12;
   const roi = calculateROI(annualProfit, effectiveSandbox.setupCost);
 
-  const chartData = Array.from({ length: 12 }, (_, i) => ({
-    month: `Mo ${i + 1}`,
-    cash: Math.round(monthlyNet * (i + 1)),
-  }));
-
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-primary)' }}>
       <div className="flex flex-col items-center gap-4">
@@ -332,17 +215,9 @@ export default function ReportPage() {
     </div>
   );
 
-  const sandboxSliders = [
-    { label: 'Project Cost', key: 'setupCost', min: 10000, max: 5000000, step: 10000 },
-    { label: 'Monthly Revenue', key: 'monthlyRevenue', min: 5000, max: 500000, step: 1000 },
-    { label: 'Monthly Expenses', key: 'monthlyExpenses', min: 1000, max: 200000, step: 1000 },
-    { label: 'Funding (Loan)', key: 'loanAmount', min: 0, max: 5000000, step: 10000 },
-  ] as const;
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-primary)' }}>
       <div className="pointer-events-none fixed inset-0 opacity-20" style={{ backgroundImage: 'url(/media/grid-pattern.svg)', backgroundSize: '280px 280px', backgroundRepeat: 'repeat' }} />
-
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10 pt-24 pb-20">
 
         <div className="flex justify-between items-center mb-10">
@@ -351,240 +226,143 @@ export default function ReportPage() {
             <h1 className="text-xl font-black tracking-tight uppercase">{t(lang, 'report.title')}</h1>
           </div>
           <Button variant="outline" onClick={() => router.push('/')} className="gap-2 rounded-2xl">
-            <ArrowLeft size={16} />
-            New Analysis
+            <ArrowLeft size={16} /> New Analysis
           </Button>
         </div>
 
-        <Reveal>
-          <HealthPulse score={data.viabilityScore} recommendation={data.recommendation} headline={data.headline} data={data} />
-        </Reveal>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-10">
-
-          {/* COLUMN 1: The Command Center */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity size={16} style={{ color: 'var(--accent)' }} />
-              <h3 className="text-xs font-bold uppercase tracking-widest opacity-60">KPI Command Center</h3>
-            </div>
-            <Stagger stagger={0.1}>
-              <LiveGauge label="Annual ROI" value={roi} unit="%" threshold={15} />
-              <LiveGauge label="Break-even" value={breakEven} unit="Mo" threshold={36} inverse />
-              <LiveGauge label="Monthly Net" value={monthlyNet} unit="₹" threshold={5000} />
-              <LiveGauge label="Debt Burden" value={effectiveSandbox.monthlyRevenue > 0 ? (emi / effectiveSandbox.monthlyRevenue) * 100 : 0} unit="%" threshold={40} inverse />
-            </Stagger>
-            <SurvivalPanel revenue={effectiveSandbox.monthlyRevenue} expenses={effectiveSandbox.monthlyExpenses} emi={emi} />
-            <FundingBridge totalCost={effectiveSandbox.setupCost} userCapital={data.financials.user_capital || 0} schemes={data.matchedSchemes} />
-          </div>
-
-          {/* COLUMN 2: The Strategy Simulator */}
-          <div className="lg:col-span-6 space-y-8">
+          {/* LEFT COLUMN: EXECUTIVE SUMMARY & CORE METRICS */}
+          <div className="lg:col-span-4 space-y-6">
             <Reveal>
-              <Card3DTilt intensity={1.2}>
-                <div className="p-8 rounded-3xl border shadow-md backdrop-blur-xl" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-                  <div className="flex justify-between items-center mb-8">
-                    <div>
-                      <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-                        <Rocket size={24} style={{ color: 'var(--accent)' }} />
-                        Strategy Simulator
-                      </h2>
-                      <p className="text-xs opacity-60">Simulate strategic levers to optimize viability.</p>
-                    </div>
-                    <div className="flex p-1 rounded-2xl border gap-0.5 bg-var(--surface-1)">
-                      {(['conservative', 'base', 'optimistic'] as ScenarioPreset[]).map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setActivePreset(p)}
-                          className="relative px-3 py-1 text-[10px] font-bold uppercase rounded-xl transition-colors capitalize cursor-pointer"
-                          style={{ color: activePreset === p ? 'var(--surface-0)' : 'var(--text-muted)' }}
-                        >
-                          {activePreset === p && (
-                            <motion.span layoutId="preset-pill" className="absolute inset-0 rounded-xl" style={{ backgroundColor: 'var(--text-primary)' }} />
-                          )}
-                          <span className="relative z-10">{p}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                    <LeverToggle
-                      label="Govt Subsidy"
-                      active={levers.appliedSubsidy}
-                      onClick={() => setLevers(l => ({...l, appliedSubsidy: !l.appliedSubsidy}))}
-                      icon={<DollarSign size={14} />}
-                    />
-                    <LeverToggle
-                      label="Lean Startup"
-                      active={levers.leanMode}
-                      onClick={() => setLevers(l => ({...l, leanMode: !l.leanMode}))}
-                      icon={<Zap size={14} />}
-                    />
-                    <LeverToggle
-                      label="Aggressive Growth"
-                      active={levers.growthMode}
-                      onClick={() => setLevers(l => ({...l, growthMode: !l.growthMode}))}
-                      icon={<TrendingUp size={14} />}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-6">
-                      {sandboxSliders.map((ctrl) => (
-                        <div key={ctrl.key} className="space-y-2">
-                          <div className="flex justify-between text-[11px] font-bold uppercase opacity-60">
-                            <span>{ctrl.label}</span>
-                            <span className="font-mono" style={{ color: 'var(--accent-text)' }}>
-                              ₹{Math.round(sandbox[ctrl.key]).toLocaleString()}
-                            </span>
-                          </div>
-                          <Slider
-                            value={[sandbox[ctrl.key] as number]}
-                            min={ctrl.min} max={ctrl.max} step={ctrl.step}
-                            onValueChange={(val) => setSandbox({ ...sandbox, [ctrl.key]: val[0] })}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-col gap-6">
-                      <div className="h-48 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                            <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Line type="monotone" dataKey="cash" name="Cumulative Cash" stroke="var(--accent)" strokeWidth={3} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="p-4 rounded-2xl border bg-var(--surface-1) text-center">
-                        <div className="text-[10px] font-bold uppercase opacity-50 mb-1">Projected Break-even</div>
-                        <div className="text-3xl font-black font-mono" style={{ color: 'var(--accent)' }}>
-                          {breakEven === null ? 'Never' : `${Math.round(breakEven)} Mo`}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card3DTilt>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <div className="p-8 rounded-3xl border shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-2 mb-6">
+              <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-4">
                   <Target size={20} style={{ color: 'var(--accent)' }} />
-                  <h3 className="text-lg font-black tracking-tight">Execution Roadmap</h3>
+                  <h2 className="text-lg font-black tracking-tight uppercase">Executive Summary</h2>
                 </div>
-                <div className="space-y-4">
-                  {data.modifications.length > 0 ? (
-                    data.modifications.map((mod, i) => (
-                      <div key={i} className="group flex items-start gap-4 p-4 rounded-2xl border transition-all hover:bg-var(--surface-1) cursor-pointer" style={{ borderColor: 'var(--border)' }}>
-                        <div className="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 group-hover:bg-var(--accent) group-hover:border-var(--accent) transition-colors">
-                          <div className="w-2 h-2 rounded-full bg-transparent group-hover:bg-white" />
+                <div className="flex items-center gap-6 mb-6">
+                  <div className="relative w-24 h-24 flex items-center justify-center">
+                    <svg width="96" height="96" className="rotate-[-90deg]">
+                      <circle cx="48" cy="48" r="40" fill="none" stroke="var(--surface-3)" strokeWidth="10" />
+                      <motion.circle
+                        cx="48" cy="48" r="40" fill="none" stroke="var(--accent)" strokeWidth="10" strokeLinecap="round"
+                        strokeDasharray={2 * Math.PI * 40}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                        animate={{ strokeDashoffset: (2 * Math.PI * 40) * (1 - data.viabilityScore / 100) }}
+                        transition={{ duration: 1.5 }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-black">{data.viabilityScore}</span>
+                      <span className="text-[8px] font-bold uppercase opacity-50">Score</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <Badge variant="secondary" className="text-[10px] mb-1">{data.category}</Badge>
+                    <div className="text-lg font-black leading-tight">{data.recommendation}</div>
+                  </div>
+                </div>
+                <p className="text-sm opacity-70 leading-relaxed italic mb-6">
+                  "{data.interpreter_reasoning}"
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <MetricCard label="Investment" value={effectiveSandbox.setupCost} unit="₹" />
+                  <MetricCard label="Annual Profit" value={annualProfit} unit="₹" variant="success" />
+                  <MetricCard label="Break-even" value={breakEven} unit="Mo" variant="warning" />
+                  <MetricCard label="Projected ROI" value={roi} unit="%" variant="success" />
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* CENTER COLUMN: THE STRATEGIC BLUEPRINT */}
+          <div className="lg:col-span-8 space-y-8">
+            <Reveal delay={0.1}>
+              <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb size={20} style={{ color: 'var(--accent)' }} />
+                    <h2 className="text-xl font-black tracking-tight uppercase">Business Model Blueprint</h2>
+                  </div>
+                  <div className="flex p-1 rounded-xl bg-var(--surface-1) border border-var(--border)">
+                    {(['conservative', 'base', 'optimistic'] as const).map(p => (
+                      <button key={p} onClick={() => setActivePreset(p)} className={`px-3 py-1 text-[10px] font-bold uppercase rounded-lg transition-all ${activePreset === p ? 'bg-var(--accent) text-white' : 'opacity-50'}`}>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <BusinessBlueprint blueprint={data.business_blueprint} />
+              </div>
+            </Reveal>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Reveal delay={0.2}>
+                <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-6">
+                    <ClipboardList size={20} style={{ color: 'var(--accent)' }} />
+                    <h3 className="text-lg font-black uppercase">The 30-Day Roadmap</h3>
+                  </div>
+                  <ActionPlan roadmap={data.startup_roadmap} />
+                </div>
+              </Reveal>
+
+              <Reveal delay={0.3}>
+                <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-2 mb-6">
+                    <FileText size={20} style={{ color: 'var(--accent)' }} />
+                    <h3 className="text-lg font-black uppercase">Compliance & Docs</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {data.regulatory_requirements?.map((req, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl border bg-var(--surface-1)">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1.5 h-1.5 rounded-full bg-var(--accent)" />
+                          <span className="text-xs font-medium">{req.doc}</span>
                         </div>
-                        <span className="text-sm leading-relaxed opacity-80 group-hover:opacity-100">{mod}</span>
+                        <Badge variant="outline" className="text-[9px] opacity-60">{req.status}</Badge>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm italic opacity-50">No specific strategic pivots recommended.</p>
-                  )}
+                    )) || <p className="text-xs opacity-50 italic">No specific documents listed.</p>}
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+
+            <Reveal delay={0.4}>
+              <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-6">
+                  <Warning size={20} style={{ color: 'var(--danger)' }} />
+                  <h3 className="text-lg font-black uppercase">Risk Assessment</h3>
+                </div>
+                <RiskMatrix risks={data.risk_matrix} />
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.5}>
+              <div className="p-8 rounded-3xl border bg-var(--surface-0) shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-6">
+                  <ShieldCheck size={20} style={{ color: 'var(--success)' }} />
+                  <h3 className="text-lg font-black uppercase">Government Support</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.matchedSchemes.map((scheme, i) => (
+                    <div key={i} className="p-4 rounded-2xl border bg-var(--surface-1) hover:border-var(--accent) transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-xs font-bold">{scheme.name}</h4>
+                        <Badge variant="secondary" className="text-[9px]">{scheme.ministry}</Badge>
+                      </div>
+                      <div className="text-[11px] opacity-80 mb-3">{scheme.benefit.subsidyPercent}% subsidy / ₹{scheme.benefit.loanAmount.toLocaleString()} loan</div>
+                      <a href={scheme.sourceUrl} target="_blank" className="text-[10px] font-bold text-var(--accent) flex items-center gap-1 hover:underline">
+                        Official Portal <ExternalLink size={10} />
+                      </a>
+                    </div>
+                  ))}
                 </div>
               </div>
             </Reveal>
           </div>
-
-          {/* COLUMN 3: Market Intelligence */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center gap-2 mb-2">
-              <LayoutDashboard size={16} style={{ color: 'var(--accent)' }} />
-              <h3 className="text-xs font-bold uppercase tracking-widest opacity-60">Market Intelligence</h3>
-            </div>
-            <Reveal>
-              <div className="grid grid-cols-1 gap-4">
-                <IntelSection title="Demand" value={data.marketAnalysis.demand} variant="emerald" icon={<TrendingUp size={14} />} evidence={data.marketAnalysis.source} />
-                <IntelSection title="Competition" value={data.marketAnalysis.competition} variant="rose" icon={<ShieldCheck size={14} />} evidence={data.marketAnalysis.source} />
-                <IntelSection title="Accessibility" value={data.marketAnalysis.accessibility} variant="blue" icon={<Rocket size={14} />} evidence={data.marketAnalysis.source} />
-                <IntelSection title="Seasonality" value={data.marketAnalysis.seasonality} variant="amber" icon={<Activity size={14} />} evidence={data.marketAnalysis.source} />
-              </div>
-            </Reveal>
-            <Reveal>
-              <SchemeAnalysisBox schemes={data.matchedSchemes} />
-            </Reveal>
-            <div className="p-6 rounded-3xl border shadow-sm backdrop-blur-md" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-              <div className="text-xs font-bold uppercase mb-3 opacity-60">Analyst's Perspective</div>
-              <p className="text-xs leading-relaxed opacity-80 italic">
-                "{data.interpreter_reasoning || 'Based on regional benchmarks and projected market demand.'}"
-              </p>
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Sub-components
-───────────────────────────────────────── */
-
-function LeverToggle({ label, active, onClick, icon }: { label: string, active: boolean, onClick: () => void, icon: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all font-bold text-[11px] uppercase tracking-wider ${
-        active ? 'shadow-md' : 'opacity-60'
-      }`}
-      style={{
-        backgroundColor: active ? 'var(--accent)' : 'var(--surface-1)',
-        borderColor: active ? 'var(--accent)' : 'var(--border)',
-        color: active ? 'var(--surface-0)' : 'var(--text-primary)'
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-function IntelSection({ title, value, variant, icon, evidence }: { title: string, value: number, variant: string, icon: React.ReactNode, evidence: string }) {
-  const colors = {
-    emerald: 'var(--success)',
-    rose: 'var(--danger)',
-    blue: 'var(--accent)',
-    amber: 'var(--warning)',
-  };
-
-  return (
-    <div className="p-4 rounded-2xl border transition-all hover:shadow-sm" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border)' }}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest opacity-60">
-          {icon}
-          {title}
-        </div>
-        <span className="text-lg font-black font-mono" style={{ color: colors[variant as keyof typeof colors] }}>
-          {value}%
-        </span>
-      </div>
-      <div className="text-[10px] opacity-50 truncate italic">Source: {evidence}</div>
-    </div>
-  );
-}
-
-function CustomTooltip ({ active, payload, label }: { active?: boolean, payload?: any[], label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl border p-3 text-xs shadow-xl backdrop-blur-md" style={{ backgroundColor: 'var(--surface-0)', borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
-      <p className="font-bold mb-1 opacity-60">{label}</p>
-      {payload.map((p: any) => (
-        <div key={p.name} className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-          <span className="opacity-60">{p.name}:</span>
-          <span className="font-bold font-mono">₹{p.value?.toLocaleString()}</span>
-        </div>
-      ))}
     </div>
   );
 }

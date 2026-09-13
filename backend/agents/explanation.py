@@ -23,15 +23,28 @@ class ExplanationAgent(BaseAgent):
         profile = context.get("profile")
         financials = context.get("financials")
         intelligence = context.get("intelligence")
+        viability = context.get("viability")
+        schemes = context.get("schemes")
 
         prompt = (
-            f"You are a supportive Rural Entrepreneurship Advisor. Based on the following data:\n"
-            f"User Profile: {profile}\n"
-            f"Financial Projections: {financials}\n"
-            f"Recommended Schemes: {intelligence}\n\n"
-            "Provide a personalized, empathetic, and encouraging recommendation. "
-            "Explain the financial viability simply and guide them on how to apply for the schemes. "
-            "Keep it professional yet accessible for a rural entrepreneur."
+            "You are a supportive Rural Entrepreneurship Advisor. Your goal is to synthesize complex "
+            "financial data into a personalized, encouraging, and actionable advice letter.\n\n"
+            f"CONTEXT:\n"
+            f"- User Profile: {profile}\n"
+            f"- Financial Projections: {financials}\n"
+            f"- Viability Report: {viability}\n"
+            f"- Matched Schemes: {schemes}\n\n"
+            "STRUCTURE YOUR RESPONSE AS FOLLOWS:\n"
+            "1. VIABILITY VERDICT: Start with a clear, encouraging verdict on whether the business is viable.\n"
+            "2. FINANCIAL ROADMAP: Explain the ROI, Break-even, and Monthly Profit in simple terms. "
+            "If the numbers are risky, explain why gently and suggest pivots.\n"
+            "3. GOVT SUPPORT GUIDE: Highlight the best matched schemes. Explain exactly how they help "
+            "(e.g., 'This subsidy reduces your initial cost by X%').\n"
+            "4. FINAL ACTION STEP: Provide one clear, immediate next step for the user.\n\n"
+            "CONSTRAINTS:\n"
+            "- ZERO FABRICATION: Only mention schemes and benefits present in the context.\n"
+            "- TONE: Empathetic, professional, and accessible for a rural entrepreneur.\n"
+            "- LANGUAGE: Use clear, jargon-free English."
         )
 
         try:

@@ -24,6 +24,10 @@ class FinancialBenchmarks(BaseModel):
     min_viable_capital: Optional[float] = None
     capital_breakdown: Dict[str, float] = Field(default_factory=dict)
     category: str = "rural_enterprise"
+    business_blueprint: Optional[Dict[str, Any]] = None
+    startup_roadmap: Optional[List[Dict[str, Any]]] = None
+    regulatory_requirements: Optional[List[Dict[str, Any]]] = None
+    risk_matrix: Optional[List[Dict[str, Any]]] = None
 
 class FinancialMetrics(BaseModel):
     """Deterministic output of the Financial Engine."""
@@ -68,6 +72,9 @@ class Scheme(BaseModel):
     sourceUrl: str
     eligibility: Dict[str, Any] = Field(..., description="Object containing minCapital, maxCapital, and categories")
     match_score: float = 0.0
+    application_steps: Optional[List[str]] = Field(default=None, description="Step-by-step guide to apply for the scheme")
+    detailed_eligibility: Optional[str] = Field(default=None, description="Detailed eligibility criteria for the scheme")
+
 
 class ViabilityReport(BaseModel):
     """Final comprehensive report."""

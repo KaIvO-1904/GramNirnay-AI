@@ -36,6 +36,12 @@ class FinancialParams(BaseModel):
     interest_rate: float = Field(0.0, description="Expected loan interest rate")
     tenure_years: int = Field(5, description="Loan repayment period in years")
     user_capital: float = Field(0.0, description="Amount of capital provided by the user")
+    # Enriched data from the interpreter
+    capital_breakdown: Dict[str, float] = Field(default_factory=dict)
+    business_blueprint: Optional[Dict[str, Any]] = None
+    startup_roadmap: Optional[List[Dict[str, Any]]] = None
+    regulatory_requirements: Optional[List[Dict[str, Any]]] = None
+    risk_matrix: Optional[List[Dict[str, Any]]] = None
 
 class FinancialResult(BaseModel):
     """Output of the deterministic financial engine."""
