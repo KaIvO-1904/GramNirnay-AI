@@ -34,7 +34,7 @@ import {
    UI Components
 ───────────────────────────────────────── */
 
-function MetricCard({ label, value, unit = '', trend, variant = 'default' }: { label: string, value: number | string, unit?: string, trend?: string, variant?: 'default' | 'success' | 'danger' }) {
+function MetricCard({ label, value, unit = '', trend, variant = 'default' }: { label: string, value: number | string | null, unit?: string, trend?: string, variant?: 'default' | 'success' | 'danger' }) {
   const colors = {
     default: 'var(--text-primary)',
     success: 'var(--success)',
@@ -44,7 +44,7 @@ function MetricCard({ label, value, unit = '', trend, variant = 'default' }: { l
     <div className="p-4 rounded-2xl border bg-var(--surface-0) transition-all hover:shadow-sm" style={{ borderColor: 'var(--border)' }}>
       <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-50">{label}</div>
       <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-black font-mono" style={{ color: colors[variant] }}>{typeof value === 'number' ? value.toLocaleString() : value}</span>
+        <span className="text-2xl font-black font-mono" style={{ color: colors[variant] }}>{typeof value === 'number' ? value.toLocaleString() : (value ?? 'N/A')}</span>
         <span className="text-xs font-bold opacity-50">{unit}</span>
       </div>
       {trend && <div className="text-[10px] mt-1 flex items-center gap-1 opacity-70"><TrendingUp size={10} /> {trend}</div>}
@@ -268,7 +268,7 @@ export default function ReportPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <MetricCard label="Investment" value={effectiveSandbox.setupCost} unit="₹" />
                   <MetricCard label="Annual Profit" value={annualProfit} unit="₹" variant="success" />
-                  <MetricCard label="Break-even" value={breakEven} unit="Mo" variant="warning" />
+                  <MetricCard label="Break-even" value={breakEven} unit="Mo" variant="danger" />
                   <MetricCard label="Projected ROI" value={roi} unit="%" variant="success" />
                 </div>
               </div>
