@@ -198,7 +198,6 @@ export default function ProfilePage() {
         availableCapital: 0,
         answers: collectedAnswers as any,
       };
-      };
 
       const result = await analyzeViability(profilePayload);
       localStorage.setItem('analysis_result', JSON.stringify(result));

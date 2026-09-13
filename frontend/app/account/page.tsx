@@ -603,17 +603,17 @@ export default function AccountPage() {
                   </div>
                   <div className="flex gap-1.5">
                     <Button
-                      variant={lang === 'en' ? 'primary' : 'outline'}
+                      variant={lang === 'en-US' ? 'primary' : 'outline'}
                       size="sm"
-                      onClick={() => setLang('en')}
+                      onClick={() => setLang('en-US')}
                       className="text-xs font-bold rounded-xl"
                     >
                       English
                     </Button>
                     <Button
-                      variant={lang === 'hi' ? 'primary' : 'outline'}
+                      variant={lang === 'hi-IN' ? 'primary' : 'outline'}
                       size="sm"
-                      onClick={() => setLang('hi')}
+                      onClick={() => setLang('hi-IN')}
                       className="text-xs font-bold rounded-xl"
                     >
                       हिंदी (Hindi)

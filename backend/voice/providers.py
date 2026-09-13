@@ -24,7 +24,8 @@ class GroqVoiceProvider(IVoiceProvider):
         import httpx
         self.client = httpx.Client(
             base_url="https://api.groq.com/openai/v1",
-            headers={"Authorization": f"Bearer {settings.groq_api_key}"}
+            headers={"Authorization": f"Bearer {settings.groq_api_key}"},
+            timeout=30.0
         )
 
     async def transcribe(self, audio_data: bytes, language_hint: Optional[str] = None) -> TranscriptionResult:
@@ -98,7 +99,8 @@ class OpenAIVoiceProvider(IVoiceProvider):
     def __init__(self):
         self.client = OpenAI(
             api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url
+            base_url=settings.openai_base_url,
+            timeout=30.0
         )
 
     async def transcribe(self, audio_data: bytes, language_hint: Optional[str] = None) -> TranscriptionResult:

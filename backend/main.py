@@ -78,9 +78,11 @@ from .orchestration.workflow import WorkflowManager
 from .location.service import LocationService
 from .location.models import LocationCandidate, LocationIdentity, LocationSource
 from .voice.service import VoiceService
+from .intelligence.providers import AIIntelligenceProvider
 workflow_manager = WorkflowManager()
 location_service = LocationService()
 voice_service = VoiceService()
+ai_provider = AIIntelligenceProvider()
 fin_engine = FinancialEngine()
 rag_engine = RAGEngine()
 interpreter = BusinessInterpreter()
@@ -360,6 +362,27 @@ async def root() -> Dict[str, str]:
     Health check endpoint.
     """
     return {"message": "Welcome to Gram-AI API", "status": "online"}
+
+@app.get("/api/health/llm")
+async def health_llm() -> Dict[str, Any]:
+    """
+    Connectivity test for the configured LLM.
+    """
+    try:
+        # Simple ping to verify connectivity and model responsiveness
+        start_time = time.time()
+        response = ai_provider._query_ai("Ping. Reply with 'pong'.")
+        latency = (time.time() - start_time) * 1000
+
+        return {
+            "status": "healthy",
+            "model": ai_provider.model,
+            "latency_ms": round(latency, 2),
+            "response": response
+        }
+    except Exception as e:
+        logger.error(f"LLM Health Check Failed: {e}")
+        raise HTTPException(status_code=503, detail=f"LLM unavailable: {str(e)}")
 
 @app.post("/api/generate-questions", dependencies=[Depends(rate_limit)])
 async def generate_questions(payload: GenerateQuestionsRequest) -> Dict[str, Any]:

@@ -11,7 +11,7 @@ export default function LanguageSwitcher() {
       className="flex items-center gap-0.5 p-1 rounded-full border"
       style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)' }}
     >
-      {(['en', 'hi'] as const).map((l) => (
+      {(['en-US', 'hi-IN', 'kn-IN'] as const).map((l) => (
         <button
           key={l}
           onClick={() => setLang(l)}
@@ -19,7 +19,7 @@ export default function LanguageSwitcher() {
           style={{
             color: lang === l ? 'var(--surface-0)' : 'var(--text-muted)',
           }}
-          aria-label={`Switch to ${l === 'en' ? 'English' : 'Hindi'}`}
+          aria-label={`Switch to ${l}`}
         >
           {lang === l && (
             <motion.span
@@ -29,7 +29,7 @@ export default function LanguageSwitcher() {
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             />
           )}
-          <span className="relative z-10">{l.toUpperCase()}</span>
+          <span className="relative z-10">{l.split('-')[0].toUpperCase()}</span>
         </button>
       ))}
     </div>

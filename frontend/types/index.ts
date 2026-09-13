@@ -14,7 +14,7 @@ export interface QuestionOption {
 export interface DynamicQuestion {
   id: string;
   question: string;
-  type: 'select' | 'text' | 'number';
+  type: 'single_select' | 'multi_select' | 'text' | 'number';
   allow_custom?: boolean;
   options?: QuestionOption[];
   placeholder?: string;

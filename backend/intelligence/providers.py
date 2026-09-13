@@ -71,7 +71,8 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
                 model=self.model,
                 messages=[{"role": "system", "content": "You are a regional market intelligence expert for rural India. Return only JSON."},
                           {"role": "user", "content": prompt}],
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
+                timeout=30.0
             )
             return json.loads(response.choices[0].message.content)
         except Exception as e:

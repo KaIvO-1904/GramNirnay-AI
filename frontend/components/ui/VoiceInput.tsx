@@ -54,8 +54,8 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
       'kn-IN': "ಗ್ರಾಮ್ ನಿರ್ಣಯ AI ಗೆ ಸ್ವಾಗತ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ವ್ಯವಹಾರದ ಆಲೋಚನೆಯನ್ನು ನಿಮ್ಮ ಮಾತೃಭಾಷೆಯಲ್ಲಿ ವಿವರಿಸಿ. ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ!",
     };
 
-    msg.text = messages[aiLanguage] || messages['en-US'];
-    msg.lang = aiLanguage;
+    msg.text = messages[lang] || messages['en-US'];
+    msg.lang = lang;
 
     // Try to find a voice that matches the preference
     const voices = window.speechSynthesis.getVoices();
@@ -198,15 +198,15 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
           </div>
 
           <div className="flex gap-2 p-1 rounded-full bg-[var(--surface-1)] border border-[var(--border)] w-fit">
-            {(['en-US', 'hi-IN', 'kn-IN'] as const).map((lang) => (
+            {(['en-US', 'hi-IN', 'kn-IN'] as const).map((l) => (
               <button
-                key={lang}
-                onClick={() => setAiLanguage(lang)}
+                key={l}
+                onClick={() => setLang(l)}
                 className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
-                  aiLanguage === lang ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  lang === l ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                {lang === 'en-US' ? 'English' : lang === 'hi-IN' ? 'Hindi' : 'Kannada'}
+                {l === 'en-US' ? 'English' : l === 'hi-IN' ? 'Hindi' : 'Kannada'}
               </button>
             ))}
           </div>
