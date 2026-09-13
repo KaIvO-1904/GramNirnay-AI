@@ -12,7 +12,7 @@ class KnowledgeManager:
         self.location_service = LocationService()
         self.local_intel_engine = LocalIntelligenceEngine()
 
-    def get_intelligence(self, profile: BusinessProfile, financial_params: FinancialParams, location_identity: Optional[Any] = None) -> IntelligenceResult:
+    def get_intelligence(self, profile: BusinessProfile, financial_params: Any, location_identity: Optional[Any] = None) -> IntelligenceResult:
         # 1. Get matched schemes from RAG
         # Convert Pydantic models to dict for existing RAGEngine compatibility
         schemes = self.rag_engine.get_best_schemes(
