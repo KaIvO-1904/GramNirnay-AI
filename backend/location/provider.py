@@ -346,7 +346,7 @@ class MockLocationProvider(ILocationProvider):
             source="manual",
             currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
         )
-, provider_id: str) -> Optional[LocationIdentity]:
+
         try:
             with httpx.Client() as client:
                 resp = client.get(
