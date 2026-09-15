@@ -115,7 +115,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           state: selectedLocation.hierarchy.state,
           country: 'India',
           coordinates: { lat: selectedLocation.lat, lng: selectedLocation.lng },
-          source: 'gps',
+                            source: 'gps',
+                  currency: { code: 'INR', symbol: '₹', locale: 'en-IN' },
         });
       }
     } catch (e: any) {
@@ -141,7 +142,8 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           state: candidate.hierarchy.state,
           country: 'India',
           coordinates: { lat: candidate.lat, lng: candidate.lng },
-          source: 'manual',
+                            source: 'manual',
+                  currency: { code: 'INR', symbol: '₹', locale: 'en-IN' },
         });
       }
     } catch (e: any) {

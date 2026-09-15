@@ -80,7 +80,7 @@ export interface UserProfile {
 export interface Financials {
   // Investment
   total_project_cost: number;
-  own_contribution: number | null;
+  user_capital: number | null;
   verified_subsidy: number | null;
   financing_required: number;
   min_viable_capital?: number;
@@ -91,7 +91,7 @@ export interface Financials {
 
   // Expenses
   monthly_cogs: number | null;
-  monthly_operating_expenses: number | null;
+  monthly_expenses: number | null;
   monthly_emi: number | null;
 
   // Totals

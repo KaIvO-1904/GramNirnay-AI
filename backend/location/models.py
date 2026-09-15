@@ -14,14 +14,47 @@ class LocationHierarchy(BaseModel):
     taluk: Optional[str] = None
     village: str
 
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
+from enum import Enum
+
+class LocationSource(str, Enum):
+    GPS = "gps"
+    MANUAL = "manual"
+    IP = "ip"
+
+class LocationHierarchy(BaseModel):
+    country: str = "India"
+    state: str
+    district: str
+    taluk: Optional[str] = None
+    village: str
+
+class CurrencyInfo(BaseModel):
+    code: str
+    symbol: str
+    locale: str
+
 class LocationIdentity(BaseModel):
     """The canonical location identity."""
-    lat: float = Field(..., ge=-90, le=90)
-    lng: float = Field(..., ge=-180, le=180)
-    hierarchy: LocationHierarchy
+    name: str
+    district: str
+    state: str
+    country: str
+    pincode: Optional[str] = None
+    coordinates: Dict[str, float] = Field(..., description="{'lat': float, 'lng': float}")
+    source: str
+    currency: CurrencyInfo
+
+class LocationCandidate(BaseModel):
+    """A potential location match during search."""
     provider_id: str
-    confidence: float = Field(..., ge=0.0, le=1.0)
-    source: LocationSource
+    label: str # Human readable: "Anekal, Karnataka"
+    hierarchy: LocationHierarchy
+    lat: float
+    lng: float
+    confidence: float
+
 
 class LocationCandidate(BaseModel):
     """A potential location match during search."""
