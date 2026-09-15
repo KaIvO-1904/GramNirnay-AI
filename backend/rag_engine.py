@@ -175,12 +175,24 @@ class RAGEngine:
 
         return scheme
 
-    def get_best_schemes(self, profile: Dict[str, Any], financial_params: Dict[str, Any]) -> List[Scheme]:
+    def get_best_schemes(self, profile: Any, financial_params: Any) -> List[Scheme]:
         """
         Main entry point for scheme matching with enrichment.
         """
-        gap = financial_params.get("setup_cost", 0) - profile.get("availableCapital", 0)
-        category = profile.get("businessIdea", "general")
+        # Normalize inputs to handle both Pydantic models and dictionaries
+        def _get_val(obj, key, default=None):
+            if isinstance(obj, dict):
+                return obj.get(key, default)
+            return getattr(obj, key, default)
+
+        setup_cost = _get_val(financial_params, "setup_cost", 0)
+        available_capital = _get_val(profile, "available_capital", 0)
+
+        gap = setup_cost - available_capital
+        category = _get_val(profile, "business_idea", "general")
+        # If business_idea is a complex object or not just a string, handle it
+        if not isinstance(category, str):
+            category = str(category)
 
         eligible = self.filter_eligible_schemes(gap, category)
         ranked = self.rank_schemes_with_ai(category, eligible)
