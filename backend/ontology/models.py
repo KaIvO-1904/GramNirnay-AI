@@ -124,11 +124,27 @@ class FinancialResult(BaseModel):
     total_project_cost: float
     financing_required: float
     monthly_emi: float
+
+    # Income
+    monthly_revenue: float
+    annual_revenue: float
+
+    # Expenditure
+    monthly_expenses: float
+    annual_expenses: float
+
+    # Profits
     monthly_net_profit: float
     annual_net_profit: float
+
     roi_percent: float
     break_even_months: Optional[float]
     is_viable: bool
+
+    # Detailed Breakdown for UI
+    expenditure_breakdown: Dict[str, float] = Field(default_factory=dict)
+    income_breakdown: Dict[str, float] = Field(default_factory=dict)
+    assumptions: Dict[str, str] = Field(default_factory=dict)
 
 class SchemeMatch(BaseModel):
     """Model for a matched government scheme."""

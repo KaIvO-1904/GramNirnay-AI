@@ -111,7 +111,9 @@ class FinancialEngine:
         return {
             "total_project_cost": setup_cost,
             "monthly_revenue": monthly_revenue,
+            "annual_revenue": monthly_revenue * 12,
             "monthly_expenses": monthly_expenses,
+            "annual_expenses": monthly_expenses * 12,
             "financing_required": financing_req,
             "monthly_emi": emi,
             "monthly_net_profit": round(monthly_net_profit, 2),
@@ -121,7 +123,20 @@ class FinancialEngine:
             "is_viable": monthly_net_profit > 0 and break_even < 60,
             "user_capital": user_capital,
             "min_viable_capital": setup_cost * 0.2,
-            "capital_breakdown": capital_breakdown
+            "capital_breakdown": capital_breakdown,
+            "expenditure_breakdown": {
+                "Operating Expenses": monthly_expenses,
+                "Debt Service (EMI)": emi,
+                "Total": monthly_expenses + emi
+            },
+            "income_breakdown": {
+                "Direct Sales": monthly_revenue,
+                "Total": monthly_revenue
+            },
+            "assumptions": {
+                "revenue": "Based on regional benchmarks for the selected category.",
+                "expenses": "Estimated at 70% of revenue if not provided." if monthly_expenses == 0 else "User provided values."
+            }
         }
 
     def calculate_scenarios(self, params: Dict[str, Any]) -> Dict[str, ScenarioResult]:

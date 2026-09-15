@@ -263,11 +263,17 @@ export default function ReportPage() {
     };
   }, [sandbox, activePreset, levers, data]);
 
-  const emi = calculateEMI(effectiveSandbox.loanAmount, effectiveSandbox.interestRate, effectiveSandbox.tenureYears);
-  const breakEven = calculateBreakEven(effectiveSandbox.setupCost, effectiveSandbox.monthlyRevenue, effectiveSandbox.monthlyExpenses + emi);
-  const monthlyNet = effectiveSandbox.monthlyRevenue - effectiveSandbox.monthlyExpenses - emi;
-  const annualProfit = monthlyNet * 12;
-  const roi = calculateROI(annualProfit, effectiveSandbox.setupCost);
+  // REMOVED: Local recalculations of emi, breakEven, monthlyNet, annualProfit, roi
+  // These should now be derived from a backend call or pre-calculated scenarios.
+  // For the simulator, we will use the provided Scenario results from the API.
+
+  const currentScenario = data?.scenarios[activePreset] || data?.scenarios['base'];
+
+  const emi = currentScenario?.monthly_emi || 0;
+  const breakEven = currentScenario?.break_even_months;
+  const monthlyNet = currentScenario?.monthly_net_cash_flow || 0;
+  const annualProfit = currentScenario?.annual_net_cash_flow || 0;
+  const roi = currentScenario?.roi_percent || 0;
 
   const chartData = Array.from({ length: 12 }, (_, i) => ({
     month: `Mo ${i + 1}`,
@@ -438,19 +444,46 @@ export default function ReportPage() {
               <div className="p-8 rounded-[40px] border bg-var(--surface-0) shadow-sm h-full" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-2 rounded-xl bg-var(--surface-1)"><LayoutDashboard size={20} style={{ color: 'var(--accent)' }} /></div>
-                  <h2 className="text-xl font-black tracking-tight uppercase">Market Intelligence</h2>
+                  <h2 className="text-xl font-black tracking-tight uppercase">Financial Breakdown</h2>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
-                  <IntelWidget title="Market Demand" value={data.marketAnalysis.demand} variant="success" icon={TrendingUp} evidence={data.marketAnalysis.source} />
-                  <IntelWidget title="Competition" value={data.marketAnalysis.competition} variant="danger" icon={ShieldCheck} evidence={data.marketAnalysis.source} />
-                  <IntelWidget title="Infrastructure" value={data.marketAnalysis.accessibility} variant="default" icon={Rocket} evidence={data.marketAnalysis.source} />
-                  <IntelWidget title="Seasonality" value={data.marketAnalysis.seasonality} variant="warning" icon={Activity} evidence={data.marketAnalysis.source} />
-                </div>
-                <div className="mt-10 p-6 rounded-3xl bg-var(--surface-1) border border-var(--border) italic text-sm opacity-80 leading-relaxed">
-                  <div className="flex items-center gap-2 mb-2 not-italic font-bold uppercase text-[10px] opacity-50">
-                    <Info size={12}/> Analyst Perspective
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-var(--surface-1) border border-var(--border)">
+                    <div className="text-xs font-black uppercase opacity-50 mb-4 flex items-center gap-2">
+                      <DollarSign size={14} className="text-var(--success)"/> Monthly Income
+                    </div>
+                    <div className="space-y-2">
+                      {Object.entries(data.financials.income_breakdown || {}).map(([key, val]: [string, any]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="opacity-60">{key}</span>
+                          <span className="font-mono font-bold">₹{formatValue(val)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  "{data.interpreter_reasoning}"
+                  <div className="p-6 rounded-3xl bg-var(--surface-1) border border-var(--border)">
+                    <div className="text-xs font-black uppercase opacity-50 mb-4 flex items-center gap-2">
+                      <Activity size={14} className="text-var(--danger)"/> Monthly Expenditure
+                    </div>
+                    <div className="space-y-2">
+                      {Object.entries(data.financials.expenditure_breakdown || {}).map(([key, val]: [string, any]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="opacity-60">{key}</span>
+                          <span className="font-mono font-bold">₹{formatValue(val)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-6 rounded-3xl border-2 border-var(--accent) bg-var(--accent)/5">
+                    <div className="text-xs font-black uppercase opacity-50 mb-4">Net Cash Flow</div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm font-bold opacity-60">Monthly Net</span>
+                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.monthly_net_profit)}</span>
+                    </div>
+                    <div className="flex justify-between items-baseline mt-2">
+                      <span className="text-sm font-bold opacity-60">Annual Net</span>
+                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.annual_net_profit)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Reveal>
