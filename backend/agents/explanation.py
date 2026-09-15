@@ -16,12 +16,14 @@ class ExplanationAgent(BaseAgent):
         intelligence = context.get("intelligence")
         viability = context.get("viability")
         schemes = context.get("schemes")
+        location = context.get("location") # New field
 
         prompt = (
             "You are a supportive Rural Entrepreneurship Advisor. Your goal is to synthesize complex "
             "financial data into a personalized, encouraging, and actionable advice letter.\n\n"
             f"CONTEXT:\n"
             f"- User Profile: {profile}\n"
+            f"- Location Identity: {location}\n"
             f"- Financial Projections: {financials}\n"
             f"- Viability Report: {viability}\n"
             f"- Matched Schemes: {schemes}\n\n"
@@ -35,6 +37,7 @@ class ExplanationAgent(BaseAgent):
             "CONSTRAINTS:\n"
             "- ZERO FABRICATION: Only mention schemes and benefits present in the context.\n"
             "- STRICT DATA ADHERENCE: Use the financial numbers (ROI, Break-even, Monthly Profit) provided in the 'Financial Projections' and 'Viability Report' EXACTLY. Do NOT recalculate, estimate, or invent your own numbers.\n"
+            "- LOCATION STRICTNESS: Use ONLY the provided Location Identity. Do NOT mention any other cities, regions, or countries (e.g., no mention of Bali, Indonesia, or any foreign locales). Use the provided currency symbol.\n"
             "- TONE: Empathetic, professional, and accessible for a rural entrepreneur.\n"
             "- LANGUAGE: Use clear, jargon-free English.\n"
             "- FORMATTING: Provide the response in PLAIN TEXT. Do NOT use Markdown bolding (**), italics (*), or hashtags (#). Use clear headings with colons (e.g., 'VIABILITY VERDICT:')."

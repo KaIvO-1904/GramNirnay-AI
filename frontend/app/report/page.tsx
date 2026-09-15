@@ -487,11 +487,11 @@ export default function ReportPage() {
                     <div className="text-xs font-black uppercase opacity-50 mb-4">Net Cash Flow</div>
                     <div className="flex justify-between items-baseline">
                       <span className="text-sm font-bold opacity-60">Monthly Net</span>
-                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.monthly_net_profit)}</span>
+                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.monthly_net_cash_flow)}</span>
                     </div>
                     <div className="flex justify-between items-baseline mt-2">
                       <span className="text-sm font-bold opacity-60">Annual Net</span>
-                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.annual_net_profit)}</span>
+                      <span className="text-2xl font-black font-mono text-var(--accent)">₹{formatValue(data.financials.annual_net_cash_flow)}</span>
                     </div>
                   </div>
                 </div>
@@ -553,8 +553,8 @@ export default function ReportPage() {
                       <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${fundingMix.loanPct}%` }} title="External Loan" />
                     </div>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">₹{data.financials.user_capital?.toLocaleString()}</span></div>
-                      <div className="flex justify-between text-emerald-500 font-bold"><span>Est. Subsidy</span><span className="font-mono">₹{calculateSubsidyBenefit(data.financials.total_project_cost, data.matchedSchemes[0]?.benefit.subsidyPercent || 0).toLocaleString()}</span></div>
+                      <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">{data.financials.own_contribution !== null ? `₹${data.financials.own_contribution.toLocaleString()}` : 'Not provided'}</span></div>
+                      <div className="flex justify-between text-emerald-500 font-bold"><span>Est. Subsidy</span><span className="font-mono">{data.financials.verified_subsidy !== null ? `₹${data.financials.verified_subsidy.toLocaleString()}` : 'Not verified'}</span></div>
                       <div className="flex justify-between border-t pt-2 font-black"><span>Financing Gap</span><span className="font-mono">₹{data.financials.financing_required.toLocaleString()}</span></div>
                     </div>
                   </div>

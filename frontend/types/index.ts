@@ -35,6 +35,11 @@ export interface LocationIdentity {
   pincode?: string;
   coordinates: { lat: number; lng: number };
   source: string;
+  currency: {
+    code: string;
+    symbol: string;
+    locale: string;
+  };
 }
 
 export interface QuestionOption {
@@ -73,29 +78,47 @@ export interface UserProfile {
 }
 
 export interface Financials {
+  // Investment
   total_project_cost: number;
+  own_contribution: number | null;
+  verified_subsidy: number | null;
   financing_required: number;
   min_viable_capital?: number;
-  monthly_revenue: number;
-  monthly_expenses: number;
-  monthly_emi: number;
-  monthly_net_profit: number;
-  annual_net_profit: number;
-  roi_percent: number;
-  break_even_months: number;
+
+  // Revenue
+  monthly_revenue: number | null;
+  annual_revenue: number | null;
+
+  // Expenses
+  monthly_cogs: number | null;
+  monthly_operating_expenses: number | null;
+  monthly_emi: number | null;
+
+  // Totals
+  monthly_net_cash_flow: number | null;
+  annual_net_cash_flow: number | null;
+
+  // Metrics
+  roi_percent: number | null;
+  break_even_months: number | null;
   is_viable: boolean;
-  user_capital?: number;
-  capital_breakdown?: Record<string, number>;
-  income_breakdown?: Record<string, number>;
-  expenditure_breakdown?: Record<string, number>;
-  assumptions?: Record<string, string>;
+
+  // Detailed Breakdown
+  income_breakdown: Record<string, number | null>;
+  expenditure_breakdown: Record<string, number | null>;
+
+  assumptions: Record<string, string>;
+  provenance: {
+    source: string;
+    confidence: string;
+  };
 }
 
 export interface MarketAnalysis {
-  demand: number;
-  competition: number;
-  accessibility: number;
-  seasonality: number;
+  demand: number | null;
+  competition: number | null;
+  accessibility: number | null;
+  seasonality: number | null;
   source: string;
   confidence: string;
   reasoning?: string;
@@ -115,6 +138,7 @@ export interface Scheme {
     maxCapital: number;
     categories: string[];
   };
+  match_reason: string;
 }
 
 export interface ScenarioResult {
@@ -136,12 +160,13 @@ export interface ScenarioResult {
 }
 
 export interface AnalysisResult {
+  status: 'SUCCESS' | 'PARTIAL' | 'FAILED';
   is_demo?: boolean;
   viabilityScore: number;
   recommendation: string;
   headline?: string;
   category?: string;
-  location?: Location;
+  location: LocationIdentity;
   marketAnalysis: MarketAnalysis;
   financials: Financials;
   scenarios?: Record<string, ScenarioResult>;
@@ -156,6 +181,10 @@ export interface AnalysisResult {
   startup_roadmap?: Array<{week: number, tasks: string[]}>;
   regulatory_requirements?: Array<{doc: string, status: string, source: string}>;
   risk_matrix?: Array<{risk: string, severity: string, probability: string, mitigation: string}>;
+  provenance: {
+    generated_at: string;
+    model_version: string;
+  };
 }
 
 export interface VoiceTranscription {

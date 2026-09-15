@@ -79,63 +79,72 @@ class FinancialEngine:
         """
         Runs a full financial projection based on business parameters.
         """
-        setup_cost = params.get('setup_cost', 0.0)
-        user_capital = params.get('user_capital', 0.0)
-        monthly_revenue = params.get('monthly_revenue', 0.0)
-        monthly_expenses = params.get('monthly_expenses', 0.0)
-        interest_rate = params.get('interest_rate', 0.0)
+        setup_cost = params.get('setup_cost')
+        user_capital = params.get('user_capital')
+        monthly_revenue = params.get('monthly_revenue')
+        monthly_expenses = params.get('monthly_expenses')
+        interest_rate = params.get('interest_rate', 9.5)
         tenure = params.get('tenure_years', 5)
 
-        # Ensure expenses are not zero if revenue exists (Business Logic)
-        if monthly_revenue > 0 and monthly_expenses <= 0:
-            # Fallback to a benchmark expenditure if not provided (e.g., 60-80% of revenue for retail/agro)
-            # In a real system, this would come from an ontology based on the category.
-            monthly_expenses = monthly_revenue * 0.7
+        if setup_cost is None:
+            return {"error": "Missing critical input: setup_cost"}
 
-        financing_req = self.project_financing_gap(setup_cost, user_capital)
+        # Handle Expenses Fallback
+        if monthly_revenue is not None and monthly_revenue > 0 and (monthly_expenses is None or monthly_expenses <= 0):
+            # Fallback to a benchmark expenditure (70% of revenue)
+            monthly_expenses = monthly_revenue * 0.7
+            expense_source = "Benchmark Estimate (70% of revenue)"
+        else:
+            expense_source = "User provided"
+
+        # Deterministic Calculations
+        financing_req = self.project_financing_gap(setup_cost, user_capital or 0.0)
         emi = self.calculate_emi(financing_req, interest_rate, tenure)
 
-        monthly_net_profit = monthly_revenue - monthly_expenses - emi
-        annual_net_profit = monthly_net_profit * 12
+        # Net Cash Flow
+        m_rev = monthly_revenue or 0.0
+        m_exp = monthly_expenses or 0.0
+        monthly_net = m_rev - m_exp - emi
+        annual_net = monthly_net * 12
 
-        roi = self.calculate_roi(annual_net_profit, setup_cost)
-        break_even = self.calculate_break_even(setup_cost, monthly_revenue, monthly_expenses + emi)
-
-        capital_breakdown = params.get('capital_breakdown')
-        if not capital_breakdown:
-            capital_breakdown = {
-                "Owner Contribution": user_capital,
-                "External Financing": financing_req
-            }
+        roi = self.calculate_roi(annual_net, setup_cost)
+        break_even = self.calculate_break_even(setup_cost, m_rev, m_exp + emi)
 
         return {
             "total_project_cost": setup_cost,
-            "monthly_revenue": monthly_revenue,
-            "annual_revenue": monthly_revenue * 12,
-            "monthly_expenses": monthly_expenses,
-            "annual_expenses": monthly_expenses * 12,
             "financing_required": financing_req,
             "monthly_emi": emi,
-            "monthly_net_profit": round(monthly_net_profit, 2),
-            "annual_net_profit": round(annual_net_profit, 2),
+            "monthly_revenue": m_rev,
+            "annual_revenue": m_rev * 12,
+            "monthly_expenses": m_exp,
+            "annual_expenses": m_exp * 12,
+            "monthly_net_profit": round(monthly_net, 2),
+            "annual_net_profit": round(annual_net, 2),
             "roi_percent": roi,
             "break_even_months": break_even,
-            "is_viable": monthly_net_profit > 0 and break_even < 60,
-            "user_capital": user_capital,
+            "is_viable": monthly_net > 0 and break_even is not None and break_even < 60,
+            "own_contribution": user_capital,
+            "verified_subsidy": params.get('verified_subsidy'),
             "min_viable_capital": setup_cost * 0.2,
-            "capital_breakdown": capital_breakdown,
-            "expenditure_breakdown": {
-                "Operating Expenses": monthly_expenses,
-                "Debt Service (EMI)": emi,
-                "Total": monthly_expenses + emi
-            },
+            "monthly_cogs": m_exp * 0.4,
+            "monthly_operating_expenses": m_exp * 0.6,
             "income_breakdown": {
-                "Direct Sales": monthly_revenue,
-                "Total": monthly_revenue
+                "Direct Sales": m_rev,
+                "Total": m_rev
+            },
+            "expenditure_breakdown": {
+                "COGS/Inventory": round(m_exp * 0.4, 2),
+                "Operating Expenses": round(m_exp * 0.6, 2),
+                "Debt Service (EMI)": round(emi, 2),
+                "Total": round(m_exp + emi, 2)
             },
             "assumptions": {
                 "revenue": "Based on regional benchmarks for the selected category.",
-                "expenses": "Estimated at 70% of revenue if not provided." if monthly_expenses == 0 else "User provided values."
+                "expenses": expense_source
+            },
+            "provenance": {
+                "source": "FinancialEngine_v2",
+                "confidence": "High"
             }
         }
 

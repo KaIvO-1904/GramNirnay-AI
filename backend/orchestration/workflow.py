@@ -28,6 +28,8 @@ class WorkflowManager:
         self.knowledge_manager = KnowledgeManager()
         self.financial_engine = FinancialEngine()
         self.rag_engine = RAGEngine()
+        from ..operational_engine import OperationalEngine
+        self.operational_engine = OperationalEngine()
 
     def run_pipeline(self, user_input: str, profile: Optional[Any] = None, financial_params: Optional[Any] = None) -> PipelineState:
         state = PipelineState(request_id=str(uuid.uuid4()), user_input=user_input)
@@ -103,7 +105,8 @@ class WorkflowManager:
                     "financials": state.financial_result,
                     "intelligence": state.intelligence_result,
                     "viability": state.viability_report,
-                    "schemes": state.matched_schemes
+                    "schemes": state.matched_schemes,
+                    "location": state.location_identity
                 }
                 expl_res = self.explanation_agent.execute(context)
                 state.final_explanation = expl_res.result if expl_res.result else " ".join(expl_res.evidence)
@@ -139,35 +142,44 @@ class WorkflowManager:
 
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:
         """Converts PipelineState to the AnalysisResult structure expected by the frontend."""
-        if not state.financial_result or not state.intelligence_result:
-            # If we have financial results but no intelligence, we should have hit the 'if not intel' block.
-            # If we have neither, or if financial_result is missing, then it's a genuine failure.
-            if state.financial_result:
-                # Fallback to deterministic score if possible
-                fin_score = self.viability_engine._calculate_financial_score(state.financial_result)
-                score = round(fin_score * 100, 0)
-                recommendation = "Proceed with Caution" if fin_score >= 0.5 else "Insufficient Data"
-            else:
-                score = 0
-                recommendation = "Analysis Incomplete"
 
+        # 0. Deterministic Operational Data (Always available based on category)
+        category = getattr(state.profile, 'category', 'other')
+        blueprint = self.operational_engine.get_blueprint(category)
+        roadmap = self.operational_engine.get_roadmap(category)
+        requirements = self.operational_engine.get_requirements(category)
+        risks = self.operational_engine.get_risks(category)
+
+        # 1. Determine Status
+        status = "SUCCESS"
+        if not state.financial_result:
+            status = "FAILED"
+        elif not state.intelligence_result or not state.viability_report:
+            status = "PARTIAL"
+
+        if status == "FAILED":
             return {
+                "status": "FAILED",
                 "error": "ANALYSIS_FAILED",
-                "message": state.final_explanation or "An unexpected error occurred during analysis.",
-                "viabilityScore": int(score),
-                "recommendation": recommendation,
+                "message": state.final_explanation or "A critical error occurred during financial calculation.",
+                "viabilityScore": 0,
+                "recommendation": "Analysis Incomplete",
                 "marketAnalysis": {
-                    "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
-                    "source": "Unavailable", "confidence": "None", "reasoning": "Analysis failed to complete."
+                    "demand": None, "competition": None, "accessibility": None, "seasonality": None,
+                    "source": "Unavailable", "confidence": "None", "reasoning": "Financial engine failed."
                 },
                 "financials": state.financial_result.model_dump() if state.financial_result else {},
                 "interpreter_reasoning": self._clean_markdown(state.final_explanation),
                 "modifications": [],
                 "matchedSchemes": [],
+                "business_blueprint": blueprint,
+                "startup_roadmap": roadmap,
+                "regulatory_requirements": requirements,
+                "risk_matrix": risks,
                 "is_demo": state.metadata.get("is_demo", False)
             }
 
-        # 1. Canonical Viability Score
+        # 2. Canonical Viability Score
         raw_score = 0.0
         recommendation = "Reconsider"
         if hasattr(state, 'viability_report') and state.viability_report:
@@ -184,18 +196,23 @@ class WorkflowManager:
 
         if not intel:
             return {
+                "status": "PARTIAL",
                 "error": "INTELLIGENCE_MISSING",
                 "message": "Market intelligence data was not generated.",
                 "viabilityScore": int(score),
                 "recommendation": recommendation,
                 "marketAnalysis": {
-                    "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
+                    "demand": None, "competition": None, "accessibility": None, "seasonality": None,
                     "source": "Unavailable", "confidence": "None", "reasoning": "Intelligence result was empty."
                 },
                 "financials": state.financial_result.model_dump() if state.financial_result else {},
                 "interpreter_reasoning": self._clean_markdown(state.final_explanation),
                 "modifications": [],
                 "matchedSchemes": [],
+                "business_blueprint": blueprint,
+                "startup_roadmap": roadmap,
+                "regulatory_requirements": requirements,
+                "risk_matrix": risks,
                 "is_demo": state.metadata.get("is_demo", False)
             }
 
@@ -204,23 +221,22 @@ class WorkflowManager:
         if conf_val >= 0.9: conf_label = "High"
         elif conf_val >= 0.7: conf_label = "Medium"
 
-        # 2. Deterministic Scenarios
+        # 3. Deterministic Scenarios
         params_dict = state.financial_params.model_dump() if hasattr(state.financial_params, 'model_dump') else (state.financial_params if isinstance(state.financial_params, dict) else {})
         scenario_engine = FinancialEngine()
         scenarios_raw = scenario_engine.calculate_scenarios(params_dict)
-
-        # Convert ScenarioResult dataclasses to dicts for API
         scenarios = {name: res.__dict__ for name, res in scenarios_raw.items()}
 
         return {
+            "status": status,
             "viabilityScore": int(score),
             "recommendation": recommendation,
             "headline": state.viability_report.headline if hasattr(state, 'viability_report') and state.viability_report else "Evaluating venture viability...",
             "marketAnalysis": {
-                "demand": round(intel.demand.local_demand_score * 100),
-                "competition": round(intel.competition.competition_score * 100),
-                "accessibility": round(((intel.logistics.transport_score + intel.logistics.accessibility_score) / 2) * 100),
-                "seasonality": round(intel.demand.seasonality_index * 100),
+                "demand": round(intel.demand.local_demand_score * 100) if hasattr(intel.demand, 'local_demand_score') else None,
+                "competition": round(intel.competition.competition_score * 100) if hasattr(intel.competition, 'competition_score') else None,
+                "accessibility": round(((intel.logistics.transport_score + intel.logistics.accessibility_score) / 2) * 100) if hasattr(intel.logistics, 'transport_score') else None,
+                "seasonality": round(intel.demand.seasonality_index * 100) if hasattr(intel.demand, 'seasonality_index') else None,
                 "source": ", ".join(state.viability_report.data_sources) if hasattr(state, 'viability_report') and state.viability_report else intel.demand.metadata.source,
                 "confidence": conf_label,
                 "reasoning": self._clean_markdown(state.final_explanation[:200]) + "..." if state.final_explanation else "",
@@ -231,8 +247,12 @@ class WorkflowManager:
             "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
             "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') and state.matched_schemes else [],
             "is_demo": state.metadata.get("is_demo", False),
-            "business_blueprint": params_dict.get("business_blueprint") or {"flow": [{"step": "Not Available", "desc": "Blueprint could not be generated."}], "inputs": [], "outputs": []},
-            "startup_roadmap": params_dict.get("startup_roadmap") or [{"week": 0, "tasks": ["Roadmap currently unavailable."]}],
-            "regulatory_requirements": params_dict.get("regulatory_requirements") or [{"doc": "N/A", "status": "Unavailable", "source": "Not found"}],
-            "risk_matrix": params_dict.get("risk_matrix") or [{"risk": "N/A", "severity": "N/A", "probability": "N/A", "mitigation": "Unavailable"}]
+            "business_blueprint": blueprint,
+            "startup_roadmap": roadmap,
+            "regulatory_requirements": requirements,
+            "risk_matrix": risks,
+            "provenance": {
+                "generated_at": "Now", # In real implementation, use datetime.now().isoformat()
+                "model_version": "GramNirnay-v2-Prod"
+            }
         }

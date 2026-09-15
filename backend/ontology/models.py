@@ -108,7 +108,7 @@ class FinancialParams(BaseModel):
     """Parameters required for financial projection."""
     setup_cost: float = Field(..., description="Total initial cost to start the business")
     monthly_revenue: float = Field(0.0, description="Estimated monthly revenue")
-    monthly_expenses: float = Field(0.0, description="Estimated monthly operating expenses")
+    monthly_expenses: Optional[float] = Field(0.0, description="Estimated monthly operating expenses")
     interest_rate: float = Field(0.0, description="Expected loan interest rate")
     tenure_years: int = Field(5, description="Loan repayment period in years")
     user_capital: float = Field(0.0, description="Amount of capital provided by the user")
