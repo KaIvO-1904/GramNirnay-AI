@@ -5,22 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CheckCircle2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { searchLocation, resolveLocation, resolveGps } from '@/lib/api';
-
-interface LocationCandidate {
-  provider_id: string;
-  label: string;
-  hierarchy: {
-    state: string;
-    district: string;
-    village: string;
-  };
-  lat: number;
-  lng: number;
-  confidence: number;
-}
+import { LocationCandidate, LocationIdentity, Place } from '@/types';
 
 interface LocationJourneyProps {
-  onResolved: (location: any) => void;
+  onResolved: (location: LocationIdentity) => void;
   initialLocation?: any;
 }
 
@@ -62,7 +50,22 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
             const lng = position.coords.longitude;
 
             const resolved = await resolveGps(lat, lng);
-            setSelectedLocation(resolved);
+
+            // Adapt LocationIdentity to LocationCandidate for the confirmation UI
+            const candidate: LocationCandidate = {
+              provider_id: resolved.provider_id,
+              label: resolved.name,
+              hierarchy: {
+                state: resolved.state,
+                district: resolved.district,
+                village: resolved.name,
+              },
+              lat: resolved.coordinates.lat,
+              lng: resolved.coordinates.lng,
+              confidence: 1.0,
+            };
+
+            setSelectedLocation(candidate);
             setStep('confirming');
           } catch (e: any) {
             setError('Failed to resolve coordinates. Please search manually.');
@@ -88,8 +91,9 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           maximumAge: 60000,
         }
       );
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      const error = e as Error;
+      setError(error.message);
       setStep('resolving');
       setIsLoading(false);
     }
@@ -105,12 +109,13 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
       } catch (resolveErr) {
         console.warn('Canonical resolution failed, using detected location as fallback:', resolveErr);
         onResolved({
-          lat: selectedLocation.lat,
-          lng: selectedLocation.lng,
-          hierarchy: selectedLocation.hierarchy,
           provider_id: selectedLocation.provider_id,
-          confidence: selectedLocation.confidence,
-          source: 'gps'
+          name: selectedLocation.label,
+          district: selectedLocation.hierarchy.district,
+          state: selectedLocation.hierarchy.state,
+          country: 'India',
+          coordinates: { lat: selectedLocation.lat, lng: selectedLocation.lng },
+          source: 'gps',
         });
       }
     } catch (e: any) {
@@ -130,12 +135,13 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
       } catch (resolveErr) {
         console.warn('Canonical resolution failed, using candidate data as fallback:', resolveErr);
         onResolved({
-          lat: candidate.lat,
-          lng: candidate.lng,
-          hierarchy: candidate.hierarchy,
           provider_id: candidate.provider_id,
-          confidence: candidate.confidence,
-          source: 'manual'
+          name: candidate.label,
+          district: candidate.hierarchy.district,
+          state: candidate.hierarchy.state,
+          country: 'India',
+          coordinates: { lat: candidate.lat, lng: candidate.lng },
+          source: 'manual',
         });
       }
     } catch (e: any) {

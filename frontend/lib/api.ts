@@ -1,7 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-import { UserProfile, AnalysisResult, QuestionnaireResponse, Place, LocationIdentity, VoiceTranscription, AuthResponse } from '@/types';
+import { UserProfile, AnalysisResult, QuestionnaireResponse, Place, LocationIdentity, LocationCandidate, VoiceTranscription, AuthResponse, AnalysisHistoryItem } from '@/types';
 
-export async function searchLocation(query: string): Promise<Place[]> {
+export async function searchLocation(query: string): Promise<LocationCandidate[]> {
   const response = await fetch(`${API_BASE_URL}/api/location/search?query=${encodeURIComponent(query)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -86,7 +86,7 @@ export async function uploadVoice(audioBlob: Blob, languageHint?: string): Promi
   return response.json();
 }
 
-export async function confirmVoice(confirmedText: string): Promise<{ status: string }> {
+export async function confirmVoice(confirmedText: string): Promise<AnalysisResult> {
   const response = await fetch(`${API_BASE_URL}/api/voice/confirm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -120,13 +120,14 @@ export async function authenticateWithGoogleBackend(authData: GoogleAuthPayload)
       throw new Error(err.detail || 'Authentication failed');
     }
     return await response.json();
-  } catch (e: any) {
-    console.error("Authentication failed:", e.message);
-    throw e;
+  } catch (e: unknown) {
+    const error = e as Error;
+    console.error("Authentication failed:", error.message);
+    throw error;
   }
 }
 
-export async function fetchUserAnalysesBackend(userId: string): Promise<AnalysisResult[]> {
+export async function fetchUserAnalysesBackend(userId: string): Promise<AnalysisHistoryItem[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/analyses?user_id=${userId}`);
     if (response.ok) {
@@ -138,7 +139,7 @@ export async function fetchUserAnalysesBackend(userId: string): Promise<Analysis
   return [];
 }
 
-export async function saveUserAnalysisBackend(userId: string, analysis: AnalysisResult): Promise<AnalysisResult | null> {
+export async function saveUserAnalysisBackend(userId: string, analysis: AnalysisHistoryItem): Promise<AnalysisHistoryItem | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/analyses?user_id=${userId}`, {
       method: 'POST',

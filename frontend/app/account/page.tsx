@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp, FontSize, AnalysisHistoryItem } from '@/lib/AppContext';
+import { useApp, FontSize } from '@/lib/AppContext';
+import { AnalysisHistoryItem } from '@/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { FadeIn, Reveal, Stagger } from '@/components/motion';

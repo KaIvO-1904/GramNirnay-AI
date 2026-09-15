@@ -13,6 +13,19 @@ export interface Place {
   lng: number;
 }
 
+export interface LocationCandidate {
+  provider_id: string;
+  label: string;
+  hierarchy: {
+    state: string;
+    district: string;
+    village: string;
+  };
+  lat: number;
+  lng: number;
+  confidence: number;
+}
+
 export interface LocationIdentity {
   provider_id: string;
   name: string;
@@ -128,6 +141,7 @@ export interface AnalysisResult {
   recommendation: string;
   headline?: string;
   category?: string;
+  location?: Location;
   marketAnalysis: MarketAnalysis;
   financials: Financials;
   scenarios?: Record<string, ScenarioResult>;
@@ -146,12 +160,32 @@ export interface AnalysisResult {
 
 export interface VoiceTranscription {
   text: string;
+  normalized_text: string;
+  raw_text: string;
   confidence: number;
 }
 
 export interface AuthResponse {
-  user_id: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    provider: string;
+  };
   token: string;
+}
+
+export interface AnalysisHistoryItem {
+  id: string;
+  businessIdea: string;
+  district: string;
+  state: string;
+  date: string;
+  score: number;
+  recommendation: string;
+  projectCost: number;
+  data: AnalysisResult;
 }
 
 

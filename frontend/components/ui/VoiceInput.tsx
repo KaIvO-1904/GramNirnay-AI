@@ -149,10 +149,11 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
     setStatus('processing');
     try {
       const result = await uploadVoice(blob);
-      setTranscript(result.normalized_text || result.raw_text);
+      setTranscript(result.normalized_text || result.raw_text || result.text);
       setStatus('review');
-    } catch (err: any) {
-      setError(err.message || 'Failed to process voice input.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to process voice input.');
       setStatus('idle');
     }
   };
@@ -170,11 +171,14 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
         // Also save to backend
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (user.id) {
+          // Map AnalysisResult to AnalysisHistoryItem
           await saveUserAnalysisBackend(user.id, {
+            id: `analysis-${Date.now()}`,
             businessIdea: transcript,
-            district: result.marketAnalysis?.district || 'Unknown',
-            state: result.marketAnalysis?.state || 'Unknown',
-            score: result.viabilityScore || 0,
+            district: result.location?.district || 'Unknown',
+            state: result.location?.state || 'Unknown',
+            date: new Date().toISOString().split('T')[0],
+            score: result.viabilityScore,
             recommendation: result.recommendation,
             projectCost: result.financials?.total_project_cost || 0,
             data: result
@@ -182,8 +186,9 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
         }
         router.push('/report');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to confirm transcription.');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'Failed to confirm transcription.');
       setStatus('review');
     }
   };

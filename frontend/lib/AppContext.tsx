@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authenticateWithGoogleBackend, fetchUserAnalysesBackend, saveUserAnalysisBackend } from '@/lib/api';
 import { triggerGoogleSignIn } from '@/lib/firebase';
+import { AnalysisHistoryItem } from '@/types';
 
 export type FontSize = 'normal' | 'large' | 'xlarge';
 
@@ -11,18 +12,6 @@ export interface UserAccount {
   email: string;
   avatar: string;
   provider: 'google' | 'guest';
-}
-
-export interface AnalysisHistoryItem {
-  id: string;
-  businessIdea: string;
-  district: string;
-  state: string;
-  date: string;
-  score: number;
-  recommendation: string;
-  projectCost: number;
-  data: any;
 }
 
 interface AppContextType {
@@ -126,12 +115,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
 
       const res = await authenticateWithGoogleBackend(payload);
-      const authenticatedUser: UserAccount = res?.user || {
-        id: googleUser.uid,
-        name: googleUser.name,
-        email: googleUser.email,
-        avatar: googleUser.avatar,
-        provider: 'google',
+      const authenticatedUser: UserAccount = {
+        id: res?.user?.id || googleUser.uid,
+        name: res?.user?.name || googleUser.name,
+        email: res?.user?.email || googleUser.email,
+        avatar: res?.user?.avatar || googleUser.avatar,
+        provider: (res?.user?.provider || 'google') as 'google' | 'guest',
       };
 
       setUser(authenticatedUser);
@@ -145,8 +134,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setHistory(remoteAnalyses);
         localStorage.setItem('analysis_history', JSON.stringify(remoteAnalyses));
       }
-    } catch (e: any) {
-      if (e.message !== "Sign in cancelled") {
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message !== "Sign in cancelled") {
         console.error("Sign in error:", e);
         alert(`Google Sign-In: ${e.message || 'Authentication could not be completed'}`);
       }
