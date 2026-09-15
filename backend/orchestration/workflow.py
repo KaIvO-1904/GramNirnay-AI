@@ -140,16 +140,27 @@ class WorkflowManager:
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:
         """Converts PipelineState to the AnalysisResult structure expected by the frontend."""
         if not state.financial_result or not state.intelligence_result:
+            # If we have financial results but no intelligence, we should have hit the 'if not intel' block.
+            # If we have neither, or if financial_result is missing, then it's a genuine failure.
+            if state.financial_result:
+                # Fallback to deterministic score if possible
+                fin_score = self.viability_engine._calculate_financial_score(state.financial_result)
+                score = round(fin_score * 100, 0)
+                recommendation = "Proceed with Caution" if fin_score >= 0.5 else "Insufficient Data"
+            else:
+                score = 0
+                recommendation = "Analysis Incomplete"
+
             return {
                 "error": "ANALYSIS_FAILED",
                 "message": state.final_explanation or "An unexpected error occurred during analysis.",
-                "viabilityScore": 0,
-                "recommendation": "Analysis Incomplete",
+                "viabilityScore": int(score),
+                "recommendation": recommendation,
                 "marketAnalysis": {
                     "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
                     "source": "Unavailable", "confidence": "None", "reasoning": "Analysis failed to complete."
                 },
-                "financials": {},
+                "financials": state.financial_result.model_dump() if state.financial_result else {},
                 "interpreter_reasoning": self._clean_markdown(state.final_explanation),
                 "modifications": [],
                 "matchedSchemes": [],
@@ -175,8 +186,8 @@ class WorkflowManager:
             return {
                 "error": "INTELLIGENCE_MISSING",
                 "message": "Market intelligence data was not generated.",
-                "viabilityScore": 0,
-                "recommendation": "Analysis Incomplete",
+                "viabilityScore": int(score),
+                "recommendation": recommendation,
                 "marketAnalysis": {
                     "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
                     "source": "Unavailable", "confidence": "None", "reasoning": "Intelligence result was empty."
@@ -220,8 +231,8 @@ class WorkflowManager:
             "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
             "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') and state.matched_schemes else [],
             "is_demo": state.metadata.get("is_demo", False),
-            "business_blueprint": params_dict.get("business_blueprint") or {"flow": [], "inputs": [], "outputs": []},
-            "startup_roadmap": params_dict.get("startup_roadmap") or [],
-            "regulatory_requirements": params_dict.get("regulatory_requirements") or [],
-            "risk_matrix": params_dict.get("risk_matrix") or []
+            "business_blueprint": params_dict.get("business_blueprint") or {"flow": [{"step": "Not Available", "desc": "Blueprint could not be generated."}], "inputs": [], "outputs": []},
+            "startup_roadmap": params_dict.get("startup_roadmap") or [{"week": 0, "tasks": ["Roadmap currently unavailable."]}],
+            "regulatory_requirements": params_dict.get("regulatory_requirements") or [{"doc": "N/A", "status": "Unavailable", "source": "Not found"}],
+            "risk_matrix": params_dict.get("risk_matrix") or [{"risk": "N/A", "severity": "N/A", "probability": "N/A", "mitigation": "Unavailable"}]
         }

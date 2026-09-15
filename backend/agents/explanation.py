@@ -34,6 +34,7 @@ class ExplanationAgent(BaseAgent):
             "4. FINAL ACTION STEP: Provide one clear, immediate next step for the user.\n\n"
             "CONSTRAINTS:\n"
             "- ZERO FABRICATION: Only mention schemes and benefits present in the context.\n"
+            "- STRICT DATA ADHERENCE: Use the financial numbers (ROI, Break-even, Monthly Profit) provided in the 'Financial Projections' and 'Viability Report' EXACTLY. Do NOT recalculate, estimate, or invent your own numbers.\n"
             "- TONE: Empathetic, professional, and accessible for a rural entrepreneur.\n"
             "- LANGUAGE: Use clear, jargon-free English.\n"
             "- FORMATTING: Provide the response in PLAIN TEXT. Do NOT use Markdown bolding (**), italics (*), or hashtags (#). Use clear headings with colons (e.g., 'VIABILITY VERDICT:')."

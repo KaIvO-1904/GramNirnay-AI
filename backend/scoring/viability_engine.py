@@ -35,16 +35,18 @@ class ViabilityEngine:
         intel: Optional[LocalIntelligenceResult]
     ) -> ViabilityReport:
         if not intel:
-            # Return a schema-valid report with neutral fallback values
+            # Calculate Financial Score since intelligence is missing
+            fin_score = self._calculate_financial_score(financials)
+            # Return a schema-valid report using the financial score as the base
             return ViabilityReport(
-                overall_score=0.0,
-                recommendation="Insufficient Data",
-                headline="Viability could not be fully calculated due to missing market intelligence.",
-                component_scores={},
-                positive_factors=[],
+                overall_score=round(fin_score, 2),
+                recommendation="Proceed with Caution" if fin_score >= 0.5 else "Insufficient Data",
+                headline="Viability calculated based on financial projections; market intelligence is unavailable.",
+                component_scores={"financials": self._create_component("Financials", fin_score, "Financial feasibility based on ROI and Break-even.")},
+                positive_factors=["Financial projections show positive potential"] if fin_score >= 0.5 else [],
                 negative_factors=["Market intelligence data unavailable"],
                 risk_flags=["MISSING_INTELLIGENCE"],
-                overall_confidence=0.0,
+                overall_confidence=0.3, # Low confidence due to missing intel
                 data_sources=[]
             )
         # 1. Component Score Mapping
