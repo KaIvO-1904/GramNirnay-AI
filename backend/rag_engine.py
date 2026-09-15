@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
-from ..intelligence.client import ai_client
-from ..structured_output import StructuredOutputHandler
-from ..ontology.models import Scheme, SchemeRankResult, SchemeEnrichmentResult
+from .intelligence.client import ai_client
+from .structured_output import StructuredOutputHandler
+from .ontology.models import Scheme, SchemeRankResult, SchemeEnrichmentResult
 import os
 import json
 try:

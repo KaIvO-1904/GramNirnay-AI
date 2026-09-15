@@ -1,4 +1,4 @@
-from ..base_service import BaseService
+from ...services.base_service import BaseService
 from ...core.schemas.domain import VentureProfile
 from ...core.schemas.validation import ValidationResult, ValidationIssue
 from typing import List

@@ -1,7 +1,7 @@
 from typing import Dict, Any
-from ..intelligence.client import ai_client
-from ..structured_output import StructuredOutputHandler
-from ..ontology.models import MarketProxyResult
+from .intelligence.client import ai_client
+from .structured_output import StructuredOutputHandler
+from .ontology.models import MarketProxyResult
 import json
 import os
 try:

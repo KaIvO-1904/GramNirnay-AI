@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Type
+from pydantic import BaseModel
 from ..location.models import LocationIdentity
 from .models import (
     CompetitionAnalysis,

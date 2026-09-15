@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     app_title: str = "GramNirnay.ai Backend"
     app_debug: bool = False
     demo_mode: bool = False
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/gramnirnay"
     app_port: int = 8000
     app_host: str = "0.0.0.0"
     allowed_origins: str = "*"

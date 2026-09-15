@@ -1,8 +1,8 @@
 import json
 from typing import Dict, Any, Optional
-from ..intelligence.client import ai_client
-from ..structured_output import StructuredOutputHandler
-from ..ontology.models import BlueprintEnrichment, InterpretationResult
+from .intelligence.client import ai_client
+from .structured_output import StructuredOutputHandler
+from .ontology.models import BlueprintEnrichment, InterpretationResult
 import os
 try:
     from .config import settings
@@ -22,8 +22,6 @@ class BusinessInterpreter:
     def __init__(self):
         self.client = ai_client.client
         self.model = ai_client.model
-
-    def interpret(self, idea: str, available_capital: float = 0.0) -> Dict[str, Any]:
 
     def interpret(self, idea: str, available_capital: float = 0.0) -> Dict[str, Any]:
         """

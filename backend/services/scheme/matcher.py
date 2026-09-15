@@ -1,4 +1,4 @@
-from ..base_service import BaseService
+from ...services.base_service import BaseService
 from ...rag_engine import RAGEngine
 from ...core.schemas.domain import Scheme, VentureProfile, FinancialBenchmarks
 from typing import List, Dict, Any

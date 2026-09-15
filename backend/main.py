@@ -50,7 +50,7 @@ def rate_limit(request: Request):
         raise HTTPException(status_code=429, detail="Too many requests. Please slow down.")
     RATE_LIMIT_STORE[client_ip].append(now)
 
-async def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+async def get_current_user(request: Request, db: Session = Depends(get_db)) -> Any:
     """
     Verify the Firebase ID token from the Authorization header.
     Returns the User record from the database.
@@ -190,7 +190,7 @@ async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 @app.post("/api/memory/correct", dependencies=[Depends(get_current_user)])
 async def record_correction(
-    current_user: User,
+    current_user: Any,
     session_id: str,
     phrase: str,
     canonical: str,
@@ -293,7 +293,7 @@ async def google_auth(auth_req: GoogleAuthRequest, db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
 @app.get("/api/user/analyses", dependencies=[Depends(get_current_user)])
-async def get_user_analyses(current_user: User, db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+async def get_user_analyses(current_user: Any, db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
     analyses = db.query(Analysis).filter(Analysis.user_id == current_user.id).all()
     return [
         {
@@ -310,7 +310,7 @@ async def get_user_analyses(current_user: User, db: Session = Depends(get_db)) -
     ]
 
 @app.post("/api/user/analyses", dependencies=[Depends(get_current_user)])
-async def save_user_analysis(current_user: User, analysis: SavedAnalysisRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
+async def save_user_analysis(current_user: Any, analysis: SavedAnalysisRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
     import time
     import uuid
     analysis_item = Analysis(
