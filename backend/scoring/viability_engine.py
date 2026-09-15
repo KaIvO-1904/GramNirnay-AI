@@ -35,9 +35,11 @@ class ViabilityEngine:
         intel: Optional[LocalIntelligenceResult]
     ) -> ViabilityReport:
         if not intel:
-            # Return a report with zeroed scores if intelligence is missing
+            # Return a schema-valid report with neutral fallback values
             return ViabilityReport(
                 overall_score=0.0,
+                recommendation="Insufficient Data",
+                headline="Viability could not be fully calculated due to missing market intelligence.",
                 component_scores={},
                 positive_factors=[],
                 negative_factors=["Market intelligence data unavailable"],
