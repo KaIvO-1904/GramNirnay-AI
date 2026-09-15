@@ -1,4 +1,5 @@
 import uuid
+import re
 from typing import Optional, Any, Dict
 from .state import PipelineState
 from ..logger import logger
@@ -125,6 +126,17 @@ class WorkflowManager:
             state.final_explanation = f"A technical error occurred while processing your analysis. Please try again."
             return state
 
+    def _clean_markdown(self, text: str) -> str:
+        """Removes common Markdown formatting markers for a cleaner plain-text display."""
+        if not text:
+            return ""
+        # Remove bold/italic markers: **, __, *, _
+        text = re.sub(r'(\*\*|__)', '', text)
+        text = re.sub(r'(\*|_)', '', text)
+        # Remove hashtag headers: #
+        text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
+        return text.strip()
+
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:
         """Converts PipelineState to the AnalysisResult structure expected by the frontend."""
         if not state.financial_result or not state.intelligence_result:
@@ -132,13 +144,13 @@ class WorkflowManager:
                 "error": "ANALYSIS_FAILED",
                 "message": state.final_explanation or "An unexpected error occurred during analysis.",
                 "viabilityScore": 0,
-                "recommendation": "Error",
+                "recommendation": "Analysis Incomplete",
                 "marketAnalysis": {
                     "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
                     "source": "Unavailable", "confidence": "None", "reasoning": "Analysis failed to complete."
                 },
                 "financials": {},
-                "interpreter_reasoning": state.final_explanation,
+                "interpreter_reasoning": self._clean_markdown(state.final_explanation),
                 "modifications": [],
                 "matchedSchemes": [],
                 "is_demo": state.metadata.get("is_demo", False)
@@ -164,13 +176,13 @@ class WorkflowManager:
                 "error": "INTELLIGENCE_MISSING",
                 "message": "Market intelligence data was not generated.",
                 "viabilityScore": 0,
-                "recommendation": "Error",
+                "recommendation": "Analysis Incomplete",
                 "marketAnalysis": {
                     "demand": 0, "competition": 0, "accessibility": 0, "seasonality": 0,
                     "source": "Unavailable", "confidence": "None", "reasoning": "Intelligence result was empty."
                 },
                 "financials": state.financial_result.model_dump() if state.financial_result else {},
-                "interpreter_reasoning": state.final_explanation,
+                "interpreter_reasoning": self._clean_markdown(state.final_explanation),
                 "modifications": [],
                 "matchedSchemes": [],
                 "is_demo": state.metadata.get("is_demo", False)
@@ -200,7 +212,7 @@ class WorkflowManager:
                 "seasonality": round(intel.demand.seasonality_index * 100),
                 "source": ", ".join(state.viability_report.data_sources) if hasattr(state, 'viability_report') and state.viability_report else intel.demand.metadata.source,
                 "confidence": conf_label,
-                "reasoning": state.final_explanation[:200] + "..." if state.final_explanation else ""
+                "reasoning": self._clean_markdown(state.final_explanation[:200]) + "..." if state.final_explanation else "",
             },
             "financials": state.financial_result.model_dump() if state.financial_result else {},
             "scenarios": scenarios,

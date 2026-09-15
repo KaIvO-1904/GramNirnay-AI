@@ -35,7 +35,8 @@ class ExplanationAgent(BaseAgent):
             "CONSTRAINTS:\n"
             "- ZERO FABRICATION: Only mention schemes and benefits present in the context.\n"
             "- TONE: Empathetic, professional, and accessible for a rural entrepreneur.\n"
-            "- LANGUAGE: Use clear, jargon-free English."
+            "- LANGUAGE: Use clear, jargon-free English.\n"
+            "- FORMATTING: Provide the response in PLAIN TEXT. Do NOT use Markdown bolding (**), italics (*), or hashtags (#). Use clear headings with colons (e.g., 'VIABILITY VERDICT:')."
         )
 
         try:
