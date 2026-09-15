@@ -1,113 +1,58 @@
 {
-  "dairy_ramanagara": {
+  "1": {
     "profile": {
-      "businessIdea": "Dairy Farming with Gir Cows",
-      "availableCapital": 200000,
-      "location": {
-        "district": "Ramanagara",
-        "state": "Karnataka"
-      },
-      "experience": 2,
-      "targetAudience": "Local milk cooperatives and urban centers"
+      "businessIdea": "Country Chicken Poultry Farm",
+      "category": "poultry",
+      "availableCapital": 126000,
+      "location": { "district": "Mayurbhanj", "state": "Odisha" },
+      "experience": 1
     },
     "financial_params": {
-      "setup_cost": 550000,
-      "monthly_revenue": 65000,
-      "monthly_expenses": 35000,
+      "setup_cost": 210000,
+      "monthly_revenue": 45000,
+      "monthly_expenses": 28000,
       "interest_rate": 9.0,
       "tenure_years": 5,
-      "user_capital": 200000
+      "user_capital": 126000
     },
     "market_proxies": {
-      "demand": 85,
-      "competition": 40,
-      "accessibility": 70,
-      "seasonality": 20,
-      "source": "Regional Livestock Census 2024"
+      "demand": 80.0,
+      "competition": 40.0,
+      "accessibility": 70.0,
+      "seasonality": 20.0,
+      "reasoning": "High demand for native chicken in Mayurbhanj."
     },
     "ai_insights": {
-      "risks": [
-        "Fodder price volatility",
-        "Disease outbreak (FMD)"
-      ],
-      "modifications": [
-        "Invest in automated milking machines to reduce labor cost",
-        "Implement a direct-to-consumer subscription model for A2 milk"
-      ]
+      "modifications": ["Integrate automated ventilation", "Establish direct tie-ups with hotel chains"],
+      "confidence": 0.9
     }
   },
-  "poultry_namakkal": {
+  "2": {
     "profile": {
-      "businessIdea": "Commercial Broiler Poultry Unit",
-      "availableCapital": 300000,
-      "location": {
-        "district": "Namakkal",
-        "state": "Tamil Nadu"
-      },
-      "experience": 5,
-      "targetAudience": "Regional wholesale markets"
+      "businessIdea": "Indigenous A2 Dairy Farm",
+      "category": "dairy",
+      "availableCapital": 231000,
+      "location": { "district": "Anand", "state": "Gujarat" },
+      "experience": 2
     },
     "financial_params": {
-      "setup_cost": 820000,
-      "monthly_revenue": 110000,
-      "monthly_expenses": 60000,
+      "setup_cost": 420000,
+      "monthly_revenue": 65000,
+      "monthly_expenses": 32000,
       "interest_rate": 8.5,
       "tenure_years": 5,
-      "user_capital": 300000
+      "user_capital": 231000
     },
     "market_proxies": {
-      "demand": 92,
-      "competition": 60,
-      "accessibility": 85,
-      "seasonality": 30,
-      "source": "Tamil Nadu Poultry Federation Report"
+      "demand": 90.0,
+      "competition": 60.0,
+      "accessibility": 80.0,
+      "seasonality": 10.0,
+      "reasoning": "Strong cooperative support in Anand."
     },
     "ai_insights": {
-      "risks": [
-        "Bird flu risk",
-        "Feed cost fluctuations"
-      ],
-      "modifications": [
-        "Adopt climate-controlled housing for better growth rates",
-        "Diversify into organic poultry for higher margins"
-      ]
-    }
-  },
-  "retail_bareilly": {
-    "profile": {
-      "businessIdea": "Agro-Inputs & Bio-Fertilizer Store",
-      "availableCapital": 100000,
-      "location": {
-        "district": "Bareilly",
-        "state": "Uttar Pradesh"
-      },
-      "experience": 1,
-      "targetAudience": "Small-scale farmers in peri-urban areas"
-    },
-    "financial_params": {
-      "setup_cost": 300000,
-      "monthly_revenue": 45000,
-      "monthly_expenses": 25000,
-      "interest_rate": 10.0,
-      "tenure_years": 5,
-      "user_capital": 100000
-    },
-    "market_proxies": {
-      "demand": 75,
-      "competition": 55,
-      "accessibility": 60,
-      "seasonality": 40,
-      "source": "UP Agri-Marketing Board"
-    },
-    "ai_insights": {
-      "risks": [
-        "Seasonal demand drop",
-        "Inventory spoilage"
-      ],
-      "modifications": [
-        "Offer soil testing services to build customer trust",
-        "Partner with local FPOs for bulk distribution"
-      ]
+      "modifications": ["Adopt silage making", "Register as Organic Certified"],
+      "confidence": 0.9
     }
   }
 }

@@ -434,10 +434,14 @@ async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
     try:
         import os
         scenario_path = os.path.join(settings.data_dir, "demo_scenarios.json")
+        if not os.path.exists(scenario_path):
+            logger.error(f"Demo scenarios file not found at: {scenario_path}")
+            raise HTTPException(status_code=500, detail=f"Demo data file missing: {scenario_path}")
+
         with open(scenario_path, "r") as f:
             scenarios = json.load(f)
         if scenario_id not in scenarios:
-            raise HTTPException(status_code=404, detail="Scenario not found")
+            raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found")
         scenario = scenarios[scenario_id]
         financials = fin_engine.compute_full_model(scenario["financial_params"])
         financials["user_capital"] = scenario["profile"]["availableCapital"]
@@ -466,6 +470,8 @@ async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
     except FileNotFoundError:
         logger.error("demo_scenarios.json not found")
         raise HTTPException(status_code=500, detail="Demo data not found")
+    except HTTPException as he:
+        raise he
     except Exception as e:
         logger.exception(f"Error retrieving demo {scenario_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
