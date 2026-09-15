@@ -96,13 +96,14 @@ class BusinessInterpreter:
                     enrichment_prompt = (
                         f"Based on these financial parameters: {json.dumps(result)}, "
                         f"for a business idea: '{idea}' in {district}, {state}, "
-                        f"generate a professional business_blueprint, startup_roadmap, regulatory_requirements, and risk_matrix. "
-                        f"Return ONLY a JSON object with these four keys. ZERO FABRICATION."
+                        f"generate a COMPACT business_blueprint, startup_roadmap, regulatory_requirements, and risk_matrix. "
+                        f"Use short phrases. Return ONLY a JSON object with these four keys. ZERO FABRICATION."
                     )
                     resp = self.client.chat.completions.create(
                         model=self.model,
                         messages=[{"role": "user", "content": enrichment_prompt}],
-                        response_format={"type": "json_object"}
+                        response_format={"type": "json_object"},
+                        max_tokens=1000
                     )
                     return resp.choices[0].message.content
 

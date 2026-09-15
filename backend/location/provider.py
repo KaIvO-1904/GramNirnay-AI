@@ -105,8 +105,6 @@ class GoogleLocationProvider(ILocationProvider):
             return None
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
-        # Google Maps doesn't have a direct "resolve by place_id" that returns the same structure as reverse_geocode
-        # without the place_id endpoint, but for a simple a manual resolve, we can use the place_id to get details.
         try:
             with httpx.Client() as client:
                 resp = client.get(
@@ -119,10 +117,26 @@ class GoogleLocationProvider(ILocationProvider):
                     return None
 
                 result = data.get("result", {})
-                formatted_address = result.get("formatted_address", "")
-                # For simplicity, we'll treat this as a manual search query to get the structured hierarchy
-                # in a real production app, we'd parse the address components from the place details.
-                return self.forward_geocode(formatted_address)[0] if self.forward_geocode(formatted_address) else None
+
+                # Parse address components directly from result
+                addr_map = {comp["types"][0]: comp["long_name"] for comp in result.get("address_components", [])}
+
+                state = addr_map.get("administrative_area_level_1", "Unknown")
+                district = addr_map.get("administrative_area_level_2") or addr_map.get("locality", "Unknown")
+                village = addr_map.get("sublocality_level_1") or addr_map.get("neighborhood", "Unknown")
+
+                return LocationIdentity(
+                    lat=result.get("geometry", {}).get("location", {}).get("lat", 0.0),
+                    lng=result.get("geometry", {}).get("location", {}).get("lng", 0.0),
+                    hierarchy=LocationHierarchy(
+                        state=state,
+                        district=district,
+                        village=village
+                    ),
+                    provider_id=provider_id,
+                    confidence=1.0,
+                    source="manual"
+                )
         except Exception as e:
             logger.error(f"Google Resolve Hierarchy Error: {e}")
             return None

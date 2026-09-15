@@ -86,6 +86,12 @@ class FinancialEngine:
         interest_rate = params.get('interest_rate', 0.0)
         tenure = params.get('tenure_years', 5)
 
+        # Ensure expenses are not zero if revenue exists (Business Logic)
+        if monthly_revenue > 0 and monthly_expenses <= 0:
+            # Fallback to a benchmark expenditure if not provided (e.g., 60-80% of revenue for retail/agro)
+            # In a real system, this would come from an ontology based on the category.
+            monthly_expenses = monthly_revenue * 0.7
+
         financing_req = self.project_financing_gap(setup_cost, user_capital)
         emi = self.calculate_emi(financing_req, interest_rate, tenure)
 
