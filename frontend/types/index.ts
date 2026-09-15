@@ -59,6 +59,32 @@ export interface Financials {
   assumptions?: Record<string, string>;
 }
 
+export interface MarketAnalysis {
+  demand: number;
+  competition: number;
+  accessibility: number;
+  seasonality: number;
+  source: string;
+  confidence: string;
+  reasoning?: string;
+}
+
+export interface Scheme {
+  schemeId: string;
+  name: string;
+  ministry: string;
+  benefit: {
+    subsidyPercent: number;
+    loanAmount: number;
+  };
+  sourceUrl: string;
+  eligibility: {
+    minCapital: number;
+    maxCapital: number;
+    categories: string[];
+  };
+}
+
 export interface ScenarioResult {
   setup_cost: number;
   user_contribution: number;
@@ -98,4 +124,5 @@ export interface AnalysisResult {
   regulatory_requirements?: Array<{doc: string, status: string, source: string}>;
   risk_matrix?: Array<{risk: string, severity: string, probability: string, mitigation: string}>;
 }
+
 
