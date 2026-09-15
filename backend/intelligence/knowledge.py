@@ -21,26 +21,17 @@ class KnowledgeManager:
         )
 
         # 2. Local Intelligence (The new engine)
-        # Use provided coordinates, otherwise fallback to default
         if location_identity:
             local_intel = self.local_intel_engine.analyze_location(
                 location_identity,
                 profile.category.value
             )
         else:
-            # Default fallback coordinates
-            from ..location.models import LocationIdentity, LocationHierarchy
-            mock_coords = LocationIdentity(
-                lat=12.97, lng=77.59,
-                hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
-                provider_id="bengaluru_city",
-                confidence=1.0,
-                source="manual"
-            )
-            local_intel = self.local_intel_engine.analyze_location(
-                mock_coords,
-                profile.category.value
-            )
+            # Location could not be resolved.
+            # Instead of silently defaulting to Bengaluru, mark intelligence as unavailable.
+            local_intel = None
+            from ..logger import logger
+            logger.warning(f"Intelligence analysis failed: No resolved location identity for profile {profile.business_idea}")
 
         # 3. Get regional intelligence from LocationService
         constraints = self.location_service.get_regional_constraints(profile.location)

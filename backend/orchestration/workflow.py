@@ -144,6 +144,7 @@ class WorkflowManager:
                 "is_demo": state.metadata.get("is_demo", False)
             }
 
+        # 1. Canonical Viability Score
         raw_score = 0.0
         recommendation = "Reconsider"
         if hasattr(state, 'viability_report') and state.viability_report:
@@ -180,7 +181,13 @@ class WorkflowManager:
         if conf_val >= 0.9: conf_label = "High"
         elif conf_val >= 0.7: conf_label = "Medium"
 
-        params = state.financial_params.model_dump() if hasattr(state.financial_params, 'model_dump') else (state.financial_params if isinstance(state.financial_params, dict) else {})
+        # 2. Deterministic Scenarios
+        params_dict = state.financial_params.model_dump() if hasattr(state.financial_params, 'model_dump') else (state.financial_params if isinstance(state.financial_params, dict) else {})
+        scenario_engine = FinancialEngine()
+        scenarios_raw = scenario_engine.calculate_scenarios(params_dict)
+
+        # Convert ScenarioResult dataclasses to dicts for API
+        scenarios = {name: res.__dict__ for name, res in scenarios_raw.items()}
 
         return {
             "viabilityScore": int(score),
@@ -196,12 +203,13 @@ class WorkflowManager:
                 "reasoning": state.final_explanation[:200] + "..." if state.final_explanation else ""
             },
             "financials": state.financial_result.model_dump() if state.financial_result else {},
+            "scenarios": scenarios,
             "interpreter_reasoning": state.final_explanation,
             "modifications": state.viability_report.negative_factors if hasattr(state, 'viability_report') and state.viability_report else [],
             "matchedSchemes": state.matched_schemes if hasattr(state, 'matched_schemes') and state.matched_schemes else [],
             "is_demo": state.metadata.get("is_demo", False),
-            "business_blueprint": params.get("business_blueprint") or {"flow": [], "inputs": [], "outputs": []},
-            "startup_roadmap": params.get("startup_roadmap") or [],
-            "regulatory_requirements": params.get("regulatory_requirements") or [],
-            "risk_matrix": params.get("risk_matrix") or []
+            "business_blueprint": params_dict.get("business_blueprint") or {"flow": [], "inputs": [], "outputs": []},
+            "startup_roadmap": params_dict.get("startup_roadmap") or [],
+            "regulatory_requirements": params_dict.get("regulatory_requirements") or [],
+            "risk_matrix": params_dict.get("risk_matrix") or []
         }
