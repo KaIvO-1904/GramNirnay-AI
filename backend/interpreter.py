@@ -1,6 +1,8 @@
 import json
 from typing import Dict, Any, Optional
-from openai import OpenAI
+from ..intelligence.client import ai_client
+from ..structured_output import StructuredOutputHandler
+from ..ontology.models import BlueprintEnrichment, InterpretationResult
 import os
 try:
     from .config import settings
@@ -18,16 +20,10 @@ class BusinessInterpreter:
     """
 
     def __init__(self):
-        # Use Groq if available, otherwise OpenAI
-        api_key = settings.groq_api_key or settings.openai_api_key
-        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
-        self.model = settings.llm_model
+        self.client = ai_client.client
+        self.model = ai_client.model
 
-        if not api_key:
-            logger.warning("OPENAI_API_KEY not found. Using domain-calibrated deterministic algorithms.")
-            self.client = None
-        else:
-            self.client = OpenAI(api_key=api_key, base_url=base_url)
+    def interpret(self, idea: str, available_capital: float = 0.0) -> Dict[str, Any]:
 
     def interpret(self, idea: str, available_capital: float = 0.0) -> Dict[str, Any]:
         """
@@ -95,24 +91,52 @@ class BusinessInterpreter:
 
         # --- ENRICHMENT PASS ---
         # If the result was generated deterministically, it might miss blueprint, roadmap, etc.
-        # We use the LLM to fill these gaps based on the deterministic numbers.
         if self.client and not result.get("business_blueprint"):
             try:
-                enrichment_prompt = (
-                    f"Based on these financial parameters: {json.dumps(result)}, "
-                    f"for a business idea: '{idea}' in {district}, {state}, "
-                    f"generate a professional business_blueprint, startup_roadmap, regulatory_requirements, and risk_matrix. "
-                    f"Return ONLY a JSON object with these four keys. ZERO FABRICATION."
+                # Define the core call
+                def call_llm():
+                    enrichment_prompt = (
+                        f"Based on these financial parameters: {json.dumps(result)}, "
+                        f"for a business idea: '{idea}' in {district}, {state}, "
+                        f"generate a professional business_blueprint, startup_roadmap, regulatory_requirements, and risk_matrix. "
+                        f"Return ONLY a JSON object with these four keys. ZERO FABRICATION."
+                    )
+                    resp = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[{"role": "user", "content": enrichment_prompt}],
+                        response_format={"type": "json_object"}
+                    )
+                    return resp.choices[0].message.content
+
+                # Define the compact retry
+                def retry_llm(failed_output):
+                    retry_prompt = (
+                        f"The previous JSON output was malformed (invalid escaping). "
+                        f"Please fix the JSON and return ONLY the corrected JSON object. "
+                        f"Ensure all single quotes are correctly escaped or use double quotes. "
+                        f"MALFORMED OUTPUT: {failed_output}"
+                    )
+                    resp = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=[{"role": "user", "content": retry_prompt}],
+                        response_format={"type": "json_object"}
+                    )
+                    return resp.choices[0].message.content
+
+                enrichment = StructuredOutputHandler.execute_with_retry(
+                    llm_call_fn=call_llm,
+                    schema=BlueprintEnrichment,
+                    operation_name="blueprint_enrichment",
+                    model_name=self.model,
+                    retry_fn=retry_llm
                 )
-                resp = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": enrichment_prompt}],
-                    response_format={"type": "json_object"}
-                )
-                enrichment_data = json.loads(resp.choices[0].message.content)
-                result.update(enrichment_data)
+
+                if enrichment:
+                    result.update(enrichment.model_dump())
+                else:
+                    logger.warning("Blueprint enrichment failed after retries; proceeding without enrichment.")
             except Exception as e:
-                logger.error(f"Blueprint enrichment failed: {e}")
+                logger.error(f"Blueprint enrichment pipeline failed: {e}")
 
         return result
 
@@ -419,16 +443,39 @@ class BusinessInterpreter:
             f"- modifications: (Array of 3 concrete strategic recommendations to increase profit margin)"
         )
 
-        try:
-            response = self.client.chat.completions.create(
+        def call_llm():
+            resp = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
-            return json.loads(response.choices[0].message.content)
-        except Exception as e:
-            logger.error(f"LLM Interpretation failed: {e}. Falling back to default model.")
-            return self._calculate_generic_financials(idea, answers, district, state)
+            return resp.choices[0].message.content
+
+        def retry_llm(failed_output):
+            retry_prompt = (
+                f"The previous JSON output was malformed. Please fix the JSON escaping and return ONLY the corrected JSON object. "
+                f"MALFORMED OUTPUT: {failed_output}"
+            )
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": retry_prompt}],
+                response_format={"type": "json_object"}
+            )
+            return resp.choices[0].message.content
+
+        result = StructuredOutputHandler.execute_with_retry(
+            llm_call_fn=call_llm,
+            schema=InterpretationResult,
+            operation_name="dynamic_interpretation",
+            model_name=self.model,
+            retry_fn=retry_llm
+        )
+
+        if result:
+            return result.model_dump()
+
+        logger.error(f"LLM Interpretation failed after retries. Falling back to default model.")
+        return self._calculate_generic_financials(idea, answers, district, state)
 
     def _calculate_generic_financials(self, idea: str, answers: Dict[str, Any], district: str, state: str) -> Dict[str, Any]:
         setup_cost = 450000

@@ -23,7 +23,6 @@ class WorkflowManager:
         self.interpretation_agent = InterpretationAgent()
         self.explanation_agent = ExplanationAgent()
         self.validation_engine = ValidationEngine()
-        self.scoring_engine = ScoringEngine() # Keep for backward compatibility
         self.viability_engine = ViabilityEngine()
         self.knowledge_manager = KnowledgeManager()
         self.financial_engine = FinancialEngine()
@@ -58,7 +57,7 @@ class WorkflowManager:
             fin_data = self.financial_engine.compute_full_model(state.financial_params.model_dump())
             from ..ontology.models import FinancialResult
             state.financial_result = FinancialResult(**fin_data)
-            state.viability_score = self.scoring_engine.calculate_financial_viability(state.financial_result)
+            state.viability_score = self.viability_engine._calculate_financial_score(state.financial_result)
 
             # Resolve location if it's a string (for Local Intelligence)
             if hasattr(state.profile, "location") and isinstance(state.profile.location, str):
@@ -109,10 +108,12 @@ class WorkflowManager:
             return state
 
         except GramNirnayError as e:
+            logger.warning(f"Pipeline halted by business rule: {e.message} (Code: {e.code})")
             state.final_explanation = f"I encountered an issue: {e.message}"
             return state
         except Exception as e:
-            state.final_explanation = f"An unexpected error occurred: {str(e)}"
+            logger.exception(f"Unexpected pipeline failure: {e}")
+            state.final_explanation = f"A technical error occurred while processing your analysis. Please try again."
             return state
 
     def format_for_frontend(self, state: PipelineState) -> Dict[str, Any]:

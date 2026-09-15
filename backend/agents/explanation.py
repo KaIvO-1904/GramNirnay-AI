@@ -1,5 +1,4 @@
-import json
-from openai import OpenAI
+from ..intelligence.client import ai_client
 from .base import BaseAgent
 from ..ontology.models import AgentResponse, BusinessProfile, FinancialResult, IntelligenceResult
 from ..config import settings
@@ -9,15 +8,7 @@ class ExplanationAgent(BaseAgent):
 
     def __init__(self):
         super().__init__(name="ExplanationAgent", model_name=settings.llm_model)
-
-        # Use Groq if available, otherwise OpenAI
-        api_key = settings.groq_api_key or settings.openai_api_key
-        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
-
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=base_url
-        )
+        self.client = ai_client.client
 
     def execute(self, context: dict, **kwargs) -> AgentResponse:
         profile = context.get("profile")

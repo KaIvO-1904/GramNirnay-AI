@@ -1,5 +1,7 @@
 from typing import Dict, Any
-from openai import OpenAI
+from ..intelligence.client import ai_client
+from ..structured_output import StructuredOutputHandler
+from ..ontology.models import MarketProxyResult
 import json
 import os
 try:
@@ -16,16 +18,8 @@ class ContextEngine:
     """
 
     def __init__(self):
-        # Configuration from settings
-        api_key = settings.groq_api_key or settings.openai_api_key
-        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
-        self.model = settings.llm_model
-
-        if api_key:
-            self.client = OpenAI(api_key=api_key, base_url=base_url)
-        else:
-            self.client = None
-            logger.warning("API Key not found. AI proxy generation will be disabled.")
+        self.client = ai_client.client
+        self.model = ai_client.model
 
         # Load demo scenarios for fallback/demo mode
         try:
@@ -80,26 +74,48 @@ class ContextEngine:
             f"- reasoning: (One sentence explaining why these scores were given)\n"
         )
 
-        try:
-            response = self.client.chat.completions.create(
+        def call_llm():
+            resp = self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "system", "content": "You are a regional market intelligence expert. Return only JSON."},
+                          {"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
-            res = json.loads(response.choices[0].message.content)
+            return resp.choices[0].message.content
 
+        def retry_llm(failed_output):
+            retry_prompt = (
+                f"The previous JSON output was malformed. Please fix the JSON escaping and return ONLY the corrected JSON object. "
+                f"MALFORMED OUTPUT: {failed_output}"
+            )
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": retry_prompt}],
+                response_format={"type": "json_object"}
+            )
+            return resp.choices[0].message.content
+
+        res = StructuredOutputHandler.execute_with_retry(
+            llm_call_fn=call_llm,
+            schema=MarketProxyResult,
+            operation_name="market_proxy_generation",
+            model_name=self.model,
+            retry_fn=retry_llm
+        )
+
+        if res:
+            res_dict = res.model_dump()
             return {
-                "demand": res.get("demand", 50),
-                "competition": res.get("competition", 50),
-                "accessibility": res.get("accessibility", 50),
-                "seasonality": res.get("seasonality", 50),
+                "demand": res_dict.get("demand", 50),
+                "competition": res_dict.get("competition", 50),
+                "accessibility": res_dict.get("accessibility", 50),
+                "seasonality": res_dict.get("seasonality", 50),
                 "source": f"AI-derived proxy based on {district} regional benchmarks",
                 "confidence": "Medium (AI Estimate)",
-                "reasoning": res.get("reasoning", "")
+                "reasoning": res_dict.get("reasoning", "")
             }
-        except Exception as e:
-            logger.error(f"AI proxy generation failed: {e}. Using safe defaults.")
-            return self._get_safe_defaults()
+
+        return self._get_safe_defaults()
 
     def _get_safe_defaults(self) -> Dict[str, Any]:
         return {

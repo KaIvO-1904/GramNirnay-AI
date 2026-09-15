@@ -19,8 +19,84 @@ class BusinessCategory(str, Enum):
     MICRO_ENTERPRISE = "micro_enterprise"
     OTHER = "other"
 
+class BlueprintStep(BaseModel):
+    step: str
+    desc: str
+
+class RoadmapWeek(BaseModel):
+    week: int
+    tasks: List[str]
+
+class RegulatoryDoc(BaseModel):
+    doc: str
+    status: str
+    source: str
+
+class RiskFactor(BaseModel):
+    risk: str
+    severity: str
+    probability: str
+    mitigation: str
+
+class BlueprintEnrichment(BaseModel):
+    """Schema for the LLM-generated business blueprint enrichment."""
+    business_blueprint: Optional[Dict[str, Any]] = None
+    startup_roadmap: Optional[List[RoadmapWeek]] = None
+    regulatory_requirements: Optional[List[RegulatoryDoc]] = None
+    risk_matrix: Optional[List[RiskFactor]] = None
+    provenance: Optional[Dict[str, Any]] = Field(
+        default_factory=lambda: {"source": "AI_ESTIMATE", "confidence": "Medium"},
+        description="Data provenance for the generated content"
+    )
+
+class InterpretationResult(BaseModel):
+    """Schema for the LLM-generated initial interpretation."""
+    setup_cost: float = 0.0
+    min_viable_capital: float = 0.0
+    monthly_revenue: float = 0.0
+    monthly_expenses: float = 0.0
+    interest_rate: float = 0.0
+    tenure_years: int = 5
+    category: str = "other"
+    capital_breakdown: Dict[str, float] = Field(default_factory=dict)
+    business_blueprint: Optional[Dict[str, Any]] = None
+    startup_roadmap: Optional[List[Dict[str, Any]]] = None
+    regulatory_requirements: Optional[List[Dict[str, Any]]] = None
+    risk_matrix: Optional[List[Dict[str, Any]]] = None
+    reasoning: str = ""
+    modifications: List[str] = Field(default_factory=list)
+
+class MarketProxyResult(BaseModel):
+    """Schema for hyper-local market proxies."""
+    demand: float = 50.0
+    competition: float = 50.0
+    accessibility: float = 50.0
+    seasonality: float = 50.0
+    reasoning: str = ""
+
+class SchemeRankResult(BaseModel):
+    """Schema for AI ranking of government schemes."""
+    ranked_ids: List[str] = Field(default_factory=list)
+
+class SchemeEnrichmentResult(BaseModel):
+    """Schema for AI-driven scheme application guides."""
+    application_steps: List[str] = Field(default_factory=list)
+    detailed_eligibility: str = "Refer to official portal."
+
+class NormalizationJSON(BaseModel):
+    """Schema for semantic normalization output."""
+    canonical_name: Optional[str] = None
+    confidence: float = 0.0
+    mapping_type: str = "NONE" # EXACT, ALIAS, FUZZY, INCOMPATIBLE
+    reason: str = ""
+
 class BusinessProfile(BaseModel):
     """Normalized business context."""
+
+
+
+
+
     business_idea: str = Field(..., description="Detailed description of the business idea")
     category: BusinessCategory = Field(BusinessCategory.OTHER, description="The sector the business belongs to")
     available_capital: float = Field(0.0, description="Capital available with the user")

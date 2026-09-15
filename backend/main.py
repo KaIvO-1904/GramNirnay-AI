@@ -18,10 +18,10 @@ from .question_generator import QuestionGenerator
 from .utils import normalize_state
 from .core.schemas.context import LocationContext
 from .core.schemas.domain import VentureProfile, FinancialBenchmarks, MarketAnalysis
+from .database import SessionLocal, User, Analysis, get_db
+from sqlalchemy.orm import Session
 
-# In-memory stores for demo purposes
-USERS_DB: Dict[str, Any] = {}
-USER_ANALYSES_DB: Dict[str, List[Any]] = {}
+# In-memory store for rate limiting only (as per goal: process-local is okay)
 RATE_LIMIT_STORE: Dict[str, List[float]] = defaultdict(list)
 
 import firebase_admin
@@ -30,14 +30,11 @@ from firebase_admin import credentials
 
 # Initialize Firebase Admin SDK
 try:
-    # In production, firebase_service_account_path should be the path to the JSON file
-    # or the JSON content itself.
     cred = credentials.Certificate(settings.firebase_service_account_path)
     firebase_admin.initialize_app(cred)
     logger.info("Firebase Admin SDK initialized successfully")
 except Exception as e:
     logger.warning(f"Firebase Admin SDK failed to initialize: {e}. Auth verification will be disabled.")
-
 
 # Initialize Logging
 setup_logging()
@@ -46,25 +43,42 @@ def rate_limit(request: Request):
     """Simple in-memory rate limiter to prevent API abuse."""
     client_ip = request.client.host
     now = time.time()
-
-    # Window: 1 minute, Limit: 60 requests
     window = 60
     limit = 60
-
-    # Clean old timestamps
     RATE_LIMIT_STORE[client_ip] = [t for t in RATE_LIMIT_STORE[client_ip] if now - t < window]
-
     if len(RATE_LIMIT_STORE[client_ip]) >= limit:
         raise HTTPException(status_code=429, detail="Too many requests. Please slow down.")
-
     RATE_LIMIT_STORE[client_ip].append(now)
+
+async def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    """
+    Verify the Firebase ID token from the Authorization header.
+    Returns the User record from the database.
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authentication token.")
+
+    token = auth_header.split(" ")[1]
+    try:
+        decoded_token = firebase_auth.verify_id_token(token)
+        google_id = decoded_token['uid']
+        user_id = f"usr_{google_id[:12]}"
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found. Please authenticate first.")
+
+        return user
+    except Exception as e:
+        logger.error(f"Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid or expired authentication token.")
 
 app = FastAPI(
     title=settings.app_title,
     description="AI-Driven Hyper-Local Business Advisory for Rural Micro-Entrepreneurs"
 )
 
-# Enable CORS for the frontend to communicate with the backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(",") if settings.allowed_origins != "*" else ["*"],
@@ -121,7 +135,6 @@ class LocationSearchRequest(BaseModel):
 
 @app.post("/api/location/search", dependencies=[Depends(rate_limit)])
 async def search_location(request: LocationSearchRequest) -> List[LocationCandidate]:
-    """Search for a place name and return candidates."""
     return location_service.search_place(request.query)
 
 class LocationResolveRequest(BaseModel):
@@ -130,7 +143,6 @@ class LocationResolveRequest(BaseModel):
 
 @app.post("/api/location/resolve", dependencies=[Depends(rate_limit)])
 async def resolve_location(request: LocationResolveRequest) -> LocationIdentity:
-    """Confirm and resolve a location candidate to a canonical identity."""
     try:
         return location_service.resolve_location(request.provider_id, request.source)
     except ValueError as e:
@@ -142,18 +154,13 @@ class GpsLocationRequest(BaseModel):
 
 @app.post("/api/location/gps", dependencies=[Depends(rate_limit)])
 async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
-    """Convert GPS coordinates to a structured location identity."""
     try:
         return location_service.resolve_gps(request.lat, request.lng)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @app.post("/api/voice/upload", dependencies=[Depends(rate_limit)])
 async def upload_voice(request: Request) -> Dict[str, Any]:
-    """
-    Uploads audio and returns the initial transcription and normalization.
-    """
     try:
         audio_file = await request.body()
         language_hint = request.query_params.get("language_hint")
@@ -169,14 +176,10 @@ async def upload_voice(request: Request) -> Dict[str, Any]:
 
 @app.post("/api/voice/confirm", dependencies=[Depends(rate_limit)])
 async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Confirms the transcript and triggers the viability pipeline.
-    """
     try:
         confirmed_text = payload.get("confirmed_text")
         if not confirmed_text or not confirmed_text.strip():
             raise HTTPException(status_code=400, detail="Confirmed text cannot be empty.")
-
         state = workflow_manager.run_pipeline(user_input=confirmed_text)
         return workflow_manager.format_for_frontend(state)
     except Exception as e:
@@ -185,9 +188,9 @@ async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 # ── Learning Memory Endpoints ──
 
-@app.post("/api/memory/correct")
+@app.post("/api/memory/correct", dependencies=[Depends(get_current_user)])
 async def record_correction(
-    user_id: str,
+    current_user: User,
     session_id: str,
     phrase: str,
     canonical: str,
@@ -196,15 +199,12 @@ async def record_correction(
     district: Optional[str] = None,
     biz: str = "GENERAL"
 ) -> Dict[str, Any]:
-    """
-    Records a user's correction of a transcribed term.
-    """
     try:
         from .voice.normalization import memory_manager
         from .memory.models import RegionalContext
         region = RegionalContext(state=state, district=district)
         mapping = memory_manager.record_correction(
-            user_id=user_id, session_id=session_id, phrase=phrase,
+            user_id=current_user.id, session_id=session_id, phrase=phrase,
             canonical=canonical, lang=lang, region=region, biz=biz
         )
         return {"status": "recorded", "mapping": mapping.model_dump()}
@@ -216,9 +216,6 @@ async def record_correction(
 
 @app.get("/api/memory/terms")
 async def get_learned_terms() -> List[Dict[str, Any]]:
-    """
-    Retrieves all current candidate terminology mappings.
-    """
     try:
         from .voice.normalization import memory_manager
         return [m.model_dump() for m in memory_manager.get_community_stats()]
@@ -234,9 +231,6 @@ async def promote_mapping(
     district: Optional[str] = None,
     biz: str = "GENERAL",
 ) -> Dict[str, Any]:
-    """
-    Admin endpoint to promote a mapping to Curated Knowledge or reject it.
-    """
     try:
         from .voice.normalization import memory_manager
         from .memory.models import RegionalContext, VerificationStatus
@@ -253,20 +247,13 @@ async def promote_mapping(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/auth/google")
-async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
-    """
-    Authenticate user with Google credentials using Firebase ID Token verification.
-    """
+async def google_auth(auth_req: GoogleAuthRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
     try:
         import time
-
-        # 1. Extract and verify the Firebase ID Token
         token = auth_req.credential
         if not token:
             raise HTTPException(status_code=400, detail="Missing Firebase ID Token.")
-
         try:
-            # Verify the token with Firebase Admin SDK
             decoded_token = firebase_auth.verify_id_token(token)
             google_id = decoded_token['uid']
             email = decoded_token.get('email')
@@ -275,30 +262,27 @@ async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"Firebase token verification failed: {e}")
             raise HTTPException(status_code=401, detail="Invalid or expired Firebase token.")
-
         if not email:
             raise HTTPException(status_code=400, detail="User email not found in token.")
-
-        # 2. Create or retrieve the user record
         user_id = f"usr_{google_id[:12]}"
-        user_record = {
-            "id": user_id,
-            "name": name,
-            "email": email,
-            "avatar": avatar,
-            "provider": "google",
-            "last_login": int(time.time()),
-        }
-
-        USERS_DB[user_id] = user_record
-        # Use the actual Firebase UID as the session token for this demo
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            user = User(
+                id=user_id,
+                name=name,
+                email=email,
+                avatar=avatar,
+                provider="google",
+                last_login=int(time.time())
+            )
+            db.add(user)
+            db.commit()
+        else:
+            user.last_login = int(time.time())
+            db.commit()
         session_token = f"gn_jwt_{user_id}_{int(time.time())}"
-
-        if user_id not in USER_ANALYSES_DB:
-            USER_ANALYSES_DB[user_id] = []
-
         return {
-            "user": user_record,
+            "user": {"id": user.id, "name": user.name, "email": user.email, "avatar": user.avatar},
             "token": session_token,
             "message": "Authentication successful"
         }
@@ -308,44 +292,45 @@ async def google_auth(auth_req: GoogleAuthRequest) -> Dict[str, Any]:
         logger.exception(f"Google auth error: {e}")
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
-@app.get("/api/user/analyses")
-async def get_user_analyses(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """
-    Retrieve saved analysis history for an authenticated user.
-    """
-    if user_id and user_id in USER_ANALYSES_DB:
-        return USER_ANALYSES_DB[user_id]
-    return []
+@app.get("/api/user/analyses", dependencies=[Depends(get_current_user)])
+async def get_user_analyses(current_user: User, db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+    analyses = db.query(Analysis).filter(Analysis.user_id == current_user.id).all()
+    return [
+        {
+            "id": a.id,
+            "businessIdea": a.business_idea,
+            "district": a.district,
+            "state": a.state,
+            "date": a.date,
+            "score": a.score,
+            "recommendation": a.recommendation,
+            "projectCost": a.project_cost,
+            "data": a.data
+        } for a in analyses
+    ]
 
-@app.post("/api/user/analyses")
-async def save_user_analysis(user_id: str, analysis: SavedAnalysisRequest) -> Dict[str, Any]:
-    """
-    Save a business viability assessment to user's backend profile.
-    """
+@app.post("/api/user/analyses", dependencies=[Depends(get_current_user)])
+async def save_user_analysis(current_user: User, analysis: SavedAnalysisRequest, db: Session = Depends(get_db)) -> Dict[str, Any]:
     import time
-    if user_id not in USER_ANALYSES_DB:
-        USER_ANALYSES_DB[user_id] = []
-
-    analysis_item = {
-        "id": f"analysis-{int(time.time())}",
-        "businessIdea": analysis.businessIdea,
-        "district": analysis.district,
-        "state": analysis.state,
-        "date": time.strftime("%Y-%m-%d"),
-        "score": analysis.score,
-        "recommendation": analysis.recommendation,
-        "projectCost": analysis.projectCost,
-        "data": analysis.data,
-    }
-
-    USER_ANALYSES_DB[user_id].insert(0, analysis_item)
-    return {"status": "saved", "item": analysis_item}
+    import uuid
+    analysis_item = Analysis(
+        id=f"analysis-{uuid.uuid4().hex[:12]}",
+        user_id=current_user.id,
+        business_idea=analysis.businessIdea,
+        district=analysis.district,
+        state=analysis.state,
+        date=time.strftime("%Y-%m-%d"),
+        score=analysis.score,
+        recommendation=analysis.recommendation,
+        project_cost=analysis.projectCost,
+        data=analysis.data
+    )
+    db.add(analysis_item)
+    db.commit()
+    return {"status": "saved", "item": {"id": analysis_item.id, "businessIdea": analysis_item.business_idea}}
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """
-    Global exception handler to ensure all errors return a structured JSON response.
-    """
     logger.error(f"Unhandled exception occurred: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -358,22 +343,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/", response_model=Dict[str, str])
 async def root() -> Dict[str, str]:
-    """
-    Health check endpoint.
-    """
     return {"message": "Welcome to Gram-AI API", "status": "online"}
 
 @app.get("/api/health/llm")
 async def health_llm() -> Dict[str, Any]:
-    """
-    Connectivity test for the configured LLM.
-    """
     try:
-        # Simple ping to verify connectivity and model responsiveness
         start_time = time.time()
         response = ai_provider._query_ai("Ping. Reply with 'pong'.")
         latency = (time.time() - start_time) * 1000
-
         return {
             "status": "healthy",
             "model": ai_provider.model,
@@ -386,9 +363,6 @@ async def health_llm() -> Dict[str, Any]:
 
 @app.post("/api/generate-questions", dependencies=[Depends(rate_limit)])
 async def generate_questions(payload: GenerateQuestionsRequest) -> Dict[str, Any]:
-    """
-    Generates domain-tailored MCQ questions for the user's specific business idea and location.
-    """
     try:
         data = QuestionGenerator.generate_questions(payload.businessIdea, payload.location)
         return data
@@ -398,24 +372,11 @@ async def generate_questions(payload: GenerateQuestionsRequest) -> Dict[str, Any
 
 @app.post("/api/analyze-viability", dependencies=[Depends(rate_limit)])
 async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
-    """
-    Main endpoint for analyzing the viability of a business idea without requiring the user to estimate capital.
-
-    Flow:
-    1. Interpretation: Business answers -> Required capital, revenue & cost parameters.
-    2. Calculation: Run deterministic financial model.
-    3. Context: Get hyper-local market proxies.
-    4. RAG: Match government schemes for funding.
-    """
     try:
-        # Normalize location data
         loc_data = profile.location or {}
         if "state" in loc_data and loc_data["state"]:
             loc_data["state"] = normalize_state(loc_data["state"])
-
         location_ctx = LocationContext(**loc_data)
-
-        # 1. AI & Domain Interpretation: Compute benchmarked capital & revenues
         if profile.answers:
             params_dict = interpreter.interpret_from_answers(
                 profile.businessIdea,
@@ -424,16 +385,10 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
                 profile.answers
             )
         else:
-            # Fallback for legacy requests
             params_dict = interpreter.interpret(profile.businessIdea, profile.availableCapital or 0.0)
-
-        # Apply targetInvestment override if user specifically gave one
         if profile.targetInvestment and profile.targetInvestment > 0:
             params_dict["setup_cost"] = profile.targetInvestment
-
         params_dict["user_capital"] = profile.availableCapital or 0.0
-
-        # Convert to new standardized schemas
         venture_profile = VentureProfile(
             businessIdea=profile.businessIdea,
             location=location_ctx,
@@ -442,13 +397,8 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
             targetInvestment=profile.targetInvestment or 0.0,
             answers=profile.answers or {}
         )
-
         benchmarks = FinancialBenchmarks(**params_dict)
-
-        # Use the new WorkflowManager for the intelligence pipeline
-        # Pass the interpreted profile and financial params to skip re-interpretation
         from .ontology.models import BusinessProfile, FinancialParams
-
         biz_profile = BusinessProfile(
             business_idea=profile.businessIdea,
             category=params_dict.get("category", "other"),
@@ -456,7 +406,6 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
             location=f"{loc_data.get('district', 'Unknown')}, {loc_data.get('state', 'Unknown')}",
             experience_years=profile.experience
         )
-
         fin_params = FinancialParams(
             setup_cost=params_dict.get("setup_cost", 0.0),
             monthly_revenue=params_dict.get("monthly_revenue", 0.0),
@@ -470,46 +419,30 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
             regulatory_requirements=params_dict.get("regulatory_requirements"),
             risk_matrix=params_dict.get("risk_matrix")
         )
-
         state = workflow_manager.run_pipeline(
             user_input=profile.businessIdea,
             profile=biz_profile,
             financial_params=fin_params
         )
         return workflow_manager.format_for_frontend(state)
-
     except Exception as e:
         logger.exception(f"Analysis failed for idea '{profile.businessIdea}': {e}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.get("/api/demo/{scenario_id}")
 async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
-    """
-    Retrieves a pre-defined demo scenario for showcase purposes.
-    """
     try:
         import os
         scenario_path = os.path.join(settings.data_dir, "demo_scenarios.json")
-
         with open(scenario_path, "r") as f:
             scenarios = json.load(f)
-
         if scenario_id not in scenarios:
             raise HTTPException(status_code=404, detail="Scenario not found")
-
         scenario = scenarios[scenario_id]
-
-        # Run actual financial engine on the scenario data
         financials = fin_engine.compute_full_model(scenario["financial_params"])
         financials["user_capital"] = scenario["profile"]["availableCapital"]
-
-        # Use RAG engine to find schemes for this scenario
         schemes = rag_engine.get_best_schemes(scenario["profile"], scenario["financial_params"])
-
-        # Construct a response that matches the analysis result format
-        # We simulate a viability score based on the financial result
         viability_score = 85 if financials["is_viable"] else 45
-
         return {
             "viabilityScore": viability_score,
             "recommendation": "Proceed" if viability_score >= 80 else "Proceed with Modification" if viability_score >= 50 else "Reconsider",
@@ -534,7 +467,7 @@ async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
         logger.error("demo_scenarios.json not found")
         raise HTTPException(status_code=500, detail="Demo data not found")
     except Exception as e:
-        logger.exception(f"Error retrieving demo scenario {scenario_id}: {e}")
+        logger.exception(f"Error retrieving demo {scenario_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

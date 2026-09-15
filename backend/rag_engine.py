@@ -1,5 +1,7 @@
 from typing import List, Dict, Any
-from openai import OpenAI
+from ..intelligence.client import ai_client
+from ..structured_output import StructuredOutputHandler
+from ..ontology.models import Scheme, SchemeRankResult, SchemeEnrichmentResult
 import os
 import json
 try:
@@ -20,18 +22,8 @@ class RAGEngine:
 
     def __init__(self):
         # Load configuration from settings
-        api_key = settings.groq_api_key or settings.openai_api_key
-        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
-        self.model = settings.llm_model
-
-        if not api_key:
-            logger.warning("API Key not found. AI ranking will be disabled.")
-            self.client = None
-        else:
-            self.client = OpenAI(
-                api_key=api_key,
-                base_url=base_url
-            )
+        self.client = ai_client.client
+        self.model = ai_client.model
 
         try:
             # Use settings for data directory
@@ -57,7 +49,6 @@ class RAGEngine:
             elig = scheme["eligibility"]
 
             # Check capital range - More permissive for MVP
-            # If user needs no capital, they can still qualify for subsidy-based schemes
             capital_match = False
             if capital_required <= 0:
                 if capital_required <= elig["maxCapital"]:
@@ -76,7 +67,7 @@ class RAGEngine:
         Step 2: Semantic Ranking.
         Uses LLM to rank filtered schemes based on specific business needs.
         """
-        if not eligible_schemes or not settings.openai_api_key:
+        if not eligible_schemes:
             return eligible_schemes
 
         # Construct a condensed list of schemes for the prompt
@@ -92,26 +83,44 @@ class RAGEngine:
             f"Schemes:\n{schemes_context}"
         )
 
-        try:
-            response = self.client.chat.completions.create(
+        def call_llm():
+            resp = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
-            res_json = json.loads(response.choices[0].message.content)
-            ranked_ids = res_json.get("ranked_ids", [])
+            return resp.choices[0].message.content
 
-            # Map IDs back to full scheme objects
+        def retry_llm(failed_output):
+            retry_prompt = (
+                f"The previous JSON output was malformed. Please fix the JSON escaping and return ONLY the corrected JSON object. "
+                f"MALFORMED OUTPUT: {failed_output}"
+            )
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": retry_prompt}],
+                response_format={"type": "json_object"}
+            )
+            return resp.choices[0].message.content
+
+        res = StructuredOutputHandler.execute_with_retry(
+            llm_call_fn=call_llm,
+            schema=SchemeRankResult,
+            operation_name="rank_schemes",
+            model_name=self.model,
+            retry_fn=retry_llm
+        )
+
+        if res:
+            ranked_ids = res.ranked_ids
             ordered_schemes = []
             for rid in ranked_ids:
                 scheme = next((s for s in eligible_schemes if s["schemeId"] == rid), None)
                 if scheme:
                     ordered_schemes.append(scheme)
-
             return ordered_schemes if ordered_schemes else eligible_schemes
-        except Exception as e:
-            logger.error(f"AI Ranking failed: {e}. Falling back to original order.")
-            return eligible_schemes
+
+        return eligible_schemes
 
     def enrich_scheme_details(self, scheme: Dict, business_description: str) -> Dict:
         """
@@ -129,45 +138,56 @@ class RAGEngine:
             f"Return ONLY a JSON object with keys 'application_steps' (list of strings) and 'detailed_eligibility' (string)."
         )
 
-        try:
-            response = self.client.chat.completions.create(
+        def call_llm():
+            resp = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
-            enrichment = json.loads(response.choices[0].message.content)
+            return resp.choices[0].message.content
 
+        def retry_llm(failed_output):
+            retry_prompt = (
+                f"The previous JSON output was malformed. Please fix the JSON escaping and return ONLY the corrected JSON object. "
+                f"MALFORMED OUTPUT: {failed_output}"
+            )
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": retry_prompt}],
+                response_format={"type": "json_object"}
+            )
+            return resp.choices[0].message.content
+
+        enrichment = StructuredOutputHandler.execute_with_retry(
+            llm_call_fn=call_llm,
+            schema=SchemeEnrichmentResult,
+            operation_name="enrich_scheme",
+            model_name=self.model,
+            retry_fn=retry_llm
+        )
+
+        if enrichment:
             return {
                 **scheme,
-                "application_steps": enrichment.get("application_steps", scheme.get("application_steps", [])),
-                "detailed_eligibility": enrichment.get("detailed_eligibility", scheme.get("detailed_eligibility", "Refer to official portal."))
+                "application_steps": enrichment.application_steps,
+                "detailed_eligibility": enrichment.detailed_eligibility
             }
-        except Exception as e:
-            logger.error(f"Enrichment failed for {scheme.get('schemeId')}: {e}")
-            return scheme
+
+        return scheme
 
     def get_best_schemes(self, profile: Dict[str, Any], financial_params: Dict[str, Any]) -> List[Scheme]:
         """
         Main entry point for scheme matching with enrichment.
         """
-        # Calculate gap
         gap = financial_params.get("setup_cost", 0) - profile.get("availableCapital", 0)
         category = profile.get("businessIdea", "general")
 
-        # 1. Deterministic Filter
         eligible = self.filter_eligible_schemes(gap, category)
-
-        # 2. AI Ranking
         ranked = self.rank_schemes_with_ai(category, eligible)
-
-        # 3. Enrichment (only for top 3 to save latency/tokens)
         top_schemes = ranked[:3]
         enriched_schemes = []
         for s in top_schemes:
             enriched_schemes.append(self.enrich_scheme_details(s, category))
 
-        # Append remaining schemes without enrichment
         final_list = enriched_schemes + ranked[3:]
-
         return [Scheme(**s) for s in final_list]
-

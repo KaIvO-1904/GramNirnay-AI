@@ -53,3 +53,21 @@ class LocalIntelligenceResult(BaseModel):
     demand: LocalDemandAnalysis
     overall_confidence: float
     timestamp: datetime = Field(default_factory=datetime.now)
+
+class CompetitorJSON(BaseModel):
+    competitors: List[Dict[str, Any]]
+
+class SupplierJSON(BaseModel):
+    suppliers: List[Dict[str, Any]]
+
+class LogisticsJSON(BaseModel):
+    road_quality: str
+    nearest_hub_km: float
+    avg_transport_cost_index: float
+    accessibility_rating: float
+
+class DemandJSON(BaseModel):
+    estimated_demand_score: float
+    seasonality_index: float
+    risks: List[str]
+    footfall_proxy: str

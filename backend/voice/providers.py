@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 from .models import TranscriptionResult, VoiceConfidence
-from openai import OpenAI
+from ..intelligence.client import ai_client
 from ..config import settings
 
 class IVoiceProvider(ABC):
@@ -97,11 +97,8 @@ class OpenAIVoiceProvider(IVoiceProvider):
 
 
     def __init__(self):
-        self.client = OpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url,
-            timeout=30.0
-        )
+        self.client = ai_client.client
+        self.client.timeout = 30.0
 
     async def transcribe(self, audio_data: bytes, language_hint: Optional[str] = None) -> TranscriptionResult:
         import uuid

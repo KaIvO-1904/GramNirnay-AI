@@ -5,19 +5,14 @@ from .models import (
     CompetitionAnalysis,
     SupplyChainAnalysis,
     LogisticsAnalysis,
-    LocalDemandAnalysis
+    LocalDemandAnalysis,
+    CompetitorJSON,
+    SupplierJSON,
+    LogisticsJSON,
+    DemandJSON
 )
-
-from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
-from ..location.models import LocationIdentity
-from .models import (
-    CompetitionAnalysis,
-    SupplyChainAnalysis,
-    LogisticsAnalysis,
-    LocalDemandAnalysis
-)
-from openai import OpenAI
+from ..intelligence.client import ai_client
+from ..structured_output import StructuredOutputHandler
 from ..config import settings
 from ..logger import logger
 import json
@@ -55,38 +50,48 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
     """
 
     def __init__(self):
-        # Use Groq if available, otherwise OpenAI
-        api_key = settings.groq_api_key or settings.openai_api_key
-        base_url = "https://api.groq.com/openai/v1" if settings.groq_api_key else settings.openai_base_url
+        self.client = ai_client.client
+        self.model = ai_client.model
 
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url=base_url
-        )
-        self.model = settings.llm_model
-
-    def _query_ai(self, prompt: str) -> Dict[str, Any]:
-        try:
-            response = self.client.chat.completions.create(
+    def _query_ai(self, prompt: str, schema: Type[BaseModel], op_name: str) -> Optional[BaseModel]:
+        def call_llm():
+            resp = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "system", "content": "You are a regional market intelligence expert for rural India. Return only JSON."},
                           {"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
                 timeout=30.0
             )
-            return json.loads(response.choices[0].message.content)
-        except Exception as e:
-            logger.error(f"AI Intelligence Error: {e}")
-            return {}
+            return resp.choices[0].message.content
+
+        def retry_llm(failed_output):
+            retry_prompt = (
+                f"The previous JSON output was malformed. Please fix the JSON escaping and return ONLY the corrected JSON object. "
+                f"MALFORMED OUTPUT: {failed_output}"
+            )
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": retry_prompt}],
+                response_format={"type": "json_object"}
+            )
+            return resp.choices[0].message.content
+
+        return StructuredOutputHandler.execute_with_retry(
+            llm_call_fn=call_llm,
+            schema=schema,
+            operation_name=op_name,
+            model_name=self.model,
+            retry_fn=retry_llm
+        )
 
     def get_competitor_data(self, location: LocationIdentity, business_type: str) -> List[Dict[str, Any]]:
         prompt = (
             f"Identify 3 realistic competitors for a '{business_type}' business in "
             f"{location.hierarchy.district}, {location.hierarchy.state}. "
-            f"Return a JSON list of objects with: name, size (Small/Medium/Large), and a brief description."
+            f"Return a JSON object with a key 'competitors' which is a list of objects with: name, size (Small/Medium/Large), and a brief description."
         )
-        res = self._query_ai(prompt)
-        competitors = res.get("competitors", [])
+        res = self._query_ai(prompt, CompetitorJSON, "get_competitor_data")
+        competitors = res.competitors if res else []
 
         # Add synthetic coordinates relative to the location
         return [
@@ -98,10 +103,10 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
         prompt = (
             f"Identify 2 realistic regional suppliers for '{business_type}' in "
             f"{location.hierarchy.district}, {location.hierarchy.state}. "
-            f"Return a JSON list of objects with: name, category, and distance_km."
+            f"Return a JSON object with a key 'suppliers' which is a list of objects with: name, category, and distance_km."
         )
-        res = self._query_ai(prompt)
-        suppliers = res.get("suppliers", [])
+        res = self._query_ai(prompt, SupplierJSON, "get_supplier_data")
+        suppliers = res.suppliers if res else []
 
         return [
             {**s, "lat": location.lat + 0.02, "lng": location.lng - 0.02}
@@ -114,7 +119,8 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
             f"Return a JSON object with: road_quality (Poor/Fair/Good), nearest_hub_km (number), "
             f"avg_transport_cost_index (0.0-1.0), and accessibility_rating (0.0-1.0)."
         )
-        return self._query_ai(prompt)
+        res = self._query_ai(prompt, LogisticsJSON, "get_logistics_data")
+        return res.model_dump() if res else {}
 
     def get_demand_data(self, location: LocationIdentity, business_type: str) -> Dict[str, Any]:
         prompt = (
@@ -122,7 +128,8 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
             f"Return a JSON object with: estimated_demand_score (0.0-1.0), seasonality_index (0.0-1.0), "
             f"risks (list of strings), and footfall_proxy (Low/Medium/High)."
         )
-        return self._query_ai(prompt)
+        res = self._query_ai(prompt, DemandJSON, "get_demand_data")
+        return res.model_dump() if res else {}
 
 class MockLocalIntelligenceProvider(ILocalIntelligenceProvider):
     """Fallback synthetic provider."""

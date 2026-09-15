@@ -29,8 +29,17 @@ class VoiceService:
         """
         Processes raw audio into a transcribed and normalized result.
         """
+        # Input Validation
+        if not audio_data:
+            raise ValueError("Audio data is empty")
+
+        # Max size: 10MB
+        if len(audio_data) > 10 * 1024 * 1024:
+            raise ValueError("Audio file too large. Maximum allowed size is 10MB.")
+
         # 1. Transcription (STT)
         transcription = await self.provider.transcribe(audio_data, language_hint)
+
 
         # 2. Normalization (Dialect/Terminology mapping)
         norm_res = self.normalizer.normalize(transcription.raw_text)
