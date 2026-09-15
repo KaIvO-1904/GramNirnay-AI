@@ -2,6 +2,7 @@ from typing import Dict, Any
 from .intelligence.client import ai_client
 from .structured_output import StructuredOutputHandler
 from .ontology.models import MarketProxyResult
+from .logger import logger
 import json
 import os
 try:

@@ -25,8 +25,7 @@ from ..financial_engine import FinancialEngine
 from ..rag_engine import RAGEngine
 from ..scoring.viability_engine import ViabilityEngine
 from ..memory.manager import MemoryManager
-
-logger = logging.getLogger(__name__)
+from ..logger import logger
 
 class AgentOrchestrator:
     """

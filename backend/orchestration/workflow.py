@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional, Any, Dict
 from .state import PipelineState
+from ..logger import logger
 from ..ontology.models import (
     InterpretationError,
     ValidationError,
