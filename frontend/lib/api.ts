@@ -1,7 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-import { UserProfile, AnalysisResult, QuestionnaireResponse } from '@/types';
+import { UserProfile, AnalysisResult, QuestionnaireResponse, Place, LocationIdentity, VoiceTranscription, AuthResponse } from '@/types';
 
-export async function searchLocation(query: string): Promise<any[]> {
+export async function searchLocation(query: string): Promise<Place[]> {
   const response = await fetch(`${API_BASE_URL}/api/location/search?query=${encodeURIComponent(query)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -11,7 +11,7 @@ export async function searchLocation(query: string): Promise<any[]> {
   return response.json();
 }
 
-export async function resolveLocation(providerId: string, source: string): Promise<any> {
+export async function resolveLocation(providerId: string, source: string): Promise<LocationIdentity> {
   const response = await fetch(`${API_BASE_URL}/api/location/resolve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -21,7 +21,7 @@ export async function resolveLocation(providerId: string, source: string): Promi
   return response.json();
 }
 
-export async function resolveGps(lat: number, lng: number): Promise<any> {
+export async function resolveGps(lat: number, lng: number): Promise<LocationIdentity> {
   const response = await fetch(`${API_BASE_URL}/api/location/gps`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -67,7 +67,7 @@ export async function getDemoScenario(scenarioId: string): Promise<AnalysisResul
   return response.json();
 }
 
-export async function uploadVoice(audioBlob: Blob, languageHint?: string): Promise<any> {
+export async function uploadVoice(audioBlob: Blob, languageHint?: string): Promise<VoiceTranscription> {
   const formData = new FormData();
   formData.append('audio', audioBlob);
 
@@ -86,7 +86,7 @@ export async function uploadVoice(audioBlob: Blob, languageHint?: string): Promi
   return response.json();
 }
 
-export async function confirmVoice(confirmedText: string): Promise<any> {
+export async function confirmVoice(confirmedText: string): Promise<{ status: string }> {
   const response = await fetch(`${API_BASE_URL}/api/voice/confirm`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -108,7 +108,7 @@ export interface GoogleAuthPayload {
   google_id?: string;
 }
 
-export async function authenticateWithGoogleBackend(authData: GoogleAuthPayload) {
+export async function authenticateWithGoogleBackend(authData: GoogleAuthPayload): Promise<AuthResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
       method: 'POST',
@@ -126,7 +126,7 @@ export async function authenticateWithGoogleBackend(authData: GoogleAuthPayload)
   }
 }
 
-export async function fetchUserAnalysesBackend(userId: string) {
+export async function fetchUserAnalysesBackend(userId: string): Promise<AnalysisResult[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/analyses?user_id=${userId}`);
     if (response.ok) {
@@ -138,7 +138,7 @@ export async function fetchUserAnalysesBackend(userId: string) {
   return [];
 }
 
-export async function saveUserAnalysisBackend(userId: string, analysis: any) {
+export async function saveUserAnalysisBackend(userId: string, analysis: AnalysisResult): Promise<AnalysisResult | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/analyses?user_id=${userId}`, {
       method: 'POST',

@@ -5,6 +5,25 @@ export interface Location {
   lng?: number;
 }
 
+export interface Place {
+  provider_id: string;
+  name: string;
+  formatted_address: string;
+  lat: number;
+  lng: number;
+}
+
+export interface LocationIdentity {
+  provider_id: string;
+  name: string;
+  district: string;
+  state: string;
+  country: string;
+  pincode?: string;
+  coordinates: { lat: number; lng: number };
+  source: string;
+}
+
 export interface QuestionOption {
   label: string;
   value: string;
@@ -124,5 +143,16 @@ export interface AnalysisResult {
   regulatory_requirements?: Array<{doc: string, status: string, source: string}>;
   risk_matrix?: Array<{risk: string, severity: string, probability: string, mitigation: string}>;
 }
+
+export interface VoiceTranscription {
+  text: string;
+  confidence: number;
+}
+
+export interface AuthResponse {
+  user_id: string;
+  token: string;
+}
+
 
 

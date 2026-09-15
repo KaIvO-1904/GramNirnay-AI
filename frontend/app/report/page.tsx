@@ -216,7 +216,14 @@ export default function ReportPage() {
     growthMode: false,
     appliedSubsidy: false,
   });
-  const [sandbox, setSandbox] = useState({
+  const [sandbox, setSandbox] = useState<{
+    setupCost: number;
+    monthlyRevenue: number;
+    monthlyExpenses: number;
+    loanAmount: number;
+    interestRate: number;
+    tenureYears: number;
+  }>({
     setupCost: 0,
     monthlyRevenue: 0,
     monthlyExpenses: 0,
@@ -253,7 +260,7 @@ export default function ReportPage() {
     if (levers.leanMode) costMult = 0.85;
     if (levers.growthMode) revMult *= 1.2;
     const bestScheme = data?.matchedSchemes?.[0];
-    const subsidyPercent = bestScheme?.benefit.subsidyPercent || 0;
+    const subsidyPercent = bestScheme?.benefit.subsidyPercent ?? 0;
     const subsidyAmount = levers.appliedSubsidy ? calculateSubsidyBenefit(sandbox.setupCost, subsidyPercent) : 0;
     return {
       ...sandbox,
@@ -267,24 +274,27 @@ export default function ReportPage() {
   // These should now be derived from a backend call or pre-calculated scenarios.
   // For the simulator, we will use the provided Scenario results from the API.
 
-  const currentScenario = data?.scenarios[activePreset] || data?.scenarios['base'];
+  const currentScenario = data?.scenarios ? (data.scenarios[activePreset] || data.scenarios['base']) : null;
 
-  const emi = currentScenario?.monthly_emi || 0;
-  const breakEven = currentScenario?.break_even_months;
-  const monthlyNet = currentScenario?.monthly_net_cash_flow || 0;
-  const annualProfit = currentScenario?.annual_net_cash_flow || 0;
-  const roi = currentScenario?.roi_percent || 0;
+  const emi = currentScenario?.monthly_emi ?? null;
+  const breakEven = currentScenario?.break_even_months ?? null;
+  const monthlyNet = currentScenario?.monthly_net_cash_flow ?? null;
+  const annualProfit = currentScenario?.annual_net_cash_flow ?? null;
+  const roi = currentScenario?.roi_percent ?? null;
 
   const chartData = Array.from({ length: 12 }, (_, i) => ({
     month: `Mo ${i + 1}`,
-    cash: Math.round(monthlyNet * (i + 1)),
+    cash: monthlyNet !== null ? Math.round(monthlyNet * (i + 1)) : 0,
   }));
 
   const fundingMix = useMemo(() => {
-    const total = data?.financials.total_project_cost || 1;
-    const user = data?.financials.user_capital || 0;
-    const subsidy = calculateSubsidyBenefit(data?.financials.total_project_cost || 0, data?.matchedSchemes[0]?.benefit.subsidyPercent || 0);
-    const loan = data?.financials.financing_required || 0;
+    const total = data?.financials.total_project_cost ?? 0;
+    const user = data?.financials.user_capital ?? 0;
+    const subsidy = calculateSubsidyBenefit(data?.financials.total_project_cost ?? 0, data?.matchedSchemes?.[0]?.benefit.subsidyPercent ?? 0);
+    const loan = data?.financials.financing_required ?? 0;
+
+    if (total === 0) return { userPct: 0, subsidyPct: 0, loanPct: 0 };
+
     return {
       userPct: (user / total) * 100,
       subsidyPct: (subsidy / total) * 100,
@@ -355,7 +365,7 @@ export default function ReportPage() {
                     </p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <KpiWidget label="Total Capital" value={effectiveSandbox.setupCost} unit="₹" icon={Wallet} />
+                    <KpiWidget label="Total Capital" value={currentScenario?.setup_cost ?? data?.financials.total_project_cost} unit="₹" icon={Wallet} />
                     <KpiWidget label="Annual Net" value={annualProfit} unit="₹" variant="success" icon={TrendingUp} />
                     <KpiWidget label="Break-even" value={breakEven} unit="Mo" variant="danger" icon={Activity} />
                     <KpiWidget label="Projected ROI" value={roi} unit="%" variant="success" icon={Scale} />
