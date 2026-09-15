@@ -54,32 +54,27 @@ export interface Financials {
   is_viable: boolean;
   user_capital?: number;
   capital_breakdown?: Record<string, number>;
+  income_breakdown?: Record<string, number>;
+  expenditure_breakdown?: Record<string, number>;
+  assumptions?: Record<string, string>;
 }
 
-export interface MarketAnalysis {
-  demand: number;
-  competition: number;
-  accessibility: number;
-  seasonality: number;
-  source: string;
-  confidence: string;
-  reasoning?: string;
-}
-
-export interface Scheme {
-  schemeId: string;
-  name: string;
-  ministry: string;
-  benefit: {
-    subsidyPercent: number;
-    loanAmount: number;
-  };
-  sourceUrl: string;
-  eligibility: {
-    minCapital: number;
-    maxCapital: number;
-    categories: string[];
-  };
+export interface ScenarioResult {
+  setup_cost: number;
+  user_contribution: number;
+  subsidy: number;
+  financing_gap: number;
+  loan_amount: number;
+  interest_rate: number;
+  tenure_years: number;
+  monthly_emi: number;
+  monthly_revenue: number;
+  monthly_expenses: number;
+  monthly_net_cash_flow: number;
+  annual_net_cash_flow: number;
+  roi_percent: number;
+  break_even_months: number | null;
+  cumulative_cash_flow_12m: number;
 }
 
 export interface AnalysisResult {
@@ -90,6 +85,7 @@ export interface AnalysisResult {
   category?: string;
   marketAnalysis: MarketAnalysis;
   financials: Financials;
+  scenarios?: Record<string, ScenarioResult>;
   interpreter_reasoning?: string;
   modifications: string[];
   matchedSchemes: Scheme[];
