@@ -25,5 +25,6 @@ class PipelineState:
 
     # Final Stage
     final_explanation: Optional[str] = None
+    status: str = "PENDING" # SUCCESS, PARTIAL, FAILED
 
     metadata: dict = field(default_factory=dict)

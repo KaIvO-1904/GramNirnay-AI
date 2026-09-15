@@ -38,7 +38,7 @@ class BaseAgent:
         return AgentResponse(
             status=status,
             confidence=score,
-            result=structured_data,
+            result=structured_data if structured_data is not None else content,
             evidence=[content, reason],
             errors=errors or [],
             next_action=NextAction.PROCEED if status == AgentStatus.SUCCESS else NextAction.RETRY

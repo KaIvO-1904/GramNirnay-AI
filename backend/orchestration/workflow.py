@@ -39,13 +39,13 @@ class WorkflowManager:
                 state.interpretation_confidence = 1.0
             else:
                 interp_res = self.interpretation_agent.execute(user_input)
-                if interp_res.confidence.score < 0.3:
+                if interp_res.confidence < 0.3:
                     raise InterpretationError("Could not understand the business request.", "INTERP_FAILED")
 
-                data = interp_res.structured_data
+                data = interp_res.result
                 state.profile = data["profile"]
                 state.financial_params = data["financials"]
-                state.interpretation_confidence = interp_res.confidence.score
+                state.interpretation_confidence = interp_res.confidence
 
             # 2. VALIDATION
             val_res = self.validation_engine.validate_profile(state.profile)
@@ -54,7 +54,8 @@ class WorkflowManager:
             state.validation_result = val_res
 
             # 3. CALCULATION
-            fin_data = self.financial_engine.compute_full_model(state.financial_params.model_dump())
+            params_dict = state.financial_params.model_dump() if hasattr(state.financial_params, "model_dump") else state.financial_params
+            fin_data = self.financial_engine.compute_full_model(params_dict)
             from ..ontology.models import FinancialResult
             state.financial_result = FinancialResult(**fin_data)
             state.viability_score = self.viability_engine._calculate_financial_score(state.financial_result)
@@ -95,24 +96,32 @@ class WorkflowManager:
             )
 
             # 7. EXPLANATION
-            context = {
-                "profile": state.profile,
-                "financials": state.financial_result,
-                "intelligence": state.intelligence_result,
-                "viability": state.viability_report,
-                "schemes": state.matched_schemes
-            }
-            expl_res = self.explanation_agent.execute(context)
-            state.final_explanation = expl_res.content
+            try:
+                context = {
+                    "profile": state.profile,
+                    "financials": state.financial_result,
+                    "intelligence": state.intelligence_result,
+                    "viability": state.viability_report,
+                    "schemes": state.matched_schemes
+                }
+                expl_res = self.explanation_agent.execute(context)
+                state.final_explanation = expl_res.result if expl_res.result else " ".join(expl_res.evidence)
+                state.status = "SUCCESS"
+            except Exception as e:
+                logger.error(f"Explanation generation failed: {e}")
+                state.final_explanation = "Analysis completed, but the personalized advice letter could not be generated."
+                state.status = "PARTIAL"
 
             return state
 
         except GramNirnayError as e:
             logger.warning(f"Pipeline halted by business rule: {e.message} (Code: {e.code})")
+            state.status = "FAILED"
             state.final_explanation = f"I encountered an issue: {e.message}"
             return state
         except Exception as e:
             logger.exception(f"Unexpected pipeline failure: {e}")
+            state.status = "FAILED"
             state.final_explanation = f"A technical error occurred while processing your analysis. Please try again."
             return state
 
