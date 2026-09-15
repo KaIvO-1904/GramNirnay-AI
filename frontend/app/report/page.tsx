@@ -241,14 +241,16 @@ export default function ReportPage() {
         const parsed: AnalysisResult = JSON.parse(source);
         setData(parsed);
         const fin = parsed.financials;
-        setSandbox({
-          setupCost: fin.total_project_cost || 0,
-          monthlyRevenue: fin.monthly_revenue || 0,
-          monthlyExpenses: fin.monthly_expenses || 0,
-          loanAmount: fin.financing_required || 0,
-          interestRate: 9,
-          tenureYears: 5,
-        });
+        if (fin) {
+          setSandbox({
+            setupCost: fin.total_project_cost || 0,
+            monthlyRevenue: fin.monthly_revenue || 0,
+            monthlyExpenses: fin.monthly_expenses || 0,
+            loanAmount: fin.financing_required || 0,
+            interestRate: 9,
+            tenureYears: 5,
+          });
+        }
       } catch { router.push('/'); }
     } else { router.push('/'); }
   }, [router]);
@@ -302,7 +304,7 @@ export default function ReportPage() {
     };
   }, [data]);
 
-  if (!data) return (
+  if (!data || !data.financials) return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-primary)' }}>
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-full border-3 border-t-[var(--accent)] animate-spin" style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }} />
