@@ -186,6 +186,7 @@ export default function ReportPage() {
     }
   }, [router]);
 
+  const currencySymbol = data?.location?.currency?.symbol || '₹';
   const currentScenario = data?.scenarios ? (data.scenarios[activePreset] || data.scenarios['base']) : null;
   const annualProfit = currentScenario?.annual_net_cash_flow ?? null;
   const breakEven = currentScenario?.break_even_months ?? null;
@@ -241,8 +242,8 @@ export default function ReportPage() {
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KpiWidget label="Total Capital" value={currentScenario?.setup_cost ?? data?.financials?.total_project_cost} unit="₹" icon={Wallet} />
-                <KpiWidget label="Annual Net" value={annualProfit} unit="₹" variant="success" icon={TrendingUp} />
+                <KpiWidget label="Total Capital" value={currentScenario?.setup_cost ?? data?.financials?.total_project_cost} unit={currencySymbol} icon={Wallet} />
+                <KpiWidget label="Annual Net" value={annualProfit} unit={currencySymbol} variant="success" icon={TrendingUp} />
                 <KpiWidget label="Break-even" value={breakEven} unit="Mo" variant="danger" icon={Activity} />
                 <KpiWidget label="Projected ROI" value={roi} unit="%" variant="success" icon={Scale} />
               </div>
@@ -273,7 +274,7 @@ export default function ReportPage() {
                   <AreaChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                     <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `${currencySymbol}${v / 1000}k`} />
                     <Tooltip />
                     <Area type="monotone" dataKey="cash" stroke="#3b82f6" strokeWidth={3} fillOpacity={0.3} fill="#3b82f6" />
                   </AreaChart>
@@ -298,7 +299,7 @@ export default function ReportPage() {
                     {Object.entries(data.financials?.income_breakdown || {}).map(([key, val]: [string, any]) => (
                       <div key={key} className="flex justify-between text-sm">
                         <span className="opacity-60">{key}</span>
-                        <span className="font-mono font-bold">₹{formatValue(val)}</span>
+                        <span className="font-mono font-bold">{currencySymbol}{formatValue(val)}</span>
                       </div>
                     ))}
                   </div>
@@ -311,7 +312,7 @@ export default function ReportPage() {
                     {Object.entries(data.financials?.expenditure_breakdown || {}).map(([key, val]: [string, any]) => (
                       <div key={key} className="flex justify-between text-sm">
                         <span className="opacity-60">{key}</span>
-                        <span className="font-mono font-bold">₹{formatValue(val)}</span>
+                        <span className="font-mono font-bold">{currencySymbol}{formatValue(val)}</span>
                       </div>
                     ))}
                   </div>
@@ -372,9 +373,9 @@ export default function ReportPage() {
                     <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: '34%' }} title="External Loan" />
                   </div>
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">₹{formatValue(data.financials?.user_capital)}</span></div>
-                    <div className="flex justify-between text-emerald-500 font-bold"><span>Est. Subsidy</span><span className="font-mono">₹{formatValue(data.financials?.verified_subsidy)}</span></div>
-                    <div className="flex justify-between border-t pt-2 font-black"><span>Financing Gap</span><span className="font-mono">₹{formatValue(data.financials?.financing_required)}</span></div>
+                    <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.user_capital)}</span></div>
+                    <div className="flex justify-between text-emerald-500 font-bold"><span>Est. Subsidy</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.verified_subsidy)}</span></div>
+                    <div className="flex justify-between border-t pt-2 font-black"><span>Financing Gap</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.financing_required)}</span></div>
                   </div>
                 </div>
               </div>
@@ -387,7 +388,7 @@ export default function ReportPage() {
                     </div>
                     <div className="text-xs opacity-80 mb-4 leading-relaxed">
                       Benefit: <span className="font-bold text-blue-600">{scheme.benefit.subsidyPercent}% subsidy</span> /
-                      <span className="font-bold text-blue-600"> ₹{formatValue(scheme.benefit.loanAmount)} max loan</span>
+                      <span className="font-bold text-blue-600"> {currencySymbol}{formatValue(scheme.benefit.loanAmount)} max loan</span>
                     </div>
                     <a href={scheme.sourceUrl} target="_blank" className="text-[10px] font-black text-blue-600 flex items-center gap-1 group-hover:underline">
                       Official Portal <ExternalLink size={10} />
