@@ -144,6 +144,7 @@ export default function AccountPage() {
   const totalEvaluations = history.length;
   const avgViability = totalEvaluations > 0 ? Math.round(history.reduce((a, b) => a + b.score, 0) / totalEvaluations) : 0;
   const totalCapital = history.reduce((a, b) => a + (b.projectCost || 0), 0);
+  const defaultCurrency = history[0]?.data?.location?.currency?.symbol || '₹';
 
   return (
     <div
@@ -309,7 +310,7 @@ export default function AccountPage() {
                   <DollarSign size={13} className="text-[var(--accent)]" /> Capital Modeled
                 </div>
                 <div className="text-2xl font-black font-mono" style={{ color: 'var(--text-primary)' }}>
-                  {totalCapital > 0 ? `₹${(totalCapital / 100000).toFixed(1)} Lakhs` : '₹0'}
+                  {totalCapital > 0 ? `${defaultCurrency}${(totalCapital / 100000).toFixed(1)} Lakhs` : `${defaultCurrency}0`}
                 </div>
               </div>
             </div>

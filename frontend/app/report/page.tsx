@@ -13,6 +13,7 @@ import { AnalysisResult } from '@/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { t } from '@/lib/i18n';
 import { Reveal } from '@/components/motion';
+import { DEFAULT_CURRENCY_SYMBOL } from '@/lib/utils';
 
 function formatValue(val: number | string | null): string {
   if (val === null || val === undefined) return 'N/A';
@@ -186,7 +187,7 @@ export default function ReportPage() {
     }
   }, [router]);
 
-  const currencySymbol = data?.location?.currency?.symbol || '₹';
+  const currencySymbol = data?.location?.currency?.symbol || DEFAULT_CURRENCY_SYMBOL;
   const currentScenario = data?.scenarios ? (data.scenarios[activePreset] || data.scenarios['base']) : null;
   const annualProfit = currentScenario?.annual_net_cash_flow ?? null;
   const breakEven = currentScenario?.break_even_months ?? null;

@@ -6,6 +6,7 @@ import { MapPin, CheckCircle2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { searchLocation, resolveLocation, resolveGps } from '@/lib/api';
 import { LocationCandidate, LocationIdentity, Place } from '@/types';
+import { DEFAULT_CURRENCY_SYMBOL } from '@/lib/utils';
 
 interface LocationJourneyProps {
   onResolved: (location: LocationIdentity) => void;
@@ -116,7 +117,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           country: 'India',
           coordinates: { lat: selectedLocation.lat, lng: selectedLocation.lng },
                             source: 'gps',
-                  currency: { code: 'INR', symbol: '₹', locale: 'en-IN' },
+                  currency: { code: 'INR', symbol: DEFAULT_CURRENCY_SYMBOL, locale: 'en-IN' },
         });
       }
     } catch (e: any) {
@@ -143,7 +144,7 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
           country: 'India',
           coordinates: { lat: candidate.lat, lng: candidate.lng },
                             source: 'manual',
-                  currency: { code: 'INR', symbol: '₹', locale: 'en-IN' },
+                  currency: { code: 'INR', symbol: DEFAULT_CURRENCY_SYMBOL, locale: 'en-IN' },
         });
       }
     } catch (e: any) {

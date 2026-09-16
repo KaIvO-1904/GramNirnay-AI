@@ -232,6 +232,7 @@ class WorkflowManager:
             "viabilityScore": int(score),
             "recommendation": recommendation,
             "headline": state.viability_report.headline if hasattr(state, 'viability_report') and state.viability_report else "Evaluating venture viability...",
+            "location": state.location_identity,
             "marketAnalysis": {
                 "demand": round(intel.demand.local_demand_score * 100) if hasattr(intel.demand, 'local_demand_score') else None,
                 "competition": round(intel.competition.competition_score * 100) if hasattr(intel.competition, 'competition_score') else None,

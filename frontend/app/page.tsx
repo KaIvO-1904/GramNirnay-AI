@@ -9,6 +9,7 @@ import Card3DTilt from '@/components/3d/Card3DTilt';
 import ThreeDIcon from '@/components/3d/ThreeDIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DEFAULT_CURRENCY_SYMBOL } from '@/lib/utils';
 import {
   ArrowRight,
   Sparkles,
@@ -56,7 +57,7 @@ export default function LandingPage() {
       location: 'Ramanagara, Karnataka',
       score: 84,
       verdict: 'Proceed with Modification',
-      investment: '₹5,50,000',
+      investment: `${DEFAULT_CURRENCY_SYMBOL}5,50,000`,
       subsidy: '25% (NABARD)',
       roi: '24.8%',
       breakeven: '18 Months',
@@ -66,7 +67,7 @@ export default function LandingPage() {
       location: 'Namakkal, Tamil Nadu',
       score: 91,
       verdict: 'Proceed',
-      investment: '₹8,20,000',
+      investment: `${DEFAULT_CURRENCY_SYMBOL}8,20,000`,
       subsidy: '35% (PMEGP)',
       roi: '31.4%',
       breakeven: '14 Months',
@@ -76,7 +77,7 @@ export default function LandingPage() {
       location: 'Bareilly, Uttar Pradesh',
       score: 72,
       verdict: 'Proceed with Modification',
-      investment: '₹3,00,000',
+      investment: `${DEFAULT_CURRENCY_SYMBOL}3,00,000`,
       subsidy: '15% (MUDRA)',
       roi: '18.2%',
       breakeven: '22 Months',
@@ -299,7 +300,7 @@ export default function LandingPage() {
               {[
                 { val: '750+', label: 'Districts Mapped' },
                 { val: '100%', label: 'Deterministic Math' },
-                { val: '₹50Cr+', label: 'Subsidies Indexed' },
+                { val: `${DEFAULT_CURRENCY_SYMBOL}50Cr+`, label: 'Subsidies Indexed' },
                 { val: '< 2.5s', label: 'Report Speed' },
               ].map((m, i) => (
                 <div key={i} className="text-left">
