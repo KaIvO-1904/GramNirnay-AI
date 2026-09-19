@@ -189,13 +189,13 @@ export default function ReportPage() {
 
   const currencySymbol = data?.location?.currency?.symbol || DEFAULT_CURRENCY_SYMBOL;
   const currentScenario = data?.scenarios ? (data.scenarios[activePreset] || data.scenarios['base']) : null;
-  const annualProfit = currentScenario?.annual_net_cash_flow ?? null;
+  const annualProfit = currentScenario?.annual_net_profit ?? null;
   const breakEven = currentScenario?.break_even_months ?? null;
   const roi = currentScenario?.roi_percent ?? null;
 
   const chartData = Array.from({ length: 12 }, (_, i) => ({
     month: `Mo ${i + 1}`,
-    cash: Math.round((currentScenario?.monthly_net_cash_flow ?? 0) * (i + 1)),
+    cash: Math.round((currentScenario?.monthly_net_profit ?? 0) * (i + 1)),
   }));
 
   if (!data) {
@@ -209,9 +209,38 @@ export default function ReportPage() {
     );
   }
 
+  if (data.status === 'FAILED') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-var(--surface-1) text-var(--text-primary) p-10">
+        <div className="max-w-2xl w-full p-12 rounded-[40px] border bg-var(--surface-0) text-center shadow-xl" style={{ borderColor: 'var(--border)' }}>
+          <div className="w-20 h-20 bg-var(--danger)/10 text-var(--danger) rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle size={40} />
+          </div>
+          <h1 className="text-3xl font-black uppercase mb-4">Analysis Failed</h1>
+          <p className="text-lg opacity-70 mb-8 leading-relaxed">
+            {data.error?.message || "A technical error occurred while processing your analysis. Please try again."}
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            className="px-8 py-3 rounded-2xl bg-var(--accent) text-white font-bold uppercase tracking-widest hover:scale-105 transition-transform"
+          >
+            Retry Analysis
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-var(--surface-1) text-var(--text-primary) p-10">
-      <h1 className="text-3xl font-black uppercase mb-10">{t(lang, 'report.title')}</h1>
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-3xl font-black uppercase">{t(lang, 'report.title')}</h1>
+        {data.status === 'PARTIAL' && (
+          <Badge variant="warning" className="text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+            ⚠ Partial Analysis
+          </Badge>
+        )}
+      </div>
 
       <Reveal>
         <div className="p-10 rounded-[40px] border bg-var(--surface-0) shadow-xl relative overflow-hidden mb-10" style={{ borderColor: 'var(--border)' }}>
@@ -224,26 +253,26 @@ export default function ReportPage() {
                     cx="80" cy="80" r="70" fill="none" stroke="var(--accent)" strokeWidth="16" strokeLinecap="round"
                     strokeDasharray={2 * Math.PI * 70}
                     initial={{ strokeDashoffset: 2 * Math.PI * 70 }}
-                    animate={{ strokeDashoffset: (2 * Math.PI * 70) * (1 - data.viabilityScore / 100) }}
+                    animate={{ strokeDashoffset: (2 * Math.PI * 70) * (1 - (data.viabilityScore ?? 0) / 100) }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl font-black font-mono">{data.viabilityScore}</span>
+                  <span className="text-5xl font-black font-mono">{data.viabilityScore ?? '--'}</span>
                   <span className="text-xs font-bold uppercase opacity-50 tracking-widest">Score</span>
                 </div>
               </div>
-              <div className="text-2xl font-black leading-tight">{data.recommendation}</div>
+              <div className="text-2xl font-black leading-tight">{data.recommendation ?? 'Evaluating...'}</div>
             </div>
             <div className="lg:col-span-8 space-y-6">
               <div className="p-6 rounded-3xl bg-var(--surface-1) border border-var(--border) relative">
                 <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-var(--accent) text-white text-[10px] font-black uppercase">Analyst Reasoning</div>
                 <p className="text-base opacity-80 leading-relaxed italic">
-                  "{data.interpreter_reasoning}"
+                  "{data.interpreter_reasoning || (data.status === 'PARTIAL' ? "Deterministic analysis completed, but personalized AI explanation is unavailable." : "Calculating reasoning...")}"
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KpiWidget label="Total Capital" value={currentScenario?.setup_cost ?? data?.financials?.total_project_cost} unit={currencySymbol} icon={Wallet} />
+                <KpiWidget label="Total Capital" value={currentScenario?.setup_cost ?? data?.financials?.total_project_cost ?? null} unit={currencySymbol} icon={Wallet} />
                 <KpiWidget label="Annual Net" value={annualProfit} unit={currencySymbol} variant="success" icon={TrendingUp} />
                 <KpiWidget label="Break-even" value={breakEven} unit="Mo" variant="danger" icon={Activity} />
                 <KpiWidget label="Projected ROI" value={roi} unit="%" variant="success" icon={Scale} />
@@ -374,9 +403,9 @@ export default function ReportPage() {
                     <div className="h-full bg-var(--warning) transition-all duration-500" style={{ width: '34%' }} title="External Loan" />
                   </div>
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.user_capital)}</span></div>
-                    <div className="flex justify-between text-var(--success) font-bold"><span>Est. Subsidy</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.verified_subsidy)}</span></div>
-                    <div className="flex justify-between border-t pt-2 font-black"><span>Financing Gap</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.financing_required)}</span></div>
+                    <div className="flex justify-between opacity-80"><span>Own Contribution</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.user_capital ?? null)}</span></div>
+                    <div className="flex justify-between text-var(--success) font-bold"><span>Est. Subsidy</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.verified_subsidy ?? null)}</span></div>
+                    <div className="flex justify-between border-t pt-2 font-black"><span>Financing Gap</span><span className="font-mono">{currencySymbol}{formatValue(data.financials?.financing_required ?? null)}</span></div>
                   </div>
                 </div>
               </div>

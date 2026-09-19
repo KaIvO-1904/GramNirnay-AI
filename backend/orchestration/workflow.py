@@ -160,18 +160,17 @@ class WorkflowManager:
         if status == "FAILED":
             return {
                 "status": "FAILED",
-                "error": "ANALYSIS_FAILED",
-                "message": state.final_explanation or "A critical error occurred during financial calculation.",
-                "viabilityScore": 0,
-                "recommendation": "Analysis Incomplete",
-                "marketAnalysis": {
-                    "demand": None, "competition": None, "accessibility": None, "seasonality": None,
-                    "source": "Unavailable", "confidence": "None", "reasoning": "Financial engine failed."
+                "error": {
+                    "code": "ANALYSIS_PIPELINE_ERROR",
+                    "message": state.final_explanation or "A critical error occurred during financial calculation."
                 },
-                "financials": state.financial_result.model_dump() if state.financial_result else {},
+                "viabilityScore": None,
+                "recommendation": None,
+                "marketAnalysis": None,
+                "financials": None,
                 "interpreter_reasoning": self._clean_markdown(state.final_explanation),
-                "modifications": [],
-                "matchedSchemes": [],
+                "modifications": None,
+                "matchedSchemes": None,
                 "business_blueprint": blueprint,
                 "startup_roadmap": roadmap,
                 "regulatory_requirements": requirements,

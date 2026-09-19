@@ -95,8 +95,8 @@ export interface Financials {
   monthly_emi: number | null;
 
   // Totals
-  monthly_net_cash_flow: number | null;
-  annual_net_cash_flow: number | null;
+  monthly_net_profit: number | null;
+  annual_net_profit: number | null;
 
   // Metrics
   roi_percent: number | null;
@@ -152,8 +152,8 @@ export interface ScenarioResult {
   monthly_emi: number;
   monthly_revenue: number;
   monthly_expenses: number;
-  monthly_net_cash_flow: number;
-  annual_net_cash_flow: number;
+  monthly_net_profit: number;
+  annual_net_profit: number;
   roi_percent: number;
   break_even_months: number | null;
   cumulative_cash_flow_12m: number;
@@ -162,17 +162,21 @@ export interface ScenarioResult {
 export interface AnalysisResult {
   status: 'SUCCESS' | 'PARTIAL' | 'FAILED';
   is_demo?: boolean;
-  viabilityScore: number;
-  recommendation: string;
+  viabilityScore: number | null;
+  recommendation: string | null;
+  error?: {
+    code: string;
+    message: string;
+  };
   headline?: string;
   category?: string;
   location: LocationIdentity;
-  marketAnalysis: MarketAnalysis;
-  financials: Financials;
+  marketAnalysis: MarketAnalysis | null;
+  financials: Financials | null;
   scenarios?: Record<string, ScenarioResult>;
   interpreter_reasoning?: string;
-  modifications: string[];
-  matchedSchemes: Scheme[];
+  modifications: string[] | null;
+  matchedSchemes: Scheme[] | null;
   business_blueprint?: {
     flow: Array<{step: string, desc: string}>;
     inputs: string[];

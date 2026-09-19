@@ -14,8 +14,8 @@ class ScenarioResult:
     monthly_emi: float
     monthly_revenue: float
     monthly_expenses: float
-    monthly_net_cash_flow: float
-    annual_net_cash_flow: float
+    monthly_net_profit: float
+    annual_net_profit: float
     roi_percent: float
     break_even_months: Optional[float]
     cumulative_cash_flow_12m: float
@@ -118,8 +118,8 @@ class FinancialEngine:
             "annual_revenue": m_rev * 12,
             "monthly_expenses": m_exp,
             "annual_expenses": m_exp * 12,
-            "monthly_net_cash_flow": round(monthly_net, 2),
-            "annual_net_cash_flow": round(annual_net, 2),
+            "monthly_net_profit": round(monthly_net, 2),
+            "annual_net_profit": round(annual_net, 2),
             "roi_percent": roi,
             "break_even_months": break_even,
             "is_viable": monthly_net > 0 and break_even is not None and break_even < 60,
@@ -205,8 +205,8 @@ class FinancialEngine:
                 monthly_emi=emi,
                 monthly_revenue=round(m_rev, 2),
                 monthly_expenses=round(m_exp, 2),
-                monthly_net_cash_flow=round(m_net, 2),
-                annual_net_cash_flow=round(a_net, 2),
+                monthly_net_profit=round(m_net, 2),
+                annual_net_profit=round(a_net, 2),
                 roi_percent=roi,
                 break_even_months=be,
                 cumulative_cash_flow_12m=round(cum_12, 2)

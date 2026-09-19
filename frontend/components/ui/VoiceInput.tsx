@@ -178,9 +178,9 @@ export default function VoiceInput({ onComplete }: VoiceInputProps) {
             district: result.location?.district || 'Unknown',
             state: result.location?.state || 'Unknown',
             date: new Date().toISOString().split('T')[0],
-            score: result.viabilityScore,
-            recommendation: result.recommendation,
-            projectCost: result.financials?.total_project_cost || 0,
+            score: result.viabilityScore ?? 0,
+            recommendation: result.recommendation ?? 'Unknown',
+            projectCost: result.financials?.total_project_cost ?? 0,
             data: result
           });
         }
