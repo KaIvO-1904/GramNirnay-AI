@@ -1,4 +1,5 @@
 import json
+from typing import List, Dict, Any, Optional
 from ..intelligence.client import ai_client
 from .base import BaseAgent
 from ..ontology.models import AgentResponse, BusinessProfile, FinancialParams
@@ -13,17 +14,19 @@ class InterpretationAgent(BaseAgent):
         self.client = ai_client.client
         self.interpreter = BusinessInterpreter()
 
-    def execute(self, user_input: str, **kwargs) -> AgentResponse:
+    def execute(self, user_input: str, answers: Optional[Dict[str, Any]] = None, **kwargs) -> AgentResponse:
         # 1. First, use the LLM to extract the profile and basic intents
         prompt = (
             "You are a Professional Business Analyst. Your task is to transform natural language "
             "descriptions of business ideas into a structured business model.\n\n"
             f"USER INPUT: '{user_input}'\n\n"
+            f"STRUCTURED ANSWERS PROVIDED: {json.dumps(answers) if answers else 'None'}\n\n"
             "CRITICAL GUIDELINES:\n"
-            "1. BENCHMARKING: If the user does not provide specific numerical values for capital, revenue, or expenses, provide realistic, benchmarked estimates based on the business category and location. Do NOT simply return 0.0 unless the business is fundamentally non-viable.\n"
-            "2. CATEGORIZATION: Map the business to the most appropriate category (agriculture, livestock, "
+            "1. GROUND TRUTH: If 'STRUCTURED ANSWERS' are provided, they are GROUND TRUTH. Use them to fill the profile and financials. Do NOT override a provided answer with an AI estimate.\n"
+            "2. BENCHMARKING: If a value is missing from structured answers AND the user input, provide realistic, benchmarked estimates based on the business category and location. Do NOT simply return 0.0 unless the business is fundamentally non-viable.\n"
+            "3. CATEGORIZATION: Map the business to the most appropriate category (agriculture, livestock, "
             "handicrafts, services, trading, other).\n"
-            "3. OUTPUT FORMAT: Return ONLY a JSON object with two keys: 'profile' and 'financials'.\n\n"
+            "4. OUTPUT FORMAT: Return ONLY a JSON object with two keys: 'profile' and 'financials'.\n\n"
             "STRUCTURE:\n"
             "- profile: { business_idea, category, available_capital, location, experience_years, target_audience }\n"
             "- financials: { setup_cost, monthly_revenue, monthly_expenses, interest_rate, tenure_years, user_capital }\n\n"
@@ -46,7 +49,7 @@ class InterpretationAgent(BaseAgent):
                 f"MALFORMED OUTPUT: {failed_output}"
             )
             resp = self.client.chat.completions.create(
-                model=self.model,
+                model=self.model_name,
                 messages=[{"role": "user", "content": retry_prompt}],
                 response_format={"type": "json_object"}
             )
@@ -86,7 +89,7 @@ class InterpretationAgent(BaseAgent):
             idea=profile_data.get("business_idea", ""),
             location=location,
             experience_years=profile_data.get("experience_years", 0),
-            answers={} # In a full flow, these would come from the questionnaire
+            answers=answers or {} # Use structured answers if provided
         )
 
         # Merge the profile and the enriched financials/blueprints

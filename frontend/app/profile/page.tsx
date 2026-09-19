@@ -186,8 +186,8 @@ export default function ProfilePage() {
   const submitDirectAnalysis = async (collectedAnswers: Record<string, string | string[]>) => {
     setStage('analyzing');
     try {
-      const profilePayload: UserProfile = {
-        businessIdea: businessIdea.trim(),
+      const profilePayload: any = {
+        user_input: businessIdea.trim(),
         location: {
           district: location?.hierarchy?.district || location?.district || '',
           state: location?.hierarchy?.state || location?.state || '',
@@ -195,15 +195,15 @@ export default function ProfilePage() {
           lng: location?.lng || 0,
         },
         experience: parseInt(experience, 10) || 0,
-        availableCapital: 0,
-        answers: collectedAnswers as any,
+        available_capital: 0,
+        answers: collectedAnswers,
       };
 
       const result = await analyzeViability(profilePayload);
       localStorage.setItem('analysis_result', JSON.stringify(result));
 
       addHistoryItem({
-        businessIdea: profilePayload.businessIdea,
+        businessIdea: profilePayload.user_input,
         district: profilePayload.location.district,
         state: profilePayload.location.state,
         score: result.viabilityScore || 85,

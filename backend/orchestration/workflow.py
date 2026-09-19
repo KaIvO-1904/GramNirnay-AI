@@ -31,8 +31,31 @@ class WorkflowManager:
         from ..operational_engine import OperationalEngine
         self.operational_engine = OperationalEngine()
 
-    def run_pipeline(self, user_input: str, profile: Optional[Any] = None, financial_params: Optional[Any] = None) -> PipelineState:
+    def run_pipeline(self, request: Any) -> PipelineState:
+        """
+        Orchestrates the GramNirnay.ai intelligence pipeline using a canonical AnalysisRequest.
+        """
+        # Handle legacy positional arguments if necessary, but shift to request object
+        if isinstance(request, str):
+            user_input = request
+            profile = None
+            financial_params = None
+            answers = {}
+        elif hasattr(request, 'dict') or isinstance(request, dict):
+            req_dict = request.dict() if hasattr(request, 'dict') else request
+            user_input = req_dict.get('user_input', '')
+            profile = req_dict.get('profile')
+            financial_params = req_dict.get('financial_params')
+            answers = req_dict.get('answers', {})
+        else:
+            user_input = getattr(request, 'user_input', '')
+            profile = getattr(request, 'profile', None)
+            financial_params = getattr(request, 'financial_params', None)
+            answers = getattr(request, 'answers', {})
+
         state = PipelineState(request_id=str(uuid.uuid4()), user_input=user_input)
+        state.answers = answers
+
 
         try:
             # 1. INTERPRETATION
@@ -41,7 +64,7 @@ class WorkflowManager:
                 state.financial_params = financial_params
                 state.interpretation_confidence = 1.0
             else:
-                interp_res = self.interpretation_agent.execute(user_input)
+                interp_res = self.interpretation_agent.execute(user_input, answers=answers)
                 if interp_res.confidence < 0.3:
                     raise InterpretationError("Could not understand the business request.", "INTERP_FAILED")
 

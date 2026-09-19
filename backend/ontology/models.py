@@ -187,13 +187,13 @@ class AgentResponse(BaseModel):
     confidence: ConfidenceScore
     metadata: Dict[str, Any] = {}
 
-class GramNirnayError(Exception):
-    """Base exception for the architecture."""
-    def __init__(self, message: str, code: str = "INTERNAL_ERROR", details: Any = None):
-        super().__init__(message)
-        self.message = message
-        self.code = code
-        self.details = details
+class AnalysisRequest(BaseModel):
+    """Canonical request for the analysis pipeline."""
+    user_input: str = Field(..., description="Natural language description of the business")
+    profile: Optional[BusinessProfile] = None
+    financial_params: Optional[FinancialParams] = None
+    answers: Dict[str, Any] = Field(default_factory=dict, description="Structured answers from the questionnaire")
+    location: Optional[Dict[str, Any]] = None
 
 class InterpretationError(GramNirnayError):
     """Raised when LLM fails to structure the input."""

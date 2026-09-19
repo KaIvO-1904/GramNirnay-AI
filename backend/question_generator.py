@@ -344,16 +344,16 @@ class QuestionGenerator:
         if any(w in idea_lower for w in ["poultry", "chicken", "broiler", "layer", "hen", "egg", "bird", "kadaknath"]):
             return "poultry"
         if any(w in idea_lower for w in ["cloth", "garment", "apparel", "saree", "textile", "tailor", "dress", "fashion", "boutique"]):
-            return "cloth"
+            return "retail_cloth"
         if any(w in idea_lower for w in ["dairy", "cow", "buffalo", "milk", "cattle", "ghee", "paneer"]):
             return "dairy"
         if any(w in idea_lower for w in ["kirana", "grocery", "provision", "supermarket", "ration", "fmcg"]):
-            return "kirana"
+            return "retail_kirana"
         if any(w in idea_lower for w in ["fertilizer", "seed", "pesticide", "agro", "input", "agriculture shop"]):
             return "agro_inputs"
         if any(w in idea_lower for w in ["goat", "sheep", "bakri", "mutton", "lamb"]):
             return "goat"
-        return "general"
+        return "other"
 
     @classmethod
     def generate_questions(cls, business_idea: str, location: Dict[str, Any]) -> Dict[str, Any]:
