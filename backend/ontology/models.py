@@ -195,7 +195,15 @@ class AnalysisRequest(BaseModel):
     answers: Dict[str, Any] = Field(default_factory=dict, description="Structured answers from the questionnaire")
     location: Optional[Dict[str, Any]] = None
 
+class GramNirnayError(Exception):
+    """Base exception for GramNirnay domain errors."""
+    def __init__(self, message: str, code: str = "INTERNAL_ERROR"):
+        self.message = message
+        self.code = code
+        super().__init__(self.message)
+
 class InterpretationError(GramNirnayError):
+
     """Raised when LLM fails to structure the input."""
     pass
 
