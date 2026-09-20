@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CheckCircle2, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { searchLocation, resolveLocation, resolveGps } from '@/lib/api';
+import { searchLocation, resolveLocation, resolveGps, detectIpLocation } from '@/lib/api';
 import { LocationCandidate, LocationIdentity, Place } from '@/types';
 import { DEFAULT_CURRENCY_SYMBOL } from '@/lib/utils';
 

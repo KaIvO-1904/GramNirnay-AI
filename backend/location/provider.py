@@ -5,6 +5,22 @@ from .models import LocationIdentity, LocationCandidate, LocationHierarchy, Curr
 from .currency import get_currency_for_country
 from ..logger import logger
 
+class ProviderError(Exception):
+    """Base class for all provider-related errors."""
+    pass
+
+class ConfigurationError(ProviderError):
+    """Raised when required API keys/tokens are missing or invalid."""
+    pass
+
+class ProviderUnavailableError(ProviderError):
+    """Raised for timeouts, network failures, or 5xx/429 responses."""
+    pass
+
+class MalformedResponseError(ProviderError):
+    """Raised when the API response format is unexpected."""
+    pass
+
 class ILocationProvider(ABC):
     """Abstraction for the geolocation provider to allow easy replacement."""
 
@@ -31,6 +47,8 @@ class GoogleLocationProvider(ILocationProvider):
         self.base_url = "https://maps.googleapis.com/maps/api/geocode"
 
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
+        if not self.api_key:
+            raise ConfigurationError("Google Maps API key is missing.")
         try:
             with httpx.Client() as client:
                 resp = client.get(
@@ -38,10 +56,18 @@ class GoogleLocationProvider(ILocationProvider):
                     params={"address": query, "key": self.api_key},
                     timeout=5.0
                 )
+                if resp.status_code == 403:
+                    raise ConfigurationError(f"Google Maps API key invalid or restricted: {resp.text}")
+                if resp.status_code >= 500 or resp.status_code == 429:
+                    raise ProviderUnavailableError(f"Google Maps API unavailable: {resp.status_code}")
+
+                resp.raise_for_status()
                 data = resp.json()
                 if data.get("status") != "OK":
+                    if data.get("status") == "ZERO_RESULTS":
+                        return []
                     logger.error(f"Google Forward Geocode Error: {data.get('status')}")
-                    return []
+                    raise ProviderError(f"Google Maps API returned error status: {data.get('status')}")
 
                 results = []
                 for item in data.get("results", []):
@@ -63,11 +89,19 @@ class GoogleLocationProvider(ILocationProvider):
                         confidence=0.9
                     ))
                 return results
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"Google Maps network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected Google Maps response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"Google Forward Geocode Exception: {e}")
-            return []
+            logger.exception(f"Unexpected Google Forward Geocode Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
     def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
+        if not self.api_key:
+            raise ConfigurationError("Google Maps API key is missing.")
         try:
             with httpx.Client() as client:
                 resp = client.get(
@@ -75,10 +109,18 @@ class GoogleLocationProvider(ILocationProvider):
                     params={"latlng": f"{lat},{lng}", "key": self.api_key},
                     timeout=5.0
                 )
+                if resp.status_code == 403:
+                    raise ConfigurationError(f"Google Maps API key invalid or restricted: {resp.text}")
+                if resp.status_code >= 500 or resp.status_code == 429:
+                    raise ProviderUnavailableError(f"Google Maps API unavailable: {resp.status_code}")
+
+                resp.raise_for_status()
                 data = resp.json()
                 if data.get("status") != "OK":
+                    if data.get("status") == "ZERO_RESULTS":
+                        return None
                     logger.error(f"Google Reverse Geocode Error: {data.get('status')}")
-                    return None
+                    raise ProviderError(f"Google Maps API returned error status: {data.get('status')}")
 
                 result = data.get("results", [{}])[0]
                 addr_map = {comp["types"][0]: comp["long_name"] for comp in result.get("address_components", [])}
@@ -99,11 +141,19 @@ class GoogleLocationProvider(ILocationProvider):
                     source="gps",
                     currency=CurrencyInfo(**get_currency_for_country(country))
                 )
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"Google Maps network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected Google Maps response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"Google Reverse Geocode Exception: {e}")
-            return None
+            logger.exception(f"Unexpected Google Reverse Geocode Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
+        if not self.api_key:
+            raise ConfigurationError("Google Maps API key is missing.")
         try:
             with httpx.Client() as client:
                 resp = client.get(
@@ -111,9 +161,18 @@ class GoogleLocationProvider(ILocationProvider):
                     params={"place_id": provider_id, "key": self.api_key},
                     timeout=5.0
                 )
+                if resp.status_code == 403:
+                    raise ConfigurationError(f"Google Maps API key invalid or restricted: {resp.text}")
+                if resp.status_code >= 500 or resp.status_code == 429:
+                    raise ProviderUnavailableError(f"Google Maps API unavailable: {resp.status_code}")
+
+                resp.raise_for_status()
                 data = resp.json()
                 if data.get("status") != "OK":
-                    return None
+                    if data.get("status") == "NOT_FOUND":
+                        return None
+                    logger.error(f"Google Resolve Hierarchy Error: {data.get('status')}")
+                    raise ProviderError(f"Google Maps API returned error status: {data.get('status')}")
 
                 result = data.get("result", {})
                 addr_map = {comp["types"][0]: comp["long_name"] for comp in result.get("address_components", [])}
@@ -137,9 +196,15 @@ class GoogleLocationProvider(ILocationProvider):
                     source="manual",
                     currency=CurrencyInfo(**get_currency_for_country(country))
                 )
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"Google Maps network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected Google Maps response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"Google Resolve Hierarchy Error: {e}")
-            return None
+            logger.exception(f"Google Resolve Hierarchy Error: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
 class OSMLocationProvider(ILocationProvider):
     def __init__(self):
@@ -156,14 +221,16 @@ class OSMLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 if resp.status_code == 429:
-                    logger.error("OSM Nominatim Rate Limit exceeded (429).")
-                    return []
+                    raise ProviderUnavailableError("OSM Nominatim Rate Limit exceeded (429).")
+                if resp.status_code >= 500:
+                    raise ProviderUnavailableError(f"OSM Search API Server Error {resp.status_code}")
                 if resp.status_code != 200:
-                    logger.error(f"OSM Search API Error {resp.status_code}: {resp.text}")
-                    return []
+                    raise ProviderError(f"OSM Search API Error {resp.status_code}: {resp.text}")
+
                 data = resp.json()
                 if not isinstance(data, list):
-                    return []
+                    raise MalformedResponseError("OSM Search API returned unexpected non-list response")
+
                 results = []
                 for item in data:
                     addr = item.get("address", {})
@@ -203,9 +270,15 @@ class OSMLocationProvider(ILocationProvider):
                         logger.error(f"LocationCandidate creation failed: {e}")
                         continue
                 return results
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"OSM network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected OSM response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"OSM Forward Geocode Exception: {e}")
-            return []
+            logger.exception(f"Unexpected OSM Forward Geocode Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
     def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
         try:
@@ -215,9 +288,13 @@ class OSMLocationProvider(ILocationProvider):
                     params={"lat": lat, "lon": lng, "format": "json", "addressdetails": 1},
                     timeout=5.0
                 )
+                if resp.status_code == 429:
+                    raise ProviderUnavailableError("OSM Nominatim Rate Limit exceeded (429).")
+                if resp.status_code >= 500:
+                    raise ProviderUnavailableError(f"OSM Reverse Geocode Server Error {resp.status_code}")
                 if resp.status_code != 200:
-                    logger.error(f"OSM Reverse Geocode API Error {resp.status_code}: {resp.text}")
-                    return None
+                    raise ProviderError(f"OSM Reverse Geocode API Error {resp.status_code}: {resp.text}")
+
                 data = resp.json()
                 if "error" in data:
                     logger.error(f"OSM Reverse Geocode Error: {data['error']}")
@@ -236,9 +313,15 @@ class OSMLocationProvider(ILocationProvider):
                     source="gps",
                     currency=CurrencyInfo(**get_currency_for_country(country))
                 )
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"OSM network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected OSM response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"OSM Reverse Geocode Exception: {e}")
-            return None
+            logger.exception(f"Unexpected OSM Reverse Geocode Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
         try:
@@ -248,6 +331,13 @@ class OSMLocationProvider(ILocationProvider):
                     params={"q": provider_id, "format": "json", "addressdetails": 1},
                     timeout=5.0
                 )
+                if resp.status_code == 429:
+                    raise ProviderUnavailableError("OSM Nominatim Rate Limit exceeded (429).")
+                if resp.status_code >= 500:
+                    raise ProviderUnavailableError(f"OSM Resolve Hierarchy Server Error {resp.status_code}")
+                if resp.status_code != 200:
+                    raise ProviderError(f"OSM Resolve Hierarchy API Error {resp.status_code}: {resp.text}")
+
                 data = resp.json()
                 if not data:
                     return None
@@ -269,9 +359,15 @@ class OSMLocationProvider(ILocationProvider):
                     source="manual",
                     currency=CurrencyInfo(**get_currency_for_country(country))
                 )
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"OSM network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected OSM response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"OSM Resolve Hierarchy Error: {e}")
-            return None
+            logger.exception(f"Unexpected OSM Resolve Hierarchy Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
 class MockLocationProvider(ILocationProvider):
     """Local mock provider for development and testing."""
@@ -365,12 +461,17 @@ class IPInfoLocationProvider(ILocationProvider):
         self.base_url = "https://ipinfo.io"
 
     def resolve_by_ip(self, ip: str) -> Optional[LocationIdentity]:
+        if not self.token:
+            raise ConfigurationError("IPInfo token is missing.")
         try:
             with httpx.Client() as client:
                 resp = client.get(f"{self.base_url}/{ip}?token={self.token}", timeout=5.0)
+                if resp.status_code == 403:
+                    raise ConfigurationError(f"IPInfo token invalid: {resp.text}")
+                if resp.status_code >= 500 or resp.status_code == 429:
+                    raise ProviderUnavailableError(f"IPInfo API unavailable: {resp.status_code}")
                 if resp.status_code != 200:
-                    logger.error(f"IPInfo API Error {resp.status_code}: {resp.text}")
-                    return None
+                    raise ProviderError(f"IPInfo API Error {resp.status_code}: {resp.text}")
 
                 data = resp.json()
                 loc_parts = data.get("loc", "0,0").split(",")
@@ -392,9 +493,15 @@ class IPInfoLocationProvider(ILocationProvider):
                     source="ip",
                     currency=CurrencyInfo(**get_currency_for_country(country))
                 )
+        except httpx.RequestError as e:
+            raise ProviderUnavailableError(f"IPInfo network error: {e}")
+        except (KeyError, TypeError) as e:
+            raise MalformedResponseError(f"Unexpected IPInfo response format: {e}")
+        except ProviderError:
+            raise
         except Exception as e:
-            logger.error(f"IPInfo Lookup Exception: {e}")
-            return None
+            logger.exception(f"Unexpected IPInfo Lookup Exception: {e}")
+            raise ProviderError(f"Internal provider error: {e}")
 
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
         raise NotImplementedError("IPInfo does not support forward geocoding.")

@@ -89,8 +89,9 @@ app.add_middleware(
 
 # Initialize Engines
 from .orchestration.workflow import WorkflowManager
-from .location.service import LocationService
+from .location.service import LocationService, LocationServiceError
 from .location.models import LocationCandidate, LocationIdentity, LocationSource
+from .location.provider import ProviderError, ConfigurationError, ProviderUnavailableError
 from .voice.service import VoiceService
 from .intelligence.providers import AIIntelligenceProvider
 workflow_manager = WorkflowManager()
@@ -135,7 +136,10 @@ class LocationSearchRequest(BaseModel):
 
 @app.post("/api/location/search", dependencies=[Depends(rate_limit)])
 async def search_location(request: LocationSearchRequest) -> List[LocationCandidate]:
-    return location_service.search_place(request.query)
+    try:
+        return location_service.search_place(request.query)
+    except (LocationServiceError, ProviderError) as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 class LocationResolveRequest(BaseModel):
     provider_id: str
@@ -147,6 +151,8 @@ async def resolve_location(request: LocationResolveRequest) -> LocationIdentity:
         return location_service.resolve_location(request.provider_id, request.source)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except (LocationServiceError, ProviderError) as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 class GpsLocationRequest(BaseModel):
     lat: float
@@ -158,6 +164,8 @@ async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
         return location_service.resolve_gps(request.lat, request.lng)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except (LocationServiceError, ProviderError) as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 @app.post("/api/location/detect-ip", dependencies=[Depends(rate_limit)])
 async def detect_ip_location(request: Request) -> LocationIdentity:
@@ -165,8 +173,12 @@ async def detect_ip_location(request: Request) -> LocationIdentity:
         client_ip = request.client.host
         identity = location_service.detect_by_ip(client_ip)
         if not identity:
-            raise HTTPException(status_code=502, detail="Could not detect location from IP. Please search manually.")
+            raise HTTPException(status_code=404, detail="Could not detect location from IP.")
         return identity
+    except (ConfigurationError, ProviderUnavailableError) as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except ProviderError as e:
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logger.exception(f"IP detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

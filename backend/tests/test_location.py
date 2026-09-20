@@ -30,7 +30,7 @@ def test_manual_override():
     service = LocationService()
     candidates = service.search_place("Anekal")
     selected = candidates[0]
-    result = service.handle_manual_confirmation(selected)
+    result = service.resolve_location(selected.provider_id, LocationSource.MANUAL)
     assert result.source == LocationSource.MANUAL
     assert result.provider_id == selected.provider_id
 
