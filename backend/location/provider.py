@@ -39,6 +39,9 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
+                print(f"--- OSM DEBUG DATA: {data}", flush=True)
+                from ..logger import logger
+                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     logger.error(f"Google Forward Geocode Error: {data.get('status')}")
                     return []
@@ -76,6 +79,9 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
+                print(f"--- OSM DEBUG DATA: {data}", flush=True)
+                from ..logger import logger
+                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     logger.error(f"Google Reverse Geocode Error: {data.get('status')}")
                     return None
@@ -109,6 +115,9 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
+                print(f"--- OSM DEBUG DATA: {data}", flush=True)
+                from ..logger import logger
+                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     return None
 
@@ -138,7 +147,7 @@ class GoogleLocationProvider(ILocationProvider):
 class OSMLocationProvider(ILocationProvider):
     def __init__(self):
         self.base_url = "https://nominatim.openstreetmap.org"
-        self.headers = {"User-Agent": "GramNirnayAI/1.0 (contact: support@gramnirnay.ai)"}
+        self.headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
 
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
         try:
@@ -179,7 +188,7 @@ class OSMLocationProvider(ILocationProvider):
                     )
                     try:
                         results.append(LocationCandidate(
-                            provider_id=osm_id,
+                            provider_id=str(osm_id),
                             label=item.get("display_name", "Unknown Location"),
                             hierarchy=LocationHierarchy(
                                 state=str(state),
@@ -190,7 +199,8 @@ class OSMLocationProvider(ILocationProvider):
                             lng=float(item.get("lon", 0)),
                             confidence=0.8
                         ))
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f"LocationCandidate creation failed: {e}")
                         continue
                 return results
         except Exception as e:

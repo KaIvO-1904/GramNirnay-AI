@@ -347,6 +347,7 @@ async def root() -> Dict[str, str]:
 
 @app.get("/api/health/llm")
 async def health_llm() -> Dict[str, Any]:
+
     try:
         start_time = time.time()
         response = ai_provider._query_ai("Ping. Reply with 'pong'.")
@@ -479,3 +480,4 @@ async def get_demo_scenario(scenario_id: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=settings.app_host, port=settings.app_port)
+
