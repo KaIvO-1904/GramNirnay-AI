@@ -180,7 +180,7 @@ async def confirm_voice(payload: Dict[str, Any]) -> Dict[str, Any]:
         confirmed_text = payload.get("confirmed_text")
         if not confirmed_text or not confirmed_text.strip():
             raise HTTPException(status_code=400, detail="Confirmed text cannot be empty.")
-        state = workflow_manager.run_pipeline(user_input=confirmed_text)
+        state = workflow_manager.run_pipeline(confirmed_text)
         return workflow_manager.format_for_frontend(state)
     except Exception as e:
         logger.exception(f"Voice confirmation failed: {e}")
@@ -420,11 +420,11 @@ async def analyze_viability(profile: UserProfile) -> Dict[str, Any]:
             regulatory_requirements=params_dict.get("regulatory_requirements"),
             risk_matrix=params_dict.get("risk_matrix")
         )
-        state = workflow_manager.run_pipeline(
-            user_input=profile.businessIdea,
-            profile=biz_profile,
-            financial_params=fin_params
-        )
+        state = workflow_manager.run_pipeline({
+            "user_input": profile.businessIdea,
+            "profile": biz_profile,
+            "financial_params": fin_params
+        })
         return workflow_manager.format_for_frontend(state)
     except Exception as e:
         logger.exception(f"Analysis failed for idea '{profile.businessIdea}': {e}")
