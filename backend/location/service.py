@@ -16,14 +16,15 @@ class LocationService:
         # 1. If a provider is explicitly passed, use it
         if provider:
             self.provider = provider
-        # 2. Use Mock provider for testing if in test environment or specifically requested
-        # In real scenarios, we would check an environment variable.
-        # For these tests to be deterministic, we can default to MockLocationProvider if no API key.
+        # 2. Use Google provider if API key is available
         elif settings.google_maps_api_key:
             from .provider import GoogleLocationProvider
             self.provider = GoogleLocationProvider(settings.google_maps_api_key)
+        # 3. Fallback to OSM for production/standard use
+        elif not settings.demo_mode:
+            self.provider = OSMLocationProvider()
+        # 4. Default to Mock for demo/test mode
         else:
-            # Default to Mock for tests, OSM for production without API key
             from .provider import MockLocationProvider
             self.provider = MockLocationProvider()
 
@@ -79,6 +80,14 @@ class LocationService:
         """Returns tailored tips for the region and business category."""
         return [f"Check the local district collector's office in {location} for {category} subsidies."]
 
-    def handle_manual_confirmation(self, candidate: LocationCandidate) -> LocationIdentity:
-        """Converts a selected candidate into a final identity."""
-        return self.resolve_location(candidate.provider_id, LocationSource.MANUAL)
+    def detect_by_ip(self, ip: str) -> Optional[LocationIdentity]:
+        """Detects location based on IP address using IPInfo."""
+        if not self.ip_provider:
+            logger.error("IPInfo provider not initialized. Missing IPINFO_TOKEN.")
+            return None
+
+        try:
+            return self.ip_provider.resolve_by_ip(ip)
+        except Exception as e:
+            logger.error(f"IP-based location detection failed: {e}")
+            return None

@@ -155,6 +155,9 @@ class OSMLocationProvider(ILocationProvider):
                     params={"q": search_query, "format": "json", "addressdetails": 1, "limit": 10},
                     timeout=5.0
                 )
+                if resp.status_code == 429:
+                    logger.error("OSM Nominatim Rate Limit exceeded (429).")
+                    return []
                 if resp.status_code != 200:
                     logger.error(f"OSM Search API Error {resp.status_code}: {resp.text}")
                     return []

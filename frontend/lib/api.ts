@@ -31,6 +31,18 @@ export async function resolveGps(lat: number, lng: number): Promise<LocationIden
   return response.json();
 }
 
+export async function detectIpLocation(): Promise<LocationIdentity> {
+  const response = await fetch(`${API_BASE_URL}/api/location/detect-ip`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `IP detection failed: ${response.status}`);
+  }
+  return response.json();
+}
+
 export async function generateQuestions(businessIdea: string, location: { district: string; state: string }): Promise<QuestionnaireResponse> {
 
   const response = await fetch(`${API_BASE_URL}/api/generate-questions`, {

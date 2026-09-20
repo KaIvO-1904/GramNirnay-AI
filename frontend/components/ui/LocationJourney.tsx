@@ -69,22 +69,61 @@ export default function LocationJourney({ onResolved, initialLocation }: Locatio
             setSelectedLocation(candidate);
             setStep('confirming');
           } catch (e: any) {
-            setError('Failed to resolve coordinates. Please search manually.');
-            setStep('resolving');
+            // FALLBACK: Try IP Detection if GPS resolution fails
+            try {
+              const ipLoc = await detectIpLocation();
+              const ipCandidate: LocationCandidate = {
+                provider_id: ipLoc.provider_id,
+                label: ipLoc.name,
+                hierarchy: {
+                  state: ipLoc.state,
+                  district: ipLoc.district,
+                  village: ipLoc.name,
+                },
+                lat: ipLoc.coordinates.lat,
+                lng: ipLoc.coordinates.lng,
+                confidence: 0.7,
+              };
+              setSelectedLocation(ipCandidate);
+              setStep('confirming');
+            } catch (ipErr: any) {
+              setError('Failed to resolve coordinates. Please search manually.');
+              setStep('resolving');
+            }
           } finally {
             setIsLoading(false);
           }
         },
-        (err) => {
-          if (err.code === 1) {
-            setError('Location access denied. Please enter your district manually.');
-          } else if (err.code === 3) {
-            setError('Location request timed out. Please search manually.');
-          } else {
-            setError('Unable to retrieve location. Please search manually.');
+        async (err) => {
+          // FALLBACK: Try IP Detection if Geolocation is denied or times out
+          try {
+            const ipLoc = await detectIpLocation();
+            const ipCandidate: LocationCandidate = {
+              provider_id: ipLoc.provider_id,
+              label: ipLoc.name,
+              hierarchy: {
+                state: ipLoc.state,
+                district: ipLoc.district,
+                village: ipLoc.name,
+              },
+              lat: ipLoc.coordinates.lat,
+              lng: ipLoc.coordinates.lng,
+              confidence: 0.7,
+            };
+            setSelectedLocation(ipCandidate);
+            setStep('confirming');
+          } catch (ipErr: any) {
+            if (err.code === 1) {
+              setError('Location access denied. Please enter your district manually.');
+            } else if (err.code === 3) {
+              setError('Location request timed out. Please search manually.');
+            } else {
+              setError('Unable to retrieve location. Please search manually.');
+            }
+            setStep('resolving');
+          } finally {
+            setIsLoading(false);
           }
-          setStep('resolving');
-          setIsLoading(false);
         },
         {
           enableHighAccuracy: true,

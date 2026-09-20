@@ -159,6 +159,18 @@ async def resolve_gps(request: GpsLocationRequest) -> LocationIdentity:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/location/detect-ip", dependencies=[Depends(rate_limit)])
+async def detect_ip_location(request: Request) -> LocationIdentity:
+    try:
+        client_ip = request.client.host
+        identity = location_service.detect_by_ip(client_ip)
+        if not identity:
+            raise HTTPException(status_code=502, detail="Could not detect location from IP. Please search manually.")
+        return identity
+    except Exception as e:
+        logger.exception(f"IP detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/voice/upload", dependencies=[Depends(rate_limit)])
 async def upload_voice(request: Request) -> Dict[str, Any]:
     try:
