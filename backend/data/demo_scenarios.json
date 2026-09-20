@@ -1,0 +1,58 @@
+{
+  "1": {
+    "profile": {
+      "businessIdea": "Country Chicken Poultry Farm",
+      "category": "poultry",
+      "availableCapital": 126000,
+      "location": { "district": "Mayurbhanj", "state": "Odisha" },
+      "experience": 1
+    },
+    "financial_params": {
+      "setup_cost": 210000,
+      "monthly_revenue": 45000,
+      "monthly_expenses": 28000,
+      "interest_rate": 9.0,
+      "tenure_years": 5,
+      "user_capital": 126000
+    },
+    "market_proxies": {
+      "demand": 80.0,
+      "competition": 40.0,
+      "accessibility": 70.0,
+      "seasonality": 20.0,
+      "reasoning": "High demand for native chicken in Mayurbhanj."
+    },
+    "ai_insights": {
+      "modifications": ["Integrate automated ventilation", "Establish direct tie-ups with hotel chains"],
+      "confidence": 0.9
+    }
+  },
+  "2": {
+    "profile": {
+      "businessIdea": "Indigenous A2 Dairy Farm",
+      "category": "dairy",
+      "availableCapital": 231000,
+      "location": { "district": "Anand", "state": "Gujarat" },
+      "experience": 2
+    },
+    "financial_params": {
+      "setup_cost": 420000,
+      "monthly_revenue": 65000,
+      "monthly_expenses": 32000,
+      "interest_rate": 8.5,
+      "tenure_years": 5,
+      "user_capital": 231000
+    },
+    "market_proxies": {
+      "demand": 90.0,
+      "competition": 60.0,
+      "accessibility": 80.0,
+      "seasonality": 10.0,
+      "reasoning": "Strong cooperative support in Anand."
+    },
+    "ai_insights": {
+      "modifications": ["Adopt silage making", "Register as Organic Certified"],
+      "confidence": 0.9
+    }
+  }
+}

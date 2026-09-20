@@ -250,7 +250,7 @@ export default function LandingPage() {
               </MagneticButton>
 
               <motion.button
-                onClick={() => loadDemo('dairy_ramanagara')}
+                onClick={() => loadDemo('2')}
                 disabled={isLoading}
                 className="px-7 py-4 text-base font-semibold rounded-full border transition-all duration-[var(--duration-base)] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                 style={{
@@ -461,7 +461,7 @@ export default function LandingPage() {
                 <div className="pt-2 flex flex-wrap gap-4">
                   <Button
                     variant="primary"
-                    onClick={() => loadDemo('dairy_ramanagara')}
+                    onClick={() => loadDemo('2')}
                     className="gap-2 rounded-2xl px-6 h-11 cursor-pointer"
                   >
                     Open Full Report Analysis <ArrowRight size={16} />
