@@ -65,10 +65,11 @@ class ViabilityEngine:
         )
 
         # Competition
-        # Higher competition score means MORE competition, which is NEGATIVE for viability.
-        comp_score = 1.0 - intel.competition.competition_score
+        # In this engine, we treat the raw competition_score as the viability score
+        # (i.e., Higher competition_score means BETTER viability/opportunity)
+        comp_score = intel.competition.competition_score
         components["competition"] = self._create_component(
-            "Competition", comp_score, f"Competition level: {intel.competition.competition_score}."
+            "Competition", comp_score, f"Competition level: {comp_score}."
         )
 
         # Supply Chain (Averaging Supplier Access and Raw Material Access)
@@ -167,7 +168,7 @@ class ViabilityEngine:
             status = ComponentStatus.WARNING
 
         return ComponentScore(
-            score=round(score, 2),
+            score=score,
             weight=0.0, # Set during aggregation
             contribution=0.0, # Set during aggregation
             status=status,

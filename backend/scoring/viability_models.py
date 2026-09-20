@@ -26,7 +26,7 @@ class ViabilityConfig(BaseModel):
         "risk": 0.05
     }
     thresholds: Dict[str, float] = {
-        "critical": 0.3,
+        "critical": 0.4,
         "warning": 0.6,
         "strong": 0.8
     }

@@ -1,8 +1,8 @@
 import pytest
 from backend.ontology.models import BusinessProfile, BusinessCategory, FinancialParams, FinancialResult
 from backend.validation.rules_engine import ValidationEngine, ValidationStatus
-from backend.scoring.viability import ScoringEngine
-from backend.location.geo_service import LocationService
+from backend.scoring.viability_engine import ViabilityEngine
+from backend.location.service import LocationService
 
 def test_business_profile_validation():
     # Valid profile
@@ -56,6 +56,7 @@ def test_financial_params_validation():
 
 def test_viability_scoring():
     # High viability
+    engine = ViabilityEngine()
     result = FinancialResult(
         total_project_cost=100000.0,
         financing_required=50000.0,
@@ -64,9 +65,14 @@ def test_viability_scoring():
         annual_net_profit=60000.0,
         roi_percent=60.0,
         break_even_months=12.0,
-        is_viable=True
+        is_viable=True,
+        monthly_revenue=10000.0,
+        annual_revenue=120000.0,
+        monthly_expenses=5000.0,
+        annual_expenses=60000.0
     )
-    score = ScoringEngine.calculate_financial_viability(result)
+    # Using the internal method for a direct test
+    score = engine._calculate_financial_score(result)
     assert score == 1.0
 
     # Low viability
@@ -78,9 +84,13 @@ def test_viability_scoring():
         annual_net_profit=-1200.0,
         roi_percent=-1.2,
         break_even_months=120.0,
-        is_viable=False
+        is_viable=False,
+        monthly_revenue=1000.0,
+        annual_revenue=12000.0,
+        monthly_expenses=5000.0,
+        annual_expenses=60000.0
     )
-    score = ScoringEngine.calculate_financial_viability(low_result)
+    score = engine._calculate_financial_score(low_result)
     assert score == 0.0
 
 def test_location_service():

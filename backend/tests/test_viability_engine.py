@@ -31,6 +31,10 @@ def create_mock_financials(is_viable=True, roi=25.0, break_even=12.0):
         monthly_emi=1000.0,
         monthly_net_profit=5000.0,
         annual_net_profit=60000.0,
+        monthly_revenue=15000.0,
+        annual_revenue=180000.0,
+        monthly_expenses=10000.0,
+        annual_expenses=120000.0,
         roi_percent=roi,
         break_even_months=break_even,
         is_viable=is_viable

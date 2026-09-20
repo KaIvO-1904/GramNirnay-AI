@@ -39,9 +39,6 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
-                print(f"--- OSM DEBUG DATA: {data}", flush=True)
-                from ..logger import logger
-                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     logger.error(f"Google Forward Geocode Error: {data.get('status')}")
                     return []
@@ -79,9 +76,6 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
-                print(f"--- OSM DEBUG DATA: {data}", flush=True)
-                from ..logger import logger
-                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     logger.error(f"Google Reverse Geocode Error: {data.get('status')}")
                     return None
@@ -98,6 +92,9 @@ class GoogleLocationProvider(ILocationProvider):
                     district=district,
                     state=state,
                     country=country,
+                    lat=lat,
+                    lng=lng,
+                    provider_id=None,
                     coordinates={"lat": lat, "lng": lng},
                     source="gps",
                     currency=CurrencyInfo(**get_currency_for_country(country))
@@ -115,9 +112,6 @@ class GoogleLocationProvider(ILocationProvider):
                     timeout=5.0
                 )
                 data = resp.json()
-                print(f"--- OSM DEBUG DATA: {data}", flush=True)
-                from ..logger import logger
-                logger.info(f"OSM Data: {data}")
                 if data.get("status") != "OK":
                     return None
 
@@ -133,6 +127,9 @@ class GoogleLocationProvider(ILocationProvider):
                     district=district,
                     state=state,
                     country=country,
+                    lat=result["geometry"]["location"]["lat"],
+                    lng=result["geometry"]["location"]["lng"],
+                    provider_id=provider_id,
                     coordinates={
                         "lat": result.get("geometry", {}).get("location", {}).get("lat", 0.0),
                         "lng": result.get("geometry", {}).get("location", {}).get("lng", 0.0)
@@ -229,6 +226,9 @@ class OSMLocationProvider(ILocationProvider):
                     district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
                     state=addr.get("state", "Unknown"),
                     country=country,
+                    lat=lat,
+                    lng=lng,
+                    provider_id=None,
                     coordinates={"lat": lat, "lng": lng},
                     source="gps",
                     currency=CurrencyInfo(**get_currency_for_country(country))
@@ -256,6 +256,9 @@ class OSMLocationProvider(ILocationProvider):
                     district=addr.get("county") or addr.get("city") or addr.get("town", "Unknown"),
                     state=addr.get("state", "Unknown"),
                     country=country,
+                    lat=float(item.get("lat", 0)),
+                    lng=float(item.get("lon", 0)),
+                    provider_id=str(item.get("osm_id", "")),
                     coordinates={
                         "lat": float(item.get("lat", 0)),
                         "lng": float(item.get("lon", 0))
@@ -268,7 +271,7 @@ class OSMLocationProvider(ILocationProvider):
             return None
 
 class MockLocationProvider(ILocationProvider):
-    """Mock implementation for testing and development."""
+    """Local mock provider for development and testing."""
 
     def forward_geocode(self, query: str) -> List[LocationCandidate]:
         if "anekal" in query.lower():
@@ -301,18 +304,100 @@ class MockLocationProvider(ILocationProvider):
             district="Bengaluru",
             state="Karnataka",
             country="India",
+            lat=lat,
+            lng=lng,
+            provider_id=None,
             coordinates={"lat": lat, "lng": lng},
             source="gps",
             currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
         )
 
     def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
+        # Match the specific mock IDs used in forward_geocode
+        mock_data = {
+            "ka_anekal": {
+                "name": "Anekal, Karnataka",
+                "district": "Bengaluru Rural",
+                "state": "Karnataka",
+                "country": "India",
+                "lat": 12.81, "lng": 77.75
+            },
+            "kl_anekal": {
+                "name": "Anekal, Kerala",
+                "district": "Unknown",
+                "state": "Kerala",
+                "country": "India",
+                "lat": 10.21, "lng": 76.55
+            },
+            "gen_1": {
+                "name": "Generic Location",
+                "district": "Unknown",
+                "state": "Unknown",
+                "country": "India",
+                "lat": 12.97, "lng": 77.59
+            }
+        }
+
+        data = mock_data.get(provider_id)
+        if not data:
+            return None
+
         return LocationIdentity(
-            name="Bengaluru City",
-            district="Bengaluru",
-            state="Karnataka",
-            country="India",
-            coordinates={"lat": 12.97, "lng": 77.59},
+            name=data["name"],
+            district=data["district"],
+            state=data["state"],
+            country=data["country"],
+            lat=data["lat"],
+            lng=data["lng"],
+            provider_id=provider_id,
+            coordinates={"lat": data["lat"], "lng": data["lng"]},
             source="manual",
             currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
         )
+
+class IPInfoLocationProvider(ILocationProvider):
+
+    def __init__(self, token: str):
+        self.token = token
+        self.base_url = "https://ipinfo.io"
+
+    def resolve_by_ip(self, ip: str) -> Optional[LocationIdentity]:
+        try:
+            with httpx.Client() as client:
+                resp = client.get(f"{self.base_url}/{ip}?token={self.token}", timeout=5.0)
+                if resp.status_code != 200:
+                    logger.error(f"IPInfo API Error {resp.status_code}: {resp.text}")
+                    return None
+
+                data = resp.json()
+                loc_parts = data.get("loc", "0,0").split(",")
+                lat = float(loc_parts[0]) if len(loc_parts) > 0 else 0.0
+                lng = float(loc_parts[1]) if len(loc_parts) > 1 else 0.0
+
+                country = data.get("country", "Unknown")
+
+                return LocationIdentity(
+                    name=data.get("city", "Unknown City"),
+                    district=data.get("region", "Unknown Region"),
+                    state=data.get("region", "Unknown State"),
+                    country=country,
+                    lat=lat,
+                    lng=lng,
+                    provider_id=None,
+                    pincode=data.get("postal"),
+                    coordinates={"lat": lat, "lng": lng},
+                    source="ip",
+                    currency=CurrencyInfo(**get_currency_for_country(country))
+                )
+        except Exception as e:
+            logger.error(f"IPInfo Lookup Exception: {e}")
+            return None
+
+    def forward_geocode(self, query: str) -> List[LocationCandidate]:
+        raise NotImplementedError("IPInfo does not support forward geocoding.")
+
+    def reverse_geocode(self, lat: float, lng: float) -> Optional[LocationIdentity]:
+        raise NotImplementedError("IPInfo does not support reverse geocoding.")
+
+    def resolve_hierarchy(self, provider_id: str) -> Optional[LocationIdentity]:
+        raise NotImplementedError("IPInfo does not support hierarchy resolution.")

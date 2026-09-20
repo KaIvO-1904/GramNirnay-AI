@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     openai_base_url: Optional[str] = None
     groq_api_key: Optional[str] = None # Added for free LLM/STT
     google_maps_api_key: Optional[str] = None # Added for production geolocation
+    ipinfo_token: Optional[str] = None # Added for IP-based location fallback
     firebase_service_account_path: str = "firebase-service-account.json"
     llm_model: str = "groq/llama-3.3-70b-versatile" # Safe fallback, overridden by LLM_MODEL env var
     stt_model: str = "whisper-large-v3" # Default to Groq Whisper

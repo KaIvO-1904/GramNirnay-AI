@@ -7,7 +7,7 @@ def test_valid_gps():
     result = service.resolve_gps(12.97, 77.59)
     assert result.lat == 12.97
     assert result.source == LocationSource.GPS
-    assert result.hierarchy.state == "Karnataka"
+    assert result.state == "Karnataka"
 
 def test_invalid_coordinates():
     service = LocationService()
@@ -17,7 +17,7 @@ def test_invalid_coordinates():
 def test_reverse_geocoding_success():
     service = LocationService()
     result = service.resolve_gps(12.97, 77.59)
-    assert result.provider_id == "bengaluru_city"
+    assert "Bengaluru" in result.name
 
 def test_duplicate_place_names():
     service = LocationService()

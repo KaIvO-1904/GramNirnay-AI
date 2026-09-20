@@ -1,18 +1,21 @@
 import pytest
 from backend.intelligence.engine import LocalIntelligenceEngine
 from backend.intelligence.models import DataSourceType
-from backend.location.models import LocationIdentity, LocationHierarchy
+from backend.location.models import LocationIdentity, LocationHierarchy, CurrencyInfo
 
 def test_local_intelligence_deterministic_scores():
     engine = LocalIntelligenceEngine()
 
     # Create a mock location
     loc = LocationIdentity(
+        name="Bengaluru City",
+        district="Bengaluru",
+        state="Karnataka",
+        country="India",
         lat=12.97, lng=77.59,
-        hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
         provider_id="bengaluru_city",
-        confidence=1.0,
-        source="manual"
+        source="manual",
+        currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
     )
 
     result = engine.analyze_location(loc, "poultry")
@@ -36,11 +39,14 @@ def test_local_intelligence_deterministic_scores():
 def test_determinism():
     engine = LocalIntelligenceEngine()
     loc = LocationIdentity(
+        name="Bengaluru City",
+        district="Bengaluru",
+        state="Karnataka",
+        country="India",
         lat=12.97, lng=77.59,
-        hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
         provider_id="bengaluru_city",
-        confidence=1.0,
-        source="manual"
+        source="manual",
+        currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
     )
 
     res1 = engine.analyze_location(loc, "poultry")
@@ -53,11 +59,14 @@ def test_determinism():
 def test_confidence_aggregation():
     engine = LocalIntelligenceEngine()
     loc = LocationIdentity(
+        name="Bengaluru City",
+        district="Bengaluru",
+        state="Karnataka",
+        country="India",
         lat=12.97, lng=77.59,
-        hierarchy=LocationHierarchy(state="Karnataka", district="Bengaluru", village="Bengaluru City"),
         provider_id="bengaluru_city",
-        confidence=1.0,
-        source="manual"
+        source="manual",
+        currency=CurrencyInfo(code="INR", symbol="₹", locale="en-IN")
     )
 
     result = engine.analyze_location(loc, "poultry")

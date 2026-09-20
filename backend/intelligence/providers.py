@@ -88,7 +88,7 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
     def get_competitor_data(self, location: LocationIdentity, business_type: str) -> List[Dict[str, Any]]:
         prompt = (
             f"Identify 3 realistic competitors for a '{business_type}' business in "
-            f"{location.hierarchy.district}, {location.hierarchy.state}. "
+            f"{location.district}, {location.state}. "
             f"Return a JSON object with a key 'competitors' which is a list of objects with: name, size (Small/Medium/Large), and a brief description."
         )
         res = self._query_ai(prompt, CompetitorJSON, "get_competitor_data")
@@ -103,7 +103,7 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
     def get_supplier_data(self, location: LocationIdentity, business_type: str) -> List[Dict[str, Any]]:
         prompt = (
             f"Identify 2 realistic regional suppliers for '{business_type}' in "
-            f"{location.hierarchy.district}, {location.hierarchy.state}. "
+            f"{location.district}, {location.state}. "
             f"Return a JSON object with a key 'suppliers' which is a list of objects with: name, category, and distance_km."
         )
         res = self._query_ai(prompt, SupplierJSON, "get_supplier_data")
@@ -116,7 +116,7 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
 
     def get_logistics_data(self, location: LocationIdentity) -> Dict[str, Any]:
         prompt = (
-            f"Analyze logistics for {location.hierarchy.district}, {location.hierarchy.state}. "
+            f"Analyze logistics for {location.district}, {location.state}. "
             f"Return a JSON object with: road_quality (Poor/Fair/Good), nearest_hub_km (number), "
             f"avg_transport_cost_index (0.0-1.0), and accessibility_rating (0.0-1.0)."
         )
@@ -125,7 +125,7 @@ class AIIntelligenceProvider(ILocalIntelligenceProvider):
 
     def get_demand_data(self, location: LocationIdentity, business_type: str) -> Dict[str, Any]:
         prompt = (
-            f"Estimate demand for '{business_type}' in {location.hierarchy.district}, {location.hierarchy.state}. "
+            f"Estimate demand for '{business_type}' in {location.district}, {location.state}. "
             f"Return a JSON object with: estimated_demand_score (0.0-1.0), seasonality_index (0.0-1.0), "
             f"risks (list of strings), and footfall_proxy (Low/Medium/High)."
         )

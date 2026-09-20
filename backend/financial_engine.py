@@ -44,7 +44,7 @@ class FinancialEngine:
         try:
             emi = (principal * monthly_rate * math.pow(1 + monthly_rate, num_payments)) / \
                   (math.pow(1 + monthly_rate, num_payments) - 1)
-            return round(emi, 2)
+            return emi
         except ZeroDivisionError:
             return 0.0
 
@@ -56,7 +56,7 @@ class FinancialEngine:
         contribution_margin = monthly_revenue - monthly_fixed_cost
         if contribution_margin <= 0:
             return None
-        return round(setup_cost / contribution_margin, 2)
+        return setup_cost / contribution_margin
 
     @staticmethod
     def calculate_roi(annual_net_profit: float, total_investment: float) -> float:
@@ -65,7 +65,7 @@ class FinancialEngine:
         """
         if total_investment <= 0:
             return 0.0
-        return round((annual_net_profit / total_investment) * 100, 2)
+        return (annual_net_profit / total_investment) * 100
 
     @staticmethod
     def project_financing_gap(total_cost: float, user_capital: float) -> float:
@@ -73,14 +73,14 @@ class FinancialEngine:
         Determines the amount of financing required.
         """
         gap = total_cost - user_capital
-        return max(0.0, round(gap, 2))
+        return max(0.0, gap)
 
     def compute_full_model(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Runs a full financial projection based on business parameters.
         """
         setup_cost = params.get('setup_cost')
-        user_capital = params.get('user_capital')
+        user_capital = params.get('user_capital', 0.0)
         monthly_revenue = params.get('monthly_revenue')
         monthly_expenses = params.get('monthly_expenses')
         interest_rate = params.get('interest_rate', 9.5)
@@ -88,6 +88,12 @@ class FinancialEngine:
 
         if setup_cost is None:
             return {"error": "Missing critical input: setup_cost"}
+
+        # Normalize setup_cost to float
+        try:
+            setup_cost = float(setup_cost)
+        except (ValueError, TypeError):
+            return {"error": "Invalid setup_cost provided"}
 
         # Handle Expenses Fallback
         if monthly_revenue is not None and monthly_revenue > 0 and (monthly_expenses is None or monthly_expenses <= 0):
@@ -98,12 +104,12 @@ class FinancialEngine:
             expense_source = "User provided"
 
         # Deterministic Calculations
-        financing_req = self.project_financing_gap(setup_cost, user_capital or 0.0)
+        financing_req = self.project_financing_gap(setup_cost, user_capital)
         emi = self.calculate_emi(financing_req, interest_rate, tenure)
 
         # Net Cash Flow
-        m_rev = monthly_revenue or 0.0
-        m_exp = monthly_expenses or 0.0
+        m_rev = float(monthly_revenue) if monthly_revenue is not None else 0.0
+        m_exp = float(monthly_expenses) if monthly_expenses is not None else 0.0
         monthly_net = m_rev - m_exp - emi
         annual_net = monthly_net * 12
 
@@ -115,9 +121,9 @@ class FinancialEngine:
             "financing_required": financing_req,
             "monthly_emi": emi,
             "monthly_revenue": m_rev,
-            "annual_revenue": m_rev * 12,
+            "annual_revenue": round(m_rev * 12, 2),
             "monthly_expenses": m_exp,
-            "annual_expenses": m_exp * 12,
+            "annual_expenses": round(m_exp * 12, 2),
             "monthly_net_profit": round(monthly_net, 2),
             "annual_net_profit": round(annual_net, 2),
             "roi_percent": roi,
@@ -125,12 +131,12 @@ class FinancialEngine:
             "is_viable": monthly_net > 0 and break_even is not None and break_even < 60,
             "user_capital": user_capital,
             "verified_subsidy": params.get('verified_subsidy'),
-            "min_viable_capital": setup_cost * 0.2,
-            "monthly_cogs": m_exp * 0.4,
-            "monthly_operating_expenses": m_exp * 0.6,
+            "min_viable_capital": round(setup_cost * 0.2, 2),
+            "monthly_cogs": round(m_exp * 0.4, 2),
+            "monthly_operating_expenses": round(m_exp * 0.6, 2),
             "income_breakdown": {
-                "Direct Sales": m_rev,
-                "Total": m_rev
+                "Direct Sales": round(m_rev, 2),
+                "Total": round(m_rev, 2)
             },
             "expenditure_breakdown": {
                 "COGS/Inventory": round(m_exp * 0.4, 2),
